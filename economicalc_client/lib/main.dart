@@ -27,35 +27,44 @@ class MyApp extends StatelessWidget {
   );
 
 
-//   Column buildButtonColumn(IconData icon) {
+  static GestureDetector buildButtonColumn(IconData icon) {
   
-//   Color color = Colors.black;
-//   return Column(
-//     mainAxisSize: MainAxisSize.min,
-//     mainAxisAlignment: MainAxisAlignment.center,
-//     children: <Widget>[
-//       Padding(
-//         padding: EdgeInsets.all(10.0),
-//       ),
-//       Icon(icon, color: color),
-//     ],
-//   );
-// }
-//   Widget iconSection=Container(
-//     child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//     children: <Widget>[
-//       buildButtonColumn(Icons.search)
-//     ]),
-//   )
+  Color color = Colors.black;
+  return GestureDetector(
+    onTap: (){print("hej");},
+    child: Column(
+    mainAxisSize: MainAxisSize.min,
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: <Widget>[
+      Padding(
+        padding: EdgeInsets.all(10.0),
+      ),
+      Icon(icon, color: color),
+    ],
+  )
+  );
+}
+  Widget iconSection=Container(
+    child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    children: <Widget>[
+      buildButtonColumn(Icons.scanner),
+      buildButtonColumn(Icons.search),
+      buildButtonColumn(Icons.auto_graph),
+      buildButtonColumn(Icons.filter)
+      //TODO replace with figma svgs
+    ]),
+  );
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'EconomiCalc',
+      theme: new ThemeData(scaffoldBackgroundColor: const Color(0xFFB8D8D8)),
       home: Scaffold (
         body: ListView(
           children: <Widget>[
-            titleSection
+            titleSection,
+            iconSection,
           ],
           )
         ),
