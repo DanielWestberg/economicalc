@@ -1,4 +1,5 @@
 import 'package:camera/camera.dart';
+import 'package:economicalc_client/home_screen.dart';
 import 'package:flutter/material.dart';
 
 class CameraScreen extends StatefulWidget {
@@ -60,39 +61,48 @@ class _CameraScreenState extends State<CameraScreen> {
             CameraPreview(controller),
             GestureDetector(
                 onTap: (() {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => HomeScreen()));
+                }),
+                child: button(
+                    Icons.arrow_circle_left_outlined, Alignment.bottomLeft)),
+            GestureDetector(
+                onTap: (() {
                   controller.takePicture().then((XFile? file) {
                     if (mounted && file != null) {
                       print("Picture saved to ${file.path}");
                     }
                   });
                 }),
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    margin: const EdgeInsets.only(
-                      left: 0,
-                      bottom: 20,
-                    ),
-                    height: 50,
-                    width: 50,
-                    decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black26,
-                            offset: Offset(2, 2),
-                            blurRadius: 10,
-                          )
-                        ]),
-                    child: Center(child: Icon(Icons.camera_alt_outlined)),
-                  ),
-                ))
+                child:
+                    button(Icons.camera_alt_outlined, Alignment.bottomCenter)),
           ],
         ),
       );
     } else {
       return const SizedBox();
     }
+  }
+
+  Widget button(IconData icon, Alignment alignment) {
+    return Align(
+      alignment: alignment,
+      child: Container(
+        margin: const EdgeInsets.only(left: 20, bottom: 20, right: 20),
+        height: 50,
+        width: 50,
+        decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                offset: Offset(2, 2),
+                blurRadius: 10,
+              )
+            ]),
+        child: Center(child: Icon(icon)),
+      ),
+    );
   }
 }
