@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+late BuildContext _context;
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
@@ -23,38 +25,42 @@ class _HomeScreen extends State<HomeScreen> {
     ),
   );
 
-  static GestureDetector buildButtonColumn(IconData icon) {
-    Color color = Colors.black;
-    return GestureDetector(
-        onTap: () {
-          print("hej");
-        },
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Padding(
-              padding: EdgeInsets.all(10.0),
-            ),
-            Icon(icon, color: color),
-          ],
-        ));
-  }
-
   Widget iconSection = Container(
     child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
-          buildButtonColumn(Icons.scanner),
-          buildButtonColumn(Icons.search),
-          buildButtonColumn(Icons.auto_graph),
-          buildButtonColumn(Icons.filter)
+          IconButton(
+            icon: Icon(Icons.camera_alt_outlined),
+            onPressed: (() {
+              Navigator.push(_context,
+                  MaterialPageRoute(builder: (_context) => CameraScreen()));
+            }),
+          ),
+          IconButton(
+            icon: Icon(Icons.search),
+            onPressed: (() {
+              print("search");
+            }),
+          ),
+          IconButton(
+            icon: Icon(Icons.auto_graph),
+            onPressed: (() {
+              print("auto_graph");
+            }),
+          ),
+          IconButton(
+            icon: Icon(Icons.filter),
+            onPressed: (() {
+              print("filter");
+            }),
+          ),
           //TODO replace with figma svgs
         ]),
   );
 
   @override
   Widget build(BuildContext context) {
+    _context = context;
     return Scaffold(
         body: ListView(
       children: <Widget>[
