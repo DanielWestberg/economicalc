@@ -1,5 +1,5 @@
 import 'package:camera/camera.dart';
-import 'package:economicalc_client/home_screen.dart';
+import 'package:economicalc_client/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
 class CameraScreen extends StatefulWidget {
