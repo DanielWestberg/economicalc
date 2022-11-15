@@ -2,14 +2,13 @@ import os
 from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
 
-from objects import Recipt
-
 application = Flask(__name__)
 
 application.config["MONGO_URI"] = 'mongodb://' + os.environ['MONGODB_USERNAME'] + ':' + os.environ['MONGODB_PASSWORD'] + '@' + os.environ['MONGODB_HOSTNAME'] + ':27017/' + os.environ['MONGODB_DATABASE']
 
 mongo = PyMongo(application)
 db = mongo.db
+
 
 @application.route('/')
 def index():
@@ -19,13 +18,35 @@ def index():
     )
 
 
-@application.route('/recipt', methods=["POST"])
-def post_recipt():
-    pass
+# XXX: Debug only
+@application.route('/user')
+def user():
+    users = db.user.find()
+    data = []
+    for user in users:
+        data.append({
+            'id': str(user['_id']),
+        })
 
-@application.route('/recipt', methods=["GET"])
-def fetch_recipts():
-    pass
+    return jsonify(data=data)
+
+
+@application.route('/image')
+def image():
+    images = db.image.find()
+    data = []
+    for image in images:
+        data.append({
+            'id': str(image['_id']),
+            'name': image['name'],
+            'lastModified': image['lastModified'].as_datetime(),
+        })
+
+    return jsonify(
+        status=True,
+        data=data
+    )
+
 
 @application.route('/todo')
 def todo():
@@ -45,6 +66,7 @@ def todo():
         data=data
     )
 
+
 @application.route('/todo', methods=['POST'])
 def createTodo():
     data = request.get_json(force=True)
@@ -57,6 +79,7 @@ def createTodo():
         status=True,
         message='To-do saved successfully!'
     ), 201
+
 
 if __name__ == "__main__":
     ENVIRONMENT_DEBUG = os.environ.get("APP_DEBUG", True)

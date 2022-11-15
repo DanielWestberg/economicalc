@@ -8,3 +8,10 @@ db.createUser({
   }],
 });
 print("Finished creating users");
+
+print("Inserting dummy data");
+db.image.insertOne({
+  name: "dummy.jpg",
+  lastModified: Timestamp(),
+});
+print("Finished inserting dummy data");
