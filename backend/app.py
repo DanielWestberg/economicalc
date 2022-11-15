@@ -4,82 +4,49 @@ from flask_pymongo import PyMongo
 
 from objects.image import Image
 
-application = Flask(__name__)
 
-application.config["MONGO_URI"] = 'mongodb://' + os.environ['MONGODB_USERNAME'] + ':' + os.environ['MONGODB_PASSWORD'] + '@' + os.environ['MONGODB_HOSTNAME'] + ':27017/' + os.environ['MONGODB_DATABASE']
+def create_app():
+    app = Flask(__name__)
+    app.config["MONGO_URI"] = 'mongodb://' + os.environ['MONGODB_USERNAME'] + ':' + os.environ['MONGODB_PASSWORD'] + '@' + os.environ['MONGODB_HOSTNAME'] + ':27017/' + os.environ['MONGODB_DATABASE']
 
-mongo = PyMongo(application)
-db = mongo.db
+    db = PyMongo(app).db
 
+    @app.route('/')
+    def index():
+        return jsonify(
+            status=True,
+            message='Welcome to the Dockerized Flask MongoDB app!'
+        )
 
-@application.route('/')
-def index():
-    return jsonify(
-        status=True,
-        message='Welcome to the Dockerized Flask MongoDB app!'
-    )
+    # XXX: Debug only
+    @app.route('/user')
+    def user():
+        users = db.user.find()
+        data = []
+        for user in users:
+            data.append({
+                'id': str(user['_id']),
+            })
 
+        return jsonify(data=data)
 
-# XXX: Debug only
-@application.route('/user')
-def user():
-    users = db.user.find()
-    data = []
-    for user in users:
-        data.append({
-            'id': str(user['_id']),
-        })
+    @app.route('/image')
+    def image():
+        images = db.image.find()
+        data = []
+        for image in images:
+            data.append(Image.doc2Dict(image))
 
-    return jsonify(data=data)
+        return jsonify(
+            status=True,
+            data=data
+        )
 
-
-@application.route('/image')
-def image():
-    images = db.image.find()
-    data = []
-    for image in images:
-        data.append(Image.doc2Dict(image))
-
-    return jsonify(
-        status=True,
-        data=data
-    )
-
-
-@application.route('/todo')
-def todo():
-    _todos = db.todo.find()
-
-    item = {}
-    data = []
-    for todo in _todos:
-        item = {
-            'id': str(todo['_id']),
-            'todo': todo['todo']
-        }
-        data.append(item)
-
-    return jsonify(
-        status=True,
-        data=data
-    )
-
-
-@application.route('/todo', methods=['POST'])
-def createTodo():
-    data = request.get_json(force=True)
-    item = {
-        'todo': data['todo']
-    }
-    db.todo.insert_one(item)
-
-    return jsonify(
-        status=True,
-        message='To-do saved successfully!'
-    ), 201
+    return app
 
 
 if __name__ == "__main__":
     ENVIRONMENT_DEBUG = os.environ.get("APP_DEBUG", True)
     ENVIRONMENT_PORT = os.environ.get("APP_PORT", 5000)
-    application.run(host='0.0.0.0', port=ENVIRONMENT_PORT, debug=ENVIRONMENT_DEBUG)
+    app = create_app()
+    app.run(host='0.0.0.0', port=ENVIRONMENT_PORT, debug=ENVIRONMENT_DEBUG)
