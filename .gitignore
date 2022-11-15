@@ -1,6 +1,7 @@
 # General
 .vscode/
 **.swp
+**/__pycache__
 
 # Frontend
 frontend/build/
@@ -9,4 +10,3 @@ frontend/.flutter-plugins
 frontend/.flutter-plugins-dependencies
 
 # Backend
-backend/__pycache__
