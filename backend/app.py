@@ -2,6 +2,8 @@ import os
 from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
 
+from objects.image import Image
+
 application = Flask(__name__)
 
 application.config["MONGO_URI"] = 'mongodb://' + os.environ['MONGODB_USERNAME'] + ':' + os.environ['MONGODB_PASSWORD'] + '@' + os.environ['MONGODB_HOSTNAME'] + ':27017/' + os.environ['MONGODB_DATABASE']
@@ -36,11 +38,7 @@ def image():
     images = db.image.find()
     data = []
     for image in images:
-        data.append({
-            'id': str(image['_id']),
-            'name': image['name'],
-            'lastModified': image['lastModified'].as_datetime(),
-        })
+        data.append(Image.doc2Dict(image))
 
     return jsonify(
         status=True,
