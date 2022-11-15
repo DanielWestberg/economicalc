@@ -2,6 +2,8 @@ import os
 from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
 
+from objects import Recipt
+
 application = Flask(__name__)
 
 application.config["MONGO_URI"] = 'mongodb://' + os.environ['MONGODB_USERNAME'] + ':' + os.environ['MONGODB_PASSWORD'] + '@' + os.environ['MONGODB_HOSTNAME'] + ':27017/' + os.environ['MONGODB_DATABASE']
@@ -15,6 +17,15 @@ def index():
         status=True,
         message='Welcome to the Dockerized Flask MongoDB app!'
     )
+
+
+@application.route('/recipt', methods=["POST"])
+def post_recipt():
+    pass
+
+@application.route('/recipt', methods=["GET"])
+def fetch_recipts():
+    pass
 
 @application.route('/todo')
 def todo():

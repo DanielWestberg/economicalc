@@ -1,11 +1,11 @@
 version: '3'
 services:
 
-  back_flask:
+  back_flaskk:
     build:
       context: backend
       dockerfile: ../Dockerfile.backend
-    container_name: backend-flask
+    container_name: backend-flaskk
     image: flaskpython3.6 #digitalocean.com/flask-python:3.6
     restart: unless-stopped
     environment:
@@ -13,22 +13,22 @@ services:
       APP_DEBUG: "False"
       APP_PORT: 5000
       MONGODB_DATABASE: flaskdb
-      MONGODB_USERNAME: flaskuser
-      MONGODB_PASSWORD: your_mongodb_password
+      MONGODB_USERNAME: Martin
+      MONGODB_PASSWORD: Martin
       MONGODB_HOSTNAME: mongodb
     ports:
       - "5000:5000"
     volumes:
       - appdata:/var/www
     depends_on:
-      - mongodb
+      - mongodbb
     networks:
       - frontend
       - backend
 
-  mongodb:
+  mongodbb:
     image: mongo:4.0.8
-    container_name: mongodb
+    container_name: mongodbb
     restart: unless-stopped
     command: mongod --auth
     environment:
