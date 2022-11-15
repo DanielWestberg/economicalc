@@ -1,5 +1,5 @@
-import 'package:frontend/helpers/utils.dart';
-import 'package:frontend/models/transaction_event.dart';
+import 'package:economicalc_client/helpers/utils.dart';
+import 'package:economicalc_client/models/transaction_event.dart';
 import 'package:flutter/material.dart';
 
 class TransactionDetailsScreen extends StatefulWidget {
