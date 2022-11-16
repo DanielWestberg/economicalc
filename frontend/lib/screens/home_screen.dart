@@ -1,5 +1,7 @@
+import 'package:economicalc_client/screens/statistics_screen.dart';
+import 'package:economicalc_client/components/history_list.dart';
+import 'package:economicalc_client/screens/camera_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:economicalc_client/camera_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 late BuildContext _context;
@@ -40,6 +42,7 @@ class _HomeScreen extends State<HomeScreen> {
   }
 
   Widget iconSection = Container(
+    padding: EdgeInsets.only(top: 10),
     child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
@@ -59,7 +62,8 @@ class _HomeScreen extends State<HomeScreen> {
           IconButton(
             icon: Icon(Icons.auto_graph),
             onPressed: (() {
-              print("auto_graph");
+              Navigator.push(_context,
+                  MaterialPageRoute(builder: (_context) => StatisticsScreen()));
             }),
           ),
           IconButton(
@@ -127,9 +131,12 @@ class _HomeScreen extends State<HomeScreen> {
         child: Scaffold(
             key: _globalKey,
             drawer: drawer,
-            body: Wrap(
-              runSpacing: 50,
-              children: [titleSection(_globalKey), iconSection],
+            body: Column(
+              children: [
+                titleSection(_globalKey),
+                iconSection,
+                Expanded(child: HistoryList())
+              ],
             )));
   }
 }
