@@ -2,8 +2,8 @@ import os
 from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
 
-from objects.image import Image
-from config import RunConfig
+from .objects.image import Image
+from .config import RunConfig
 
 
 def create_app(config):

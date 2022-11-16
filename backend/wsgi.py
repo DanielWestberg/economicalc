@@ -1,5 +1,5 @@
-from app import create_app
-from config import RunConfig
+from economicalc.app import create_app
+from economicalc.config import RunConfig
 
 application = create_app(RunConfig())
 
