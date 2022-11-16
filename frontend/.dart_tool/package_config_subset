@@ -1,7 +1,7 @@
 economicalc_client
 2.18
-file:///home/martin/flaskapp/flutter/
-file:///home/martin/flaskapp/flutter/lib/
+file:///home/martin/economicalc/frontend/
+file:///home/martin/economicalc/frontend/lib/
 async
 2.14
 file:///home/martin/snap/flutter/common/flutter/.pub-cache/hosted/pub.dartlang.org/async-2.9.0/

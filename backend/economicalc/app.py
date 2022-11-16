@@ -19,6 +19,17 @@ def create_app(config):
             message='Welcome to the Dockerized Flask MongoDB app!'
         )
 
+    @app.route('/recipt')
+    def fetch_recipts():
+        user = db.users.find_one()
+
+    
+        print(user, flush=True)
+        return jsonify(
+            status=True,
+            data=user['receipts']
+    )
+    
     # XXX: Debug only
     @app.route('/user')
     def user():
