@@ -11,47 +11,90 @@ class TransactionDetailsScreen extends StatefulWidget {
 class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   int? sortColumnIndex;
   bool isAscending = false;
+  double fontSize = 16;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Color(0xFFB8D8D8),
-          foregroundColor: Colors.black,
-          title: const Text("EconomiCalc",
-              style: TextStyle(
-                  color: Color(0xff000000),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 36.0)),
-          centerTitle: true,
-          elevation: 0,
-        ),
-        body: ListView(
-            children: [headerInfo(), Expanded(child: buildDataTable())]));
+    return SafeArea(
+        child: Scaffold(
+            appBar: AppBar(
+              toolbarHeight: 180,
+              backgroundColor: Color(0xFFB8D8D8),
+              foregroundColor: Colors.black,
+              title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                        padding: EdgeInsets.only(left: 10),
+                        child: Text("EconomiCalc",
+                            style: TextStyle(
+                                color: Color(0xff000000),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 36.0))),
+                    headerInfo()
+                  ]),
+              centerTitle: false,
+              elevation: 0,
+            ),
+            body: ListView(children: [buildDataTable()])));
   }
 
   Widget headerInfo() {
     return Container(
-        padding: EdgeInsets.all(20),
+        padding: EdgeInsets.only(top: 10),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Expanded(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Icon(Icons.category),
+                  Padding(
+                      padding: EdgeInsets.only(left: 5),
+                      child: Text(
+                        "Mat & Dryck",
+                        style: TextStyle(
+                            fontSize: fontSize, fontWeight: FontWeight.w600),
+                      )),
+                ]),
+                Row(
+                  children: [
+                    Icon(Icons.store),
+                    Padding(
+                        padding: EdgeInsets.only(left: 5),
+                        child: Text(
+                          "Ica",
+                          style: TextStyle(
+                              fontSize: fontSize, fontWeight: FontWeight.w600),
+                        )),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Icon(Icons.date_range),
+                    Padding(
+                        padding: EdgeInsets.only(left: 5),
+                        child: Text(
+                          "2022-10-01",
+                          style: TextStyle(
+                              fontSize: fontSize, fontWeight: FontWeight.w600),
+                        )),
+                  ],
+                )
+              ],
+            ),
+            Padding(
+                padding: EdgeInsets.all(20),
                 child: Column(children: [
-              Text(
-                "Mat & Dryck",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-              ),
-              Text(
-                "Ica Väst",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              Text("2022-10-01",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400))
-            ])),
-            Text("Total: 210.99 kr",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  Icon(Icons.payment),
+                  Text("210.99 kr",
+                      style: TextStyle(
+                          fontSize: fontSize, fontWeight: FontWeight.w600))
+                ])),
             IconButton(
+                padding: EdgeInsets.all(20),
                 onPressed: (() {
                   print("receipt");
                 }),
@@ -81,7 +124,12 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
 
   List<DataRow> getRows(List<ReceiptItem> items) =>
       items.map((ReceiptItem item) {
-        final cells = [item.itemName, item.price, item.quantity, item.sum];
+        final cells = [
+          item.itemName,
+          item.price,
+          item.quantity,
+          double.parse((item.sum).toStringAsFixed(2))
+        ];
         return DataRow(cells: getCells(cells));
       }).toList();
 
