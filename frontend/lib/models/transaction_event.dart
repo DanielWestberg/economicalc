@@ -2,7 +2,7 @@ class TransactionEvent {
   int userID;
   String recipient;
   DateTime date;
-  num amount;
+  double amount;
   List<ReceiptItem> items;
 
   TransactionEvent(
@@ -14,13 +14,15 @@ class TransactionEvent {
 }
 
 class ReceiptItem {
+  int id;
   String itemName;
   int quantity;
-  num price;
-  num sum;
+  double price;
+  double sum;
 
   ReceiptItem(
-      {required this.itemName,
+      {required this.id,
+      required this.itemName,
       required this.quantity,
       required this.price,
       required this.sum});
