@@ -1,4 +1,5 @@
 print("Creating users");
+
 db.createUser({
   user: "flaskuser",
   pwd: "your_mongodb_password",
@@ -7,11 +8,14 @@ db.createUser({
     db: "flaskdb",
   }],
 });
-print("Finished creating users");
 
-print("Inserting dummy data");
-db.image.insertOne({
-  name: "dummy.jpg",
-  lastModified: Timestamp(),
+db.createUser({
+  user: "test",
+  pwd: "weak",
+  roles: [{
+    role: "readWrite",
+    db: "testdb",
+  }],
 });
-print("Finished inserting dummy data");
+
+print("Finished creating users");

@@ -3,11 +3,12 @@ from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
 
 from objects.image import Image
+from config import RunConfig
 
 
-def create_app():
+def create_app(config):
     app = Flask(__name__)
-    app.config["MONGO_URI"] = 'mongodb://' + os.environ['MONGODB_USERNAME'] + ':' + os.environ['MONGODB_PASSWORD'] + '@' + os.environ['MONGODB_HOSTNAME'] + ':27017/' + os.environ['MONGODB_DATABASE']
+    app.config["MONGO_URI"] = config.MONGO_URI
 
     db = PyMongo(app).db
 
@@ -48,5 +49,5 @@ def create_app():
 if __name__ == "__main__":
     ENVIRONMENT_DEBUG = os.environ.get("APP_DEBUG", True)
     ENVIRONMENT_PORT = os.environ.get("APP_PORT", 5000)
-    app = create_app()
+    app = create_app(RunConfig())
     app.run(host='0.0.0.0', port=ENVIRONMENT_PORT, debug=ENVIRONMENT_DEBUG)
