@@ -17,31 +17,8 @@ class _HomeScreen extends State<HomeScreen> {
   GlobalKey<ScaffoldState> _globalKey = GlobalKey<ScaffoldState>();
   late String appName = "EconomiCalc";
 
-  Widget titleSection(GlobalKey<ScaffoldState> _globalKey) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(10, 20, 0, 0),
-      child: Stack(
-        alignment: Alignment.topLeft,
-        children: [
-          IconButton(
-              onPressed: () {
-                _globalKey.currentState?.openDrawer();
-              },
-              icon: Icon(Icons.menu, size: 32),
-              color: Colors.black),
-          Container(
-              alignment: Alignment.topCenter,
-              child: Text(appName,
-                  style: TextStyle(
-                      color: new Color(0xff000000),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 36.0)))
-        ],
-      ),
-    );
-  }
-
   Widget iconSection = Container(
+    color: Color(0xFFB8D8D8),
     padding: EdgeInsets.only(top: 10),
     child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -137,14 +114,25 @@ class _HomeScreen extends State<HomeScreen> {
     _context = context;
     return SafeArea(
         child: Scaffold(
+            appBar: AppBar(
+              toolbarHeight: 80,
+              toolbarOpacity: 1,
+              backgroundColor: Color(0xFFB8D8D8),
+              foregroundColor: Colors.black,
+              title: Column(children: [
+                Text("EconomiCalc",
+                    style: TextStyle(
+                        color: Color(0xff000000),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 36.0)),
+              ]),
+              centerTitle: true,
+              elevation: 0,
+            ),
             key: _globalKey,
             drawer: drawer,
             body: Column(
-              children: [
-                titleSection(_globalKey),
-                iconSection,
-                Expanded(child: HistoryList())
-              ],
+              children: [iconSection, Expanded(child: HistoryList())],
             )));
   }
 }
