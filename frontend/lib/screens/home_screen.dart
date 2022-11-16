@@ -1,8 +1,8 @@
 import 'package:economicalc_client/screens/statistics_screen.dart';
 import 'package:economicalc_client/components/history_list.dart';
-import 'package:economicalc_client/screens/camera_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 
 late BuildContext _context;
 
@@ -48,9 +48,17 @@ class _HomeScreen extends State<HomeScreen> {
         children: <Widget>[
           IconButton(
             icon: Icon(Icons.camera_alt_outlined),
-            onPressed: (() {
-              Navigator.push(_context,
-                  MaterialPageRoute(builder: (_context) => CameraScreen()));
+            onPressed: (() async {
+            final XFile? image = await ImagePicker().pickImage(source: ImageSource.camera);
+            //process()
+
+            })
+          ),
+          IconButton(
+            icon: Icon(Icons.filter),
+            onPressed: (() async {
+              final XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
+              //process()
             }),
           ),
           IconButton(
