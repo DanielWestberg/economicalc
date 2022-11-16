@@ -75,7 +75,7 @@ class _HomeScreen extends State<HomeScreen> {
             }),
           ),
           IconButton(
-            icon: Icon(Icons.filter),
+            icon: Icon(Icons.filter_alt),
             onPressed: (() {
               print("filter");
             }),
