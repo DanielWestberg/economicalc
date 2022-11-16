@@ -1,8 +1,9 @@
 import os
 from flask import Flask, request, jsonify
+#from Objects import Receipt, Item, User
 from flask_pymongo import PyMongo
 
-from objects import Recipt
+
 
 application = Flask(__name__)
 
@@ -10,6 +11,33 @@ application.config["MONGO_URI"] = 'mongodb://' + os.environ['MONGODB_USERNAME'] 
 
 mongo = PyMongo(application)
 db = mongo.db
+
+
+class User:
+    def __init__(self, id, receipts : list) -> None:
+        self.id = id
+        self.receipts = receipts
+    
+    def add_receipt(self):
+        pass
+
+    def delete_reciept(self):
+        pass
+
+
+class Receipt:
+    def __init__(self, id : int, store : str, items : list, date_of_purchase : int, total_sum : float) -> None:
+        self.id = id
+        self.store = store
+        self.items = items
+        self.date = date_of_purchase
+        self.total_sum = total_sum
+
+class Item:
+    def __init__(self, item_name : str, price : float) -> None:
+        self.item_name = item_name
+        self.price = price
+        
 
 @application.route('/')
 def index():
@@ -20,12 +48,20 @@ def index():
 
 
 @application.route('/recipt', methods=["POST"])
-def post_recipt():
+def post_receipt():
     pass
 
-@application.route('/recipt', methods=["GET"])
+@application.route('/recipt')
 def fetch_recipts():
-    pass
+    user = db.users.find_one()
+
+    
+    print(user, flush=True)
+    return jsonify(
+        status=True,
+        data=user['receipts']
+    )
+    
 
 @application.route('/todo')
 def todo():
