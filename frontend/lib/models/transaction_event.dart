@@ -2,7 +2,7 @@ class TransactionEvent {
   int userID;
   String recipient;
   DateTime date;
-  num amount;
+  double amount;
   List<ReceiptItem> items;
 
   TransactionEvent(
