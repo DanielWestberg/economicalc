@@ -10,7 +10,7 @@ def create_app(config):
     app = Flask(__name__)
     app.config["MONGO_URI"] = config.MONGO_URI
 
-    db = PyMongo(app).db
+    db = create_db(app)
 
     @app.route('/')
     def index():
@@ -44,6 +44,10 @@ def create_app(config):
         )
 
     return app
+
+
+def create_db(app):
+    return PyMongo(app).db
 
 
 if __name__ == "__main__":
