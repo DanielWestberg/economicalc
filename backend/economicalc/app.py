@@ -1,6 +1,7 @@
 import os
 from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
+from bson.objectid import ObjectId
 
 from .objects.image import Image
 from .config import RunConfig
@@ -19,15 +20,19 @@ def create_app(config):
             message='Welcome to the Dockerized Flask MongoDB app!'
         )
 
-    @app.route('/recipt')
-    def fetch_recipts():
-        user = db.users.find_one()
-
-    
-        print(user, flush=True)
+    @app.route('/recipt/<id>')
+    def fetch_recipts(id):
+        users = db.users.find({"bankId": id})
+        data = []
+        try:
+            data = users[0]
+        except:
+            return jsonify(
+                status = False
+            )
         return jsonify(
             status=True,
-            data=user['receipts']
+            data= data['receipts']
     )
     
     # XXX: Debug only
