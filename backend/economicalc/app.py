@@ -20,7 +20,7 @@ def create_app(config):
         )
 
     # XXX: Debug only
-    @app.route('/user')
+    @app.route('/users')
     def user():
         users = db.user.find()
         data = []
@@ -31,7 +31,7 @@ def create_app(config):
 
         return jsonify(data=data)
 
-    @app.route('/image')
+    @app.route('/images')
     def image():
         images = db.image.find()
         data = []
