@@ -20,4 +20,4 @@ class TestConfig(RunConfig):
         self.MONGO_USERNAME = "test"
         self.MONGO_PASSWORD = "weak"
         self.MONGO_DATABASE = "testdb"
-        self.MONGO_URI = RunConfig.getMongoURI()
+        self.MONGO_URI = self.getMongoURI()
