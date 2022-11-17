@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
 
 from .objects.image import Image
-from .config import RunConfig
+from .config import FlaskConfig
 
 
 def create_app(config):
@@ -53,5 +53,5 @@ def create_db(app):
 if __name__ == "__main__":
     ENVIRONMENT_DEBUG = os.environ.get("APP_DEBUG", True)
     ENVIRONMENT_PORT = os.environ.get("APP_PORT", 5000)
-    app = create_app(RunConfig())
+    app = create_app(FlaskConfig())
     app.run(host='0.0.0.0', port=ENVIRONMENT_PORT, debug=ENVIRONMENT_DEBUG)

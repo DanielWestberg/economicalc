@@ -9,13 +9,4 @@ db.createUser({
   }],
 });
 
-db.createUser({
-  user: "test",
-  pwd: "weak",
-  roles: [{
-    role: "readWrite",
-    db: "testdb",
-  }],
-});
-
 print("Finished creating users");
