@@ -14,7 +14,8 @@ class HistoryList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Container(
-        padding: const EdgeInsets.only(left: 20),
+        color: Color(0xFFB8D8D8),
+        padding: const EdgeInsets.all(20),
         child: Text(
           "History",
           textAlign: TextAlign.left,

@@ -25,24 +25,24 @@ class StatisticsScreenState extends State<StatisticsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          toolbarHeight: 180,
-          toolbarOpacity: 1,
-          backgroundColor: Color(0xFFB8D8D8),
-          foregroundColor: Colors.black,
-          title: Column(children: [
-            Text("EconomiCalc",
-                style: TextStyle(
-                    color: Color(0xff000000),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 36.0)),
-            headerInfo()
-          ]),
-          centerTitle: true,
-          elevation: 0,
-        ),
-        body: displayStats(dropdownValue));
+    return SafeArea(
+        child: Scaffold(
+            appBar: AppBar(
+              toolbarHeight: 180,
+              backgroundColor: Color(0xFFB8D8D8),
+              foregroundColor: Colors.black,
+              title: Column(children: [
+                const Text("EconomiCalc",
+                    style: TextStyle(
+                        color: Color(0xff000000),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 36.0)),
+                headerInfo()
+              ]),
+              centerTitle: true,
+              elevation: 0,
+            ),
+            body: displayStats(dropdownValue)));
   }
 
   Widget displayStats(String dropdownValue) {
