@@ -28,11 +28,9 @@ def db_images(db, images):
 class TestImages():
 
     def test_get_user_image(self, images, db_images, client):
-        print(db_images.find_one(images[0]))
         response = client.get("/images")
         assert response.status == constants["ok"]
 
         image = loads(response.data)[0]
-        print(image)
 
         assert image["name"] == "test.jpg"
