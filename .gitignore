@@ -1,4 +1,5 @@
 # General
+.idea/
 .vscode/
 **.swp
 **/__pycache__
