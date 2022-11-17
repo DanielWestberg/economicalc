@@ -42,7 +42,7 @@ class _HomeScreen extends State<HomeScreen> {
           IconButton(
             icon: Icon(Icons.search),
             onPressed: (() {
-              fetchMockedTransactions();
+              print("search");
             }),
           ),
           IconButton(
