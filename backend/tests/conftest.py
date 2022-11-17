@@ -7,9 +7,7 @@ from economicalc.app import create_app, create_db
 @pytest.fixture()
 def app():
     app = create_app(FlaskConfig())
-    app.config.update({
-        "TESTING": True
-    })
+    app.testing = True
 
     # further setup code goes here, if any
 
@@ -20,3 +18,7 @@ def app():
 @pytest.fixture()
 def db(app):
     return PyMongo(app).db
+
+@pytest.fixture()
+def client(app):
+    return app.test_client()
