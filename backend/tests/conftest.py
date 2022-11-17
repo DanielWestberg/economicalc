@@ -22,3 +22,7 @@ def db(app):
 @pytest.fixture()
 def client(app):
     return app.test_client()
+
+constants = {
+    "ok": "200 OK"
+}
