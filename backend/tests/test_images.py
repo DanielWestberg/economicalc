@@ -10,7 +10,8 @@ from economicalc.objects.image import Image
 @pytest.fixture()
 def images():
     return [
-        Image("test.jpg").to_dict()
+        Image("test.jpg").to_dict(),
+        Image("rofl.jpg").to_dict(),
     ]
 
 
@@ -31,6 +32,7 @@ class TestImages():
         response = client.get("/images")
         assert response.status == constants["ok"]
 
-        image = loads(response.data)[0]
+        response_images = loads(response.data)
 
-        assert image["name"] == "test.jpg"
+        for (image_expected, image_actual) in zip(response_images, images):
+            assert image_expected["name"] == image_actual["name"]
