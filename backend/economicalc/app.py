@@ -20,8 +20,8 @@ def create_app(config):
             message='Welcome to the Dockerized Flask MongoDB app!'
         )
 
-    @app.route('/recipt/<id>')
-    def fetch_recipts(id):
+    @app.route('/receipts/<id>')
+    def fetch_receipts(id):
         users = db.users.find({"bankId": id})
         data = []
         try:
