@@ -33,13 +33,12 @@ def create_app(config):
 
     @app.route('/images')
     def image():
-        images = db.image.find()
+        images = db.images.find()
         data = []
         for image in images:
-            data.append(Image.doc2Dict(image))
+            data.append(Image.doc2dict(image))
 
         return jsonify(
-            status=True,
             data=data
         )
 
