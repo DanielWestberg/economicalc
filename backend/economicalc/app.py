@@ -39,7 +39,7 @@ def create_app(config):
             data.append(Image.doc2dict(image))
 
         return jsonify(
-            data=data
+            data
         )
 
     return app
