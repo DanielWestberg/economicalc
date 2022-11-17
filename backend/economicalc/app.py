@@ -22,18 +22,11 @@ def create_app(config):
 
     @app.route('/receipts/<id>')
     def fetch_receipts(id):
-        users = db.users.find({"bankId": id})
-        data = []
-        try:
-            data = users[0]
-        except:
-            return jsonify(
-                status = False
-            )
+        user = db.users.find_one_or_404({"bankId": id})
         return jsonify(
             status=True,
-            data= data['receipts']
-    )
+            data=user['receipts']
+        )
     
     # XXX: Debug only
     @app.route('/user')
