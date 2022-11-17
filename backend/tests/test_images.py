@@ -4,15 +4,15 @@ from flask.json import loads
 
 from .conftest import constants
 
-from economicalc.objects.image import Image
+from economicalc.objects import *
 
 
 @pytest.fixture()
 def images():
-    return [
-        Image("test.jpg").to_dict(),
-        Image("rofl.jpg").to_dict(),
-    ]
+    return map(Image.to_dict, [
+        Image("test.jpg"),
+        Image("rofl.jpg"),
+    ])
 
 
 @pytest.fixture()
