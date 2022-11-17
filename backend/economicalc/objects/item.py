@@ -1,16 +1,18 @@
 class Item:
-    def __init__(self, item_name: str, price: int) -> None:
-        self.item_name = item_name
+    def __init__(self, name: str, price: int, quantity: int) -> None:
+        self.name = name
         self.price = price
+        self.quantity = quantity
 
     @staticmethod
     def from_mongo_doc(doc):
-        return Item(doc["item_name"], doc["price"])
+        return Item(doc["name"], doc["price"], doc["quantity"])
 
     def to_dict(self):
         return {
-            "item_name": self.item_name,
-            "receipts": self.receipts,
+            "name": self.name,
+            "price": self.price,
+            "quantity", self.quantity,
         }
 
     @staticmethod
