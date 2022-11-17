@@ -1,8 +1,13 @@
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/transaction_event.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class TransactionDetailsScreen extends StatefulWidget {
+  final TransactionEvent transaction;
+
+  TransactionDetailsScreen(Key? key, this.transaction) : super(key: key);
+
   @override
   TransactionDetailsScreenState createState() =>
       TransactionDetailsScreenState();
@@ -11,7 +16,8 @@ class TransactionDetailsScreen extends StatefulWidget {
 class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   int? sortColumnIndex;
   bool isAscending = false;
-  double fontSize = 16;
+  double fontSize = 14;
+  final columns = ["Items", "Price", "Qty", "Sum"];
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +71,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                     Padding(
                         padding: EdgeInsets.only(left: 5),
                         child: Text(
-                          "Ica",
+                          widget.transaction.recipient,
                           style: TextStyle(
                               fontSize: fontSize, fontWeight: FontWeight.w600),
                         )),
@@ -77,7 +83,9 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                     Padding(
                         padding: EdgeInsets.only(left: 5),
                         child: Text(
-                          "2022-10-01",
+                          DateFormat("yyyy-MM-dd")
+                              .format(widget.transaction.date)
+                              .toString(),
                           style: TextStyle(
                               fontSize: fontSize, fontWeight: FontWeight.w600),
                         )),
@@ -86,15 +94,16 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
               ],
             ),
             Padding(
-                padding: EdgeInsets.all(20),
+                padding: EdgeInsets.all(10),
                 child: Column(children: [
                   Icon(Icons.payment),
-                  Text("210.99 kr",
+                  Text(
+                      "${NumberFormat('###,###,###.0#', 'sv-se').format(widget.transaction.totalSum)} kr",
                       style: TextStyle(
                           fontSize: fontSize, fontWeight: FontWeight.w600))
                 ])),
             IconButton(
-                padding: EdgeInsets.all(20),
+                padding: EdgeInsets.all(10),
                 onPressed: (() {
                   print("receipt");
                 }),
@@ -103,16 +112,13 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
         ));
   }
 
-  final columns = ["Items", "Price", "Qty", "Sum"];
-  final rows = Utils.getMockedReceiptItems();
-
   Widget buildDataTable() {
     return DataTable(
         columnSpacing: 30,
         sortAscending: isAscending,
         sortColumnIndex: sortColumnIndex,
         columns: getColumns(columns),
-        rows: getRows(rows));
+        rows: getRows(widget.transaction.items as List<ReceiptItem>));
   }
 
   List<DataColumn> getColumns(List<String> columns) => columns
@@ -126,9 +132,11 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
       items.map((ReceiptItem item) {
         final cells = [
           item.itemName,
-          item.price,
+          // item.price,
+          NumberFormat('###,###,###.0#', 'sv-se').format(item.price),
           item.quantity,
-          double.parse((item.sum).toStringAsFixed(2))
+          NumberFormat('###,###,###.0#', 'sv-se').format(item.sum)
+          // double.parse((item.sum).toStringAsFixed(2))
         ];
         return DataRow(cells: getCells(cells));
       }).toList();
@@ -138,16 +146,17 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
 
   void onSort(int columnIndex, bool ascending) {
     if (columnIndex == 0) {
-      rows.sort((row1, row2) =>
+      widget.transaction.items.sort((row1, row2) =>
           compareString(ascending, row1.itemName, row2.itemName));
     } else if (columnIndex == 1) {
-      rows.sort(
+      widget.transaction.items.sort(
           (row1, row2) => compareNumber(ascending, row1.price, row2.price));
     } else if (columnIndex == 2) {
-      rows.sort((row1, row2) =>
+      widget.transaction.items.sort((row1, row2) =>
           compareNumber(ascending, row1.quantity, row2.quantity));
     } else if (columnIndex == 3) {
-      rows.sort((row1, row2) => compareNumber(ascending, row1.sum, row2.sum));
+      widget.transaction.items
+          .sort((row1, row2) => compareNumber(ascending, row1.sum, row2.sum));
     }
 
     setState(() {
