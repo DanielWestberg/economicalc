@@ -99,8 +99,7 @@ class TestImages():
             response = client.get(f"/users/{user.bankId}/receipts")
             assert response.status == constants["ok"]
 
-            response_data = loads(response.data)
-            response_receipts = response_data["receipts"]
+            response_receipts = loads(response.data)
 
             for (expected_receipt, actual_receipt) in zip(response_receipts, user.receipts):
                 expected_image = expected_receipt.image if expected_receipt.image is not None else "null"
