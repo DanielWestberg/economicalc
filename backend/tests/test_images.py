@@ -102,10 +102,10 @@ class TestImages():
             response_receipts = loads(response.data)
 
             for (expected_receipt, actual_receipt) in zip(response_receipts, user.receipts):
-                expected_image = expected_receipt.image if expected_receipt.image is not None else "null"
-                response_image = response_receipt["image"]
+                expected_image = expected_receipt.image
 
-                if expected_image == "null":
-                    assert response_image == "null"
+                if expected_image is None:
+                    assert "image" not in response_receipt
                 else:
+                    response_image = response_receipt["image"]
                     assert expected_image.name == response_image["name"]
