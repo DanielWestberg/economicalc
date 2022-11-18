@@ -1,17 +1,20 @@
 from datetime import date
 
+from .image import Image
+
 
 class Receipt:
-    def __init__(self, id: int, store: str, items: list, date_of_purchase: date, total_sum: int) -> None:
+    def __init__(self, id: int, store: str, items: list, date_of_purchase: date, total_sum: int, image: Image) -> None:
         self.id = id
         self.store = store
         self.items = items
         self.date = date_of_purchase
         self.total_sum = total_sum
+        self.image = image
 
     @staticmethod
     def from_mongo_doc(doc):
-        return Receipt(doc["_id"], doc["store"], doc["items"].from_mongo_doc, doc["date_of_purchase"], doc["total_sum"])
+        return Receipt(doc["_id"], doc["store"], doc["items"].from_mongo_doc, doc["date_of_purchase"], doc["total_sum"], doc["image"])
 
     def to_dict(self):
         return {
@@ -20,6 +23,7 @@ class Receipt:
             "items": self.items.to_dict(),
             "date": self.date,
             "total_sum": self.total_sum,
+            "image": self.image,
         }
 
     @staticmethod
