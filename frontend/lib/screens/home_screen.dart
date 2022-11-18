@@ -1,5 +1,6 @@
 import 'package:economicalc_client/screens/statistics_screen.dart';
 import 'package:economicalc_client/components/history_list.dart';
+import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -24,17 +25,17 @@ class _HomeScreen extends State<HomeScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
           IconButton(
-            icon: Icon(Icons.camera_alt_outlined),
-            onPressed: (() async {
-            final XFile? image = await ImagePicker().pickImage(source: ImageSource.camera);
-            //process()
-
-            })
-          ),
+              icon: Icon(Icons.camera_alt_outlined),
+              onPressed: (() async {
+                final XFile? image =
+                    await ImagePicker().pickImage(source: ImageSource.camera);
+                //process()
+              })),
           IconButton(
             icon: Icon(Icons.filter),
             onPressed: (() async {
-              final XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
+              final XFile? image =
+                  await ImagePicker().pickImage(source: ImageSource.gallery);
               //process()
             }),
           ),
@@ -57,7 +58,6 @@ class _HomeScreen extends State<HomeScreen> {
               print("filter");
             }),
           ),
-          //TODO replace with figma svgs
         ]),
   );
 
