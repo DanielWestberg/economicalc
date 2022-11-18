@@ -2,7 +2,7 @@ import pytest
 from flask_pymongo import PyMongo
 
 from economicalc.config import FlaskConfig
-from economicalc.app import create_app, create_db
+from economicalc.app import create_app
 
 @pytest.fixture()
 def app():
@@ -14,10 +14,6 @@ def app():
     yield app
 
     # cleanup code goes here, if any
-
-@pytest.fixture()
-def db(app):
-    return PyMongo(app).db
 
 @pytest.fixture()
 def client(app):
