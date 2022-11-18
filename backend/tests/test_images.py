@@ -96,7 +96,7 @@ class TestImages():
 
     def test_get_user_image(self, images, db_images, client, users, db_users):
         for user in users:
-            response = client.get(f"/user/{user.bankId}/receipts")
+            response = client.get(f"/users/{user.bankId}/receipts")
             assert response.status == constants["ok"]
 
             response_data = loads(response.data)
