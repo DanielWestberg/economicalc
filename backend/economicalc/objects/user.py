@@ -10,7 +10,7 @@ class User:
     def to_dict(self):
         return {
             "bankId": self.bankId,
-            "receipts": self.receipts,
+            "receipts": [receipt.to_dict() for receipt in self.receipts],
         }
 
     @staticmethod
