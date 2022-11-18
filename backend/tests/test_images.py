@@ -1,6 +1,6 @@
 import pytest
 
-from datetime import date
+from datetime import datetime
 
 from flask.json import loads
 
@@ -36,20 +36,20 @@ def receipts(items, images):
             0,
             "Ica",
             [items[0], items[1], items[3]],
-            date(2022, 6, 30),
+            datetime(2022, 6, 30),
             1500 + 2000 + 1300,
             images[1]
         ), Receipt(
             1,
             "Coop",
             [items[2], items[3], items[4], items[5]],
-            date(2022, 7, 1),
+            datetime(2022, 7, 1),
             1700 + 1300 + 2600 + 350
         ), Receipt(
             2,
             "Willy's",
             [items[1], items[5]],
-            date(2021, 12, 13),
+            datetime(2021, 12, 13),
             2000 + 350,
             images[0]
         )
