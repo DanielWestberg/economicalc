@@ -20,12 +20,12 @@ def images():
 @pytest.fixture()
 def items():
     return [
-        Item("Äpple", 1500),
-        Item("Banan", 2000),
-        Item("Fil", 1700),
-        Item("Kikärter", 1300),
-        Item("Vetemjöl", 2600),
-        Item("Jäst", 350),
+        Item("Äpple", 1500, 7),
+        Item("Banan", 2000, 7),
+        Item("Fil", 1700, 2),
+        Item("Kikärter", 1300, 1),
+        Item("Vetemjöl", 2600, 1),
+        Item("Jäst", 350, 1),
     ]
 
 
