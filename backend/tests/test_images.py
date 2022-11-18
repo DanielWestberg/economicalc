@@ -73,23 +73,23 @@ def users(receipts):
 @pytest.fixture()
 def db_images(db, images):
     for image in images:
-        db.images.insert_one(image)
+        db.images.insert_one(image.to_dict())
 
     yield db.images
 
     for image in images:
-        db.images.delete_one(image)
+        db.images.delete_one(image.to_dict())
 
 
 @pytest.fixture()
 def db_users(db, users):
     for user in users:
-        db.users.insert_one(user)
+        db.users.insert_one(user.to_dict())
 
     yield db.users
 
     for user in users:
-        db.users.delete_one(user)
+        db.users.delete_one(user.to_dict())
 
 
 class TestImages():
