@@ -30,14 +30,15 @@ def items():
 
 
 @pytest.fixture()
-def receipts(items):
+def receipts(items, images):
     return [
         Receipt(
             0,
             "Ica",
             [items[0], items[1], items[3]],
             date(2022, 6, 30),
-            1500 + 2000 + 1300
+            1500 + 2000 + 1300,
+            images[1]
         ), Receipt(
             1,
             "Coop",
@@ -49,7 +50,8 @@ def receipts(items):
             "Willy's",
             [items[1], items[5]],
             date(2021, 12, 13),
-            2000 + 350
+            2000 + 350,
+            images[0]
         )
     ]
 
@@ -92,11 +94,19 @@ def db_users(db, users):
 
 class TestImages():
 
-    def test_get_user_image(self, images, db_images, client):
-        response = client.get("/images")
-        assert response.status == constants["ok"]
+    def test_get_user_image(self, images, db_images, client, users, db_users):
+        for user in users:
+            response = client.get(f"/user/{user.bankId}/receipts")
+            assert response.status == constants["ok"]
 
-        response_images = loads(response.data)
+            response_data = loads(response.data)
+            response_receipts = response_data["receipts"]
 
-        for (image_expected, image_actual) in zip(response_images, images):
-            assert image_expected["name"] == image_actual["name"]
+            for (expected_receipt, actual_receipt) in zip(response_receipts, user.receipts):
+                expected_image = expected_receipt.image if expected_receipt.image is not None else "null"
+                response_image = response_receipt["image"]
+
+                if expected_image == "null":
+                    assert response_image == "null"
+                else:
+                    assert expected_image.name == response_image["name"]
