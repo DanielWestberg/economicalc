@@ -18,14 +18,16 @@ class Receipt:
         return Receipt(doc["_id"], doc["store"], doc["items"].from_mongo_doc, doc["date_of_purchase"], doc["total_sum"], doc["image"])
 
     def to_dict(self):
-        return {
+        res = {
             "id": self.id,
             "store": self.store,
             "items": [item.to_dict() for item in self.items],
             "date": self.date,
             "total_sum": self.total_sum,
-            "image": self.image,
         }
+
+        if self.image is not None:
+            res["image"] = self.image.to_dict()
 
     @staticmethod
     def doc2dict(doc):
