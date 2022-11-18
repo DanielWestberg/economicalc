@@ -42,6 +42,12 @@ def create_app(config):
             data
         )
 
+    @app.route("/users/<userId>/receipts")
+    def receipts(userId):
+        return jsonify(
+            status=True
+        )
+
     return app
 
 
