@@ -46,8 +46,8 @@ def create_app(config):
     @app.route("/users/<bankId>/receipts")
     def receipts(bankId):
         user = db.users.find_one_or_404({"bankId": bankId})
-        user.pop("_id", None)
-        return jsonify(user)
+        receipts = user["receipts"]
+        return jsonify(receipts)
 
     return app
 
