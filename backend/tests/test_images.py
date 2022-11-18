@@ -11,10 +11,10 @@ from economicalc.objects import *
 
 @pytest.fixture()
 def images():
-    return map(Image.to_dict, [
+    return [
         Image("test.jpg"),
         Image("rofl.jpg"),
-    ])
+    ]
 
 
 @pytest.fixture()
