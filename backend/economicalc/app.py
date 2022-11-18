@@ -2,7 +2,7 @@ import os
 from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
 
-from .objects.image import Image
+from .objects import Image, User
 from .config import FlaskConfig
 
 
@@ -42,11 +42,10 @@ def create_app(config):
             data
         )
 
-    @app.route("/users/<userId>/receipts")
-    def receipts(userId):
-        return jsonify(
-            status=True
-        )
+    @app.route("/users/<bankId>/receipts")
+    def receipts(bankId):
+        user = db.users.find_one_or_404({"bankId": bankId})
+        return jsonify(User.doc2dict(user))
 
     return app
 
