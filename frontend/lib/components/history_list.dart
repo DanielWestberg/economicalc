@@ -60,8 +60,7 @@ class HistoryListState extends State<HistoryList> {
                                     fontWeight: FontWeight.w600, fontSize: 18),
                               ),
                               subtitle: Text(
-                                "${NumberFormat('###,###,###.0#', 'sv-se').format(transactions[index].totalSum)} kr",
-                                // "${transactions[index].totalSum.toStringAsFixed(2)} kr",
+                                "${transactions[index].totalSumStr} kr",
                                 style: TextStyle(
                                     fontWeight: FontWeight.w600, fontSize: 16),
                               ),
