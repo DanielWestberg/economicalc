@@ -90,9 +90,9 @@ def db(app, images, users):
         db.images.delete_one(image.to_dict())
 
 
-class TestImages():
+class TestReceipts():
 
-    def test_get_user_image(self, images, client, users):
+    def test_get_user_receipts(self, images, client, users):
         for user in users:
             response = client.get(f"/users/{user.bankId}/receipts")
             assert response.status == constants["ok"]
