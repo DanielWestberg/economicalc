@@ -1,10 +1,11 @@
 from datetime import date
+from typing import Optional
 
 from .image import Image
 
 
 class Receipt:
-    def __init__(self, id: int, store: str, items: list, date_of_purchase: date, total_sum: int, image: Image) -> None:
+    def __init__(self, id: int, store: str, items: list, date_of_purchase: date, total_sum: int, image: Optional[Image] = None) -> None:
         self.id = id
         self.store = store
         self.items = items
