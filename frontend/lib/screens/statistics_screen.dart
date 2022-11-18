@@ -1,5 +1,6 @@
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/transaction_event.dart';
+import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
@@ -18,10 +19,15 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   DateTime endDate = DateTime(2022, 12, 31);
   String dropdownValue = dropdownList.first;
 
-  final TooltipBehavior _tooltip = TooltipBehavior(enable: true);
-
   final columns = ["Items", "Price", "Qty", "Sum"];
-  final rows = Utils.getMockedReceiptItems();
+  late Future<List<ReceiptItem>> dataFuture;
+  List<ReceiptItem> rows = [];
+
+  @override
+  void initState() {
+    super.initState();
+    dataFuture = fetchMockedReceiptItems();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,12 +146,23 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget buildDataTable() {
-    return DataTable(
-        columnSpacing: 30,
-        sortAscending: isAscending,
-        sortColumnIndex: sortColumnIndex,
-        columns: getColumns(columns),
-        rows: getRows(rows));
+    return FutureBuilder(
+        future: dataFuture,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Text("${snapshot.error}");
+          } else if (snapshot.hasData) {
+            rows = snapshot.data!;
+            return DataTable(
+                columnSpacing: 30,
+                sortAscending: isAscending,
+                sortColumnIndex: sortColumnIndex,
+                columns: getColumns(columns),
+                rows: getRows(rows));
+          } else {
+            return Text('Waiting....');
+          }
+        });
   }
 
   List<DataColumn> getColumns(List<String> columns) => columns
@@ -177,8 +194,8 @@ class StatisticsScreenState extends State<StatisticsScreen> {
       rows.sort(
           (row1, row2) => compareNumber(ascending, row1.price, row2.price));
     } else if (columnIndex == 2) {
-      rows.sort((row1, row2) =>
-          compareNumber(ascending, row1.quantity, row2.quantity));
+      rows.sort((row1, row2) => compareNumber(
+          ascending, row1.quantity.toDouble(), row2.quantity.toDouble()));
     } else if (columnIndex == 3) {
       rows.sort((row1, row2) => compareNumber(ascending, row1.sum, row2.sum));
     }
@@ -192,7 +209,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   int compareString(bool ascending, String value1, String value2) =>
       ascending ? value1.compareTo(value2) : value2.compareTo(value1);
 
-  int compareNumber(bool ascending, num value1, num value2) =>
+  int compareNumber(bool ascending, double value1, double value2) =>
       ascending ? value1.compareTo(value2) : value2.compareTo(value1);
 
   double getMaxSum(List<ReceiptItem> items) {
@@ -218,7 +235,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                 interval: 100,
                 visibleMinimum: 0,
                 decimalPlaces: 2),
-            tooltipBehavior: _tooltip,
+            tooltipBehavior: TooltipBehavior(enable: true),
             series: <ChartSeries<ReceiptItem, String>>[
               BarSeries<ReceiptItem, String>(
                   dataSource: rows,
