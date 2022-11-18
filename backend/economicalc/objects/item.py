@@ -12,7 +12,7 @@ class Item:
         return {
             "name": self.name,
             "price": self.price,
-            "quantity", self.quantity,
+            "quantity": self.quantity,
         }
 
     @staticmethod
