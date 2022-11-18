@@ -36,7 +36,8 @@ def create_app(config):
         images = db.images.find()
         data = []
         for image in images:
-            data.append(Image.doc2dict(image))
+            image.pop("_id", None)
+            data.append(image)
 
         return jsonify(
             data
@@ -45,7 +46,8 @@ def create_app(config):
     @app.route("/users/<bankId>/receipts")
     def receipts(bankId):
         user = db.users.find_one_or_404({"bankId": bankId})
-        return jsonify(User.doc2dict(user))
+        user.pop("_id", None)
+        return jsonify(user)
 
     return app
 
