@@ -29,6 +29,8 @@ class Receipt:
         if self.image is not None:
             res["image"] = self.image.to_dict()
 
+        return res
+
     @staticmethod
     def doc2dict(doc):
         return Receipt.from_mongo_doc(doc).to_dict()
