@@ -21,7 +21,7 @@ class Receipt:
         return {
             "id": self.id,
             "store": self.store,
-            "items": self.items.to_dict(),
+            "items": [item.to_dict() for item in self.items],
             "date": self.date,
             "total_sum": self.total_sum,
             "image": self.image,
