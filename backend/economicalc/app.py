@@ -79,6 +79,17 @@ def create_app(config):
 
         return response.text
 
+    @app.route('/tink_transaction_history/<access_token>')
+    def tink_account_info(access_token):
+
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+        }
+
+        response = requests.get('https://api.tink.com/data/v2/accounts', headers=headers)
+
+        return response.text
+
 
     
     # XXX: Debug only
