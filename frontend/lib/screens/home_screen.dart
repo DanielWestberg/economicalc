@@ -1,5 +1,6 @@
 import 'package:economicalc_client/screens/statistics_screen.dart';
 import 'package:economicalc_client/components/history_list.dart';
+import 'package:economicalc_client/screens/tink_login.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -50,6 +51,13 @@ class _HomeScreen extends State<HomeScreen> {
             onPressed: (() {
               Navigator.push(_context,
                   MaterialPageRoute(builder: (_context) => StatisticsScreen()));
+            }),
+          ),
+          IconButton(
+            icon: Icon(Icons.abc),
+            onPressed: (() {
+              Navigator.push(_context,
+                  MaterialPageRoute(builder: (_context) => TinkLogin()));
             }),
           ),
           IconButton(
