@@ -26,7 +26,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   @override
   void initState() {
     super.initState();
-    dataFuture = fetchMockedReceiptItems();
+    dataFuture = fetchMockedReceiptItemsBetweenDates(startDate, endDate);
   }
 
   @override
@@ -88,8 +88,11 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                               firstDate: DateTime(1900),
                               lastDate: DateTime(2100));
                           if (newStartDate == null) return;
-                          setState(() => startDate =
-                              newStartDate); // TODO: trigger filtering of items
+                          setState(() {
+                            startDate = newStartDate;
+                            dataFuture = fetchMockedReceiptItemsBetweenDates(
+                                startDate, endDate);
+                          });
                         },
                       )
                     ]),
@@ -110,8 +113,11 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                               firstDate: DateTime(1900),
                               lastDate: DateTime(2100));
                           if (newEndDate == null) return;
-                          setState(() => endDate =
-                              newEndDate); // TODO: trigger filtering of items
+                          setState(() {
+                            endDate = newEndDate;
+                            dataFuture = fetchMockedReceiptItemsBetweenDates(
+                                startDate, endDate);
+                          });
                         },
                       )
                     ])
@@ -131,7 +137,6 @@ class StatisticsScreenState extends State<StatisticsScreen> {
         color: Colors.black45,
       ),
       onChanged: (String? value) {
-        // This is called when the user selects an item.
         setState(() {
           dropdownValue = value!;
         });
