@@ -2,6 +2,7 @@ import pytest
 
 from datetime import datetime
 from dateutil.parser import *
+from typing import List
 
 from flask.json import loads
 
@@ -12,7 +13,7 @@ from economicalc.app import create_db
 
 
 @pytest.fixture()
-def images():
+def images() -> List[Image]:
     return [
         Image("test.jpg"),
         Image("rofl.jpg"),
@@ -20,7 +21,7 @@ def images():
 
 
 @pytest.fixture()
-def items():
+def items() -> List[Item]:
     return [
         Item("Äpple", 39, 0, 39, 0, 1),
         Item("Banan", 49, 0, 98, 0, 2),
@@ -32,7 +33,7 @@ def items():
 
 
 @pytest.fixture()
-def transactions(items, images):
+def transactions(items, images) -> List[Transaction]:
     return [
         Transaction(
             0,
@@ -62,7 +63,7 @@ def transactions(items, images):
 
 
 @pytest.fixture()
-def users(transactions):
+def users(transactions) -> List[User]:
     return [
         User(
             "test1",

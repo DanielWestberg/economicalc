@@ -1,11 +1,12 @@
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Dict, Any, List
 
 from .image import Image
+from .item import Item
 
 
 class Transaction:
-    def __init__(self, id: int, recipient: str, items: list, date_of_purchase: datetime, total_sum_kr: int, total_sum_ore: int, image: Optional[Image] = None) -> None:
+    def __init__(self, id: int, recipient: str, items: List[Item], date_of_purchase: datetime, total_sum_kr: int, total_sum_ore: int, image: Optional[Image] = None) -> None:
         self.id = id
         self.recipient = recipient
         self.items = items
@@ -16,7 +17,7 @@ class Transaction:
         date = date_of_purchase
         self.date = datetime(date.year, date.month, date.day, tzinfo=timezone.utc)
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         res = {
             "id": self.id,
             "recipient": self.recipient,

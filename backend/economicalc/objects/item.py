@@ -1,3 +1,5 @@
+from typing import Dict, Any
+
 class Item:
     def __init__(self, name: str, price_kr: int, price_ore: int, sum_kr: int, sum_ore: int, quantity: int) -> None:
         self.name = name
@@ -7,7 +9,7 @@ class Item:
         self.sum_ore = sum_ore
         self.quantity = quantity
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "name": self.name,
             "price_kr": self.price_kr,
