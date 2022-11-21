@@ -9,3 +9,4 @@ frontend/.flutter-plugins
 frontend/.flutter-plugins-dependencies
 
 # Backend
+**/__pycache__
