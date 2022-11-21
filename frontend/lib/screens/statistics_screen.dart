@@ -181,9 +181,9 @@ class StatisticsScreenState extends State<StatisticsScreen> {
       items.map((ReceiptItem item) {
         final cells = [
           item.itemName,
-          item.price,
+          item.priceStr,
           item.quantity,
-          double.parse((item.sum).toStringAsFixed(2))
+          item.sumStr
         ];
         return DataRow(cells: getCells(cells));
       }).toList();
@@ -196,13 +196,14 @@ class StatisticsScreenState extends State<StatisticsScreen> {
       rows.sort((row1, row2) =>
           compareString(ascending, row1.itemName, row2.itemName));
     } else if (columnIndex == 1) {
-      rows.sort(
-          (row1, row2) => compareNumber(ascending, row1.price, row2.price));
+      rows.sort((row1, row2) =>
+          compareString(ascending, row1.priceStr, row2.priceStr));
     } else if (columnIndex == 2) {
-      rows.sort((row1, row2) => compareNumber(
-          ascending, row1.quantity.toDouble(), row2.quantity.toDouble()));
+      rows.sort((row1, row2) =>
+          compareNumber(ascending, row1.quantity, row2.quantity));
     } else if (columnIndex == 3) {
-      rows.sort((row1, row2) => compareNumber(ascending, row1.sum, row2.sum));
+      rows.sort(
+          (row1, row2) => compareString(ascending, row1.sumStr, row2.sumStr));
     }
 
     setState(() {
@@ -211,25 +212,19 @@ class StatisticsScreenState extends State<StatisticsScreen> {
     });
   }
 
-  int compareString(bool ascending, String value1, String value2) =>
-      ascending ? value1.compareTo(value2) : value2.compareTo(value1);
-
-  int compareNumber(bool ascending, double value1, double value2) =>
-      ascending ? value1.compareTo(value2) : value2.compareTo(value1);
-
   double getMaxSum(List<ReceiptItem> items) {
     var max = items.first;
     items.forEach((e) {
-      if (e.sum > max.sum) {
+      if (e.sumKr > max.sumKr) {
         max = e;
       }
     });
-    return max.sum;
+    return (max.sumKr + max.sumOre.toDouble() / 100);
   }
 
   @override
   Widget itemsChart() {
-    rows.sort((a, b) => compareNumber(true, a.sum, b.sum));
+    rows.sort((a, b) => compareNumber(true, a.sumKr, b.sumKr));
     return Container(
         padding: EdgeInsets.all(5),
         child: SfCartesianChart(
@@ -245,7 +240,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
               BarSeries<ReceiptItem, String>(
                   dataSource: rows,
                   xValueMapper: (ReceiptItem rows, _) => rows.itemName,
-                  yValueMapper: (ReceiptItem rows, _) => rows.sum,
+                  yValueMapper: (ReceiptItem rows, _) => rows.sumKr,
                   name: '',
                   dataLabelSettings: DataLabelSettings(isVisible: true),
                   color: Color.fromARGB(255, 68, 104, 107))
