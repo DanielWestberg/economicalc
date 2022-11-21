@@ -2,6 +2,7 @@
 .vscode/
 **.swp
 **/__pycache__
+**/.idea
 
 # Frontend
 frontend/build/
