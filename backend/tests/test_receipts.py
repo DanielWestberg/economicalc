@@ -93,6 +93,19 @@ def db(app, images, users):
 
 class TestReceipts():
 
+    def compare_receipts(self, expected, actual):
+        for key in ["id", "store", "total_sum"]:
+            assert expected[key] == actual[key]
+
+        assert expected["date"] == parse(actual["date"])
+
+        if "image" not in expected:
+            assert "image" not in actual
+        else:
+            expected_image = expected["image"]
+            actual_image = actual["image"]
+            assert expected_image["name"] == actual_image["name"]
+
     def test_get_user_receipts(self, images, client, users):
         for user in users:
             response = client.get(f"/users/{user.bankId}/receipts")
@@ -102,15 +115,4 @@ class TestReceipts():
 
             for (expected_receipt, actual_receipt) in zip(user.receipts, response_receipts):
                 expected_receipt = expected_receipt.to_dict()
-
-                for key in ["id", "store", "total_sum"]:
-                    assert expected_receipt[key] == actual_receipt[key]
-
-                assert expected_receipt["date"] == parse(actual_receipt["date"])
-
-                if "image" not in expected_receipt:
-                    assert "image" not in actual_receipt
-                else:
-                    expected_image = expected_receipt["image"]
-                    actual_image = actual_receipt["image"]
-                    assert expected_image["name"] == actual_image["name"]
+                self.compare_receipts(expected_receipt, actual_receipt)
