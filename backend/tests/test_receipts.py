@@ -94,7 +94,8 @@ def db(app, images, users):
 class TestReceipts():
 
     def compare_items(self, expected, actual):
-        pass
+        for key in ["name", "price", "quantity"]:
+            assert expected[key] == actual[key]
 
     def compare_receipts(self, expected, actual):
         for key in ["id", "store", "total_sum"]:
