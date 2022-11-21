@@ -4,15 +4,15 @@ from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
 import requests
 
-from .objects.image import Image
-from .config import RunConfig
+from .objects import Image, User
+from .config import FlaskConfig
 
 
 def create_app(config):
     app = Flask(__name__)
     app.config["MONGO_URI"] = config.MONGO_URI
 
-    db = PyMongo(app).db
+    db = create_db(app)
 
     @app.route('/')
     def index():
@@ -93,7 +93,7 @@ def create_app(config):
 
     
     # XXX: Debug only
-    @app.route('/user')
+    @app.route('/users')
     def user():
         users = db.user.find()
         data = []
@@ -104,23 +104,33 @@ def create_app(config):
 
         return jsonify(data=data)
 
-    @app.route('/image')
+    @app.route('/images')
     def image():
-        images = db.image.find()
+        images = db.images.find()
         data = []
         for image in images:
-            data.append(Image.doc2Dict(image))
+            image.pop("_id", None)
+            data.append(image)
 
         return jsonify(
-            status=True,
-            data=data
+            data
         )
 
+    @app.route("/users/<bankId>/receipts")
+    def receipts(bankId):
+        user = db.users.find_one_or_404({"bankId": bankId})
+        receipts = user["receipts"]
+        return jsonify(receipts)
+
     return app
+
+
+def create_db(app):
+    return PyMongo(app).db
 
 
 if __name__ == "__main__":
     ENVIRONMENT_DEBUG = os.environ.get("APP_DEBUG", True)
     ENVIRONMENT_PORT = os.environ.get("APP_PORT", 5000)
-    app = create_app(RunConfig())
+    app = create_app(FlaskConfig())
     app.run(host='0.0.0.0', port=ENVIRONMENT_PORT, debug=ENVIRONMENT_DEBUG)

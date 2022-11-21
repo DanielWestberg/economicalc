@@ -1,5 +1,12 @@
 class Item:
-    def __init__(self, item_name : str, price : float) -> None:
-        self.item_name = item_name
+    def __init__(self, name: str, price: int, quantity: int) -> None:
+        self.name = name
         self.price = price
-        
+        self.quantity = quantity
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "price": self.price,
+            "quantity": self.quantity,
+        }

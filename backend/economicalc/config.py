@@ -1,7 +1,7 @@
 import os
 
 
-class RunConfig:
+class FlaskConfig:
 
     def __init__(self):
         self.MONGO_USERNAME = os.environ['MONGODB_USERNAME']
@@ -12,12 +12,3 @@ class RunConfig:
 
     def getMongoURI(self):
         return f"mongodb://{self.MONGO_USERNAME}:{self.MONGO_PASSWORD}@{self.MONGO_HOSTNAME}:27017/{self.MONGO_DATABASE}"
-
-
-class TestConfig(RunConfig):
-    def __init__(self):
-        super().__init__()
-        self.MONGO_USERNAME = "test"
-        self.MONGO_PASSWORD = "weak"
-        self.MONGO_DATABASE = "testdb"
-        self.MONGO_URI = RunConfig.getMongoURI()
