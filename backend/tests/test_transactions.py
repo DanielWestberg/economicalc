@@ -22,12 +22,12 @@ def images():
 @pytest.fixture()
 def items():
     return [
-        Item("Äpple", 1500, 7),
-        Item("Banan", 2000, 7),
-        Item("Fil", 1700, 2),
-        Item("Kikärter", 1300, 1),
-        Item("Vetemjöl", 2600, 1),
-        Item("Jäst", 350, 1),
+        Item("Äpple", 39, 0, 39, 0, 1),
+        Item("Banan", 49, 0, 98, 0, 2),
+        Item("Fil", 16, 90, 33, 80, 2),
+        Item("Kikärter", 13, 0, 26, 0, 2),
+        Item("Vetemjöl", 26, 0, 78, 0, 3),
+        Item("Jäst", 3, 50, 3, 50, 1),
     ]
 
 
@@ -39,20 +39,23 @@ def transactions(items, images):
             "Ica",
             [items[0], items[1], items[3]],
             datetime(2022, 6, 30),
-            1500 + 2000 + 1300,
+            163,
+            0,
             images[1]
         ), Transaction(
             1,
             "Coop",
             [items[2], items[3], items[4], items[5]],
             datetime(2022, 7, 1),
-            1700 + 1300 + 2600 + 350
+            141,
+            30
         ), Transaction(
             2,
             "Willy's",
             [items[1], items[5]],
             datetime(2021, 12, 13),
-            2000 + 350,
+            101,
+            50,
             images[0]
         )
     ]
@@ -94,11 +97,11 @@ def db(app, images, users):
 class TestTransactions():
 
     def compare_items(self, expected, actual):
-        for key in ["name", "price", "quantity"]:
+        for key in ["name", "price_kr", "price_ore", "sum_kr", "sum_ore", "quantity"]:
             assert expected[key] == actual[key]
 
     def compare_transactions(self, expected, actual):
-        for key in ["id", "recipient", "total_sum"]:
+        for key in ["id", "recipient", "total_sum_kr", "total_sum_ore"]:
             assert expected[key] == actual[key]
 
         assert expected["date"] == parse(actual["date"])

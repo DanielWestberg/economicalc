@@ -5,11 +5,12 @@ from .image import Image
 
 
 class Transaction:
-    def __init__(self, id: int, recipient: str, items: list, date_of_purchase: datetime, total_sum: int, image: Optional[Image] = None) -> None:
+    def __init__(self, id: int, recipient: str, items: list, date_of_purchase: datetime, total_sum_kr: int, total_sum_ore: int, image: Optional[Image] = None) -> None:
         self.id = id
         self.recipient = recipient
         self.items = items
-        self.total_sum = total_sum
+        self.total_sum_kr = total_sum_kr
+        self.total_sum_ore = total_sum_ore
         self.image = image
 
         date = date_of_purchase
@@ -21,7 +22,8 @@ class Transaction:
             "recipient": self.recipient,
             "items": [item.to_dict() for item in self.items],
             "date": self.date,
-            "total_sum": self.total_sum,
+            "total_sum_kr": self.total_sum_kr,
+            "total_sum_ore": self.total_sum_ore
         }
 
         if self.image is not None:
