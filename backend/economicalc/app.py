@@ -21,12 +21,12 @@ def create_app(config):
             message='Welcome to the Dockerized Flask MongoDB app!'
         )
 
-    @app.route('/receipts/<id>')
-    def fetch_receipts(id):
+    @app.route('/transactions/<id>')
+    def fetch_transactions(id):
         user = db.users.find_one_or_404({"bankId": id})
         return jsonify(
             status=True,
-            data=user['receipts']
+            data=user['transactions']
         )
     
     # XXX: Debug only
@@ -53,11 +53,11 @@ def create_app(config):
             data
         )
 
-    @app.route("/users/<bankId>/receipts")
-    def receipts(bankId):
+    @app.route("/users/<bankId>/transactions")
+    def transactions(bankId):
         user = db.users.find_one_or_404({"bankId": bankId})
-        receipts = user["receipts"]
-        return jsonify(receipts)
+        transactions = user["transactions"]
+        return jsonify(transactions)
 
     return app
 

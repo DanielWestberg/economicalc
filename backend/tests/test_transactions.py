@@ -32,22 +32,22 @@ def items():
 
 
 @pytest.fixture()
-def receipts(items, images):
+def transactions(items, images):
     return [
-        Receipt(
+        Transaction(
             0,
             "Ica",
             [items[0], items[1], items[3]],
             datetime(2022, 6, 30),
             1500 + 2000 + 1300,
             images[1]
-        ), Receipt(
+        ), Transaction(
             1,
             "Coop",
             [items[2], items[3], items[4], items[5]],
             datetime(2022, 7, 1),
             1700 + 1300 + 2600 + 350
-        ), Receipt(
+        ), Transaction(
             2,
             "Willy's",
             [items[1], items[5]],
@@ -59,15 +59,15 @@ def receipts(items, images):
 
 
 @pytest.fixture()
-def users(receipts):
+def users(transactions):
     return [
         User(
             "test1",
-            [receipts[0], receipts[2]]
+            [transactions[0], transactions[2]]
         ),
         User(
             "test2",
-            [receipts[1]]
+            [transactions[1]]
         )
     ]
 
@@ -91,13 +91,13 @@ def db(app, images, users):
         db.images.delete_one(image.to_dict())
 
 
-class TestReceipts():
+class TestTransactions():
 
     def compare_items(self, expected, actual):
         for key in ["name", "price", "quantity"]:
             assert expected[key] == actual[key]
 
-    def compare_receipts(self, expected, actual):
+    def compare_transactions(self, expected, actual):
         for key in ["id", "store", "total_sum"]:
             assert expected[key] == actual[key]
 
@@ -113,13 +113,13 @@ class TestReceipts():
         for (expected_item, actual_item) in zip(expected["items"], actual["items"]):
             self.compare_items(expected_item, actual_item)
 
-    def test_get_user_receipts(self, images, client, users):
+    def test_get_user_transactions(self, images, client, users):
         for user in users:
-            response = client.get(f"/users/{user.bankId}/receipts")
+            response = client.get(f"/users/{user.bankId}/transactions")
             assert response.status == constants["ok"]
 
-            response_receipts = loads(response.data)
+            response_transactions = loads(response.data)
 
-            for (expected_receipt, actual_receipt) in zip(user.receipts, response_receipts):
-                expected_receipt = expected_receipt.to_dict()
-                self.compare_receipts(expected_receipt, actual_receipt)
+            for (expected_transaction, actual_transaction) in zip(user.transactions, response_transactions):
+                expected_transaction = expected_transaction.to_dict()
+                self.compare_transactions(expected_transaction, actual_transaction)

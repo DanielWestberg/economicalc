@@ -1,10 +1,10 @@
 class User:
-    def __init__(self, bankId, receipts: list) -> None:
+    def __init__(self, bankId, transactions: list) -> None:
         self.bankId = bankId
-        self.receipts = receipts
+        self.transactions = transactions
 
     def to_dict(self):
         return {
             "bankId": self.bankId,
-            "receipts": [receipt.to_dict() for receipt in self.receipts],
+            "transactions": [transaction.to_dict() for transaction in self.transactions],
         }

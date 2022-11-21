@@ -4,7 +4,7 @@ from typing import Optional
 from .image import Image
 
 
-class Receipt:
+class Transaction:
     def __init__(self, id: int, store: str, items: list, date_of_purchase: datetime, total_sum: int, image: Optional[Image] = None) -> None:
         self.id = id
         self.store = store
