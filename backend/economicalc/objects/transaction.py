@@ -6,8 +6,7 @@ from .item import Item
 
 
 class Transaction:
-    def __init__(self, id: int, recipient: str, items: List[Item], date_of_purchase: datetime, total_sum_kr: int, total_sum_ore: int, image: Optional[Image] = None) -> None:
-        self.id = id
+    def __init__(self, recipient: str, items: List[Item], date_of_purchase: datetime, total_sum_kr: int, total_sum_ore: int, image: Optional[Image] = None) -> None:
         self.recipient = recipient
         self.items = items
         self.total_sum_kr = total_sum_kr
@@ -19,7 +18,6 @@ class Transaction:
 
     def to_dict(self) -> Dict[str, Any]:
         res = {
-            "id": self.id,
             "recipient": self.recipient,
             "items": [item.to_dict() for item in self.items],
             "date": self.date,

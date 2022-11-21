@@ -36,7 +36,6 @@ def items() -> List[Item]:
 def transactions(items, images) -> List[Transaction]:
     return [
         Transaction(
-            0,
             "Ica",
             [items[0], items[1], items[3]],
             datetime(2022, 6, 30),
@@ -44,14 +43,12 @@ def transactions(items, images) -> List[Transaction]:
             0,
             images[1]
         ), Transaction(
-            1,
             "Coop",
             [items[2], items[3], items[4], items[5]],
             datetime(2022, 7, 1),
             141,
             30
         ), Transaction(
-            2,
             "Willy's",
             [items[1], items[5]],
             datetime(2021, 12, 13),
@@ -102,7 +99,7 @@ class TestTransactions():
             assert expected[key] == actual[key]
 
     def compare_transactions(self, expected, actual):
-        for key in ["id", "recipient", "total_sum_kr", "total_sum_ore"]:
+        for key in ["recipient", "total_sum_kr", "total_sum_ore"]:
             assert expected[key] == actual[key]
 
         assert expected["date"] == parse(actual["date"])
