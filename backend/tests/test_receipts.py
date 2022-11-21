@@ -93,6 +93,9 @@ def db(app, images, users):
 
 class TestReceipts():
 
+    def compare_items(self, expected, actual):
+        pass
+
     def compare_receipts(self, expected, actual):
         for key in ["id", "store", "total_sum"]:
             assert expected[key] == actual[key]
@@ -105,6 +108,9 @@ class TestReceipts():
             expected_image = expected["image"]
             actual_image = actual["image"]
             assert expected_image["name"] == actual_image["name"]
+
+        for (expected_item, actual_item) in zip(expected["items"], actual["items"]):
+            self.compare_items(expected_item, actual_item)
 
     def test_get_user_receipts(self, images, client, users):
         for user in users:
