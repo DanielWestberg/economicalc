@@ -1,6 +1,7 @@
 import pytest
 
 from datetime import datetime
+from dateutil.parser import *
 
 from flask.json import loads
 
@@ -100,10 +101,16 @@ class TestReceipts():
             response_receipts = loads(response.data)
 
             for (expected_receipt, actual_receipt) in zip(user.receipts, response_receipts):
-                expected_image = expected_receipt.image
+                expected_receipt = expected_receipt.to_dict()
 
-                if expected_image is None:
+                for key in ["id", "store", "total_sum"]:
+                    assert expected_receipt[key] == actual_receipt[key]
+
+                assert expected_receipt["date"] == parse(actual_receipt["date"])
+
+                if "image" not in expected_receipt:
                     assert "image" not in actual_receipt
                 else:
+                    expected_image = expected_receipt["image"]
                     actual_image = actual_receipt["image"]
-                    assert expected_image.name == actual_image["name"]
+                    assert expected_image["name"] == actual_image["name"]
