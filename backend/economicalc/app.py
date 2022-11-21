@@ -18,7 +18,7 @@ def create_app(config):
     def transactions(bankId):
         user = db.users.find_one_or_404({"bankId": bankId})
         transactions = user["transactions"]
-        return jsonify(transactions)
+        return jsonify(data=transactions)
 
     return app
 

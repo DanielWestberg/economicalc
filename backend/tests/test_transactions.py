@@ -119,7 +119,7 @@ class TestTransactions():
             response = client.get(f"/users/{user.bankId}/transactions")
             assert response.status == constants["ok"]
 
-            response_transactions = loads(response.data)
+            response_transactions = loads(response.data)["data"]
 
             for (expected_transaction, actual_transaction) in zip(user.transactions, response_transactions):
                 expected_transaction = expected_transaction.to_dict()
