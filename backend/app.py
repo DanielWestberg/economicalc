@@ -1,64 +1,126 @@
 import os
 from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
+from bson.objectid import ObjectId
+import requests
 
-from objects import Recipt
-
-application = Flask(__name__)
-
-application.config["MONGO_URI"] = 'mongodb://' + os.environ['MONGODB_USERNAME'] + ':' + os.environ['MONGODB_PASSWORD'] + '@' + os.environ['MONGODB_HOSTNAME'] + ':27017/' + os.environ['MONGODB_DATABASE']
-
-mongo = PyMongo(application)
-db = mongo.db
-
-@application.route('/')
-def index():
-    return jsonify(
-        status=True,
-        message='Welcome to the Dockerized Flask MongoDB app!'
-    )
+from .objects.image import Image
+from .config import RunConfig
 
 
-@application.route('/recipt', methods=["POST"])
-def post_recipt():
-    pass
+def create_app(config):
+    app = Flask(__name__)
+    app.config["MONGO_URI"] = config.MONGO_URI
 
-@application.route('/recipt', methods=["GET"])
-def fetch_recipts():
-    pass
+    db = PyMongo(app).db
 
-@application.route('/todo')
-def todo():
-    _todos = db.todo.find()
+    @app.route('/')
+    def index():
+        return jsonify(
+            status=True,
+            message='Welcome to the Dockerized Flask MongoDB app!'
+        )
 
-    item = {}
-    data = []
-    for todo in _todos:
-        item = {
-            'id': str(todo['_id']),
-            'todo': todo['todo']
+    @app.route('/receipts/<id>')
+    def fetch_receipts(id):
+        user = db.users.find_one_or_404({"bankId": id})
+        return jsonify(
+            status=True,
+            data=user['receipts']
+        )
+
+    @app.route('/initiate_bank_session/')
+    def initiate_bank_session():
+        appUri = ""
+        callBackUri = ""
+        fields = {}
+        originatingUserIp = ""
+        providerName = ""
+
+        authenticationOptionDefinition = "",
+        authenticationOptionsGroup = "",
+        selectedAuthenticationOptions = [
+            authenticationOptionDefinition,
+            authenticationOptionsGroup,
+            fields 
+        ]
+        triggerRefresh = True
+        url = "https://api.tink.com/link/v1/session"
+        #request = requests.post()
+        return ""
+
+    @app.route('/tink_access_token/<code>')
+    def tink_access_token(code):
+
+        ENVIRONMENT_TINK_CLIENT_ID = os.environ.get('TINK_CLIENT_ID')
+        ENVIRONMENT_TINK_CLIENT_SECRET = os.environ.get('TINK_CLIENT_SECRET')
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded',
         }
-        data.append(item)
+        print(ENVIRONMENT_TINK_CLIENT_ID)
+        print(ENVIRONMENT_TINK_CLIENT_SECRET)
+        data = f'code={code}&client_id={ENVIRONMENT_TINK_CLIENT_ID}&client_secret={ENVIRONMENT_TINK_CLIENT_SECRET}&grant_type=authorization_code'
+        print(data)
+        response = requests.post('https://api.tink.com/api/v1/oauth/token', headers=headers, data=data)
+        print(response.text, flush=True)
+        return(
+            response.text
+        )
+    
 
-    return jsonify(
-        status=True,
-        data=data
-    )
+    @app.route('/tink_transaction_history/<access_token>')
+    def tink_transaction_history(access_token):
 
-@application.route('/todo', methods=['POST'])
-def createTodo():
-    data = request.get_json(force=True)
-    item = {
-        'todo': data['todo']
-    }
-    db.todo.insert_one(item)
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+        }
 
-    return jsonify(
-        status=True,
-        message='To-do saved successfully!'
-    ), 201
+        response = requests.get('https://api.tink.com/data/v2/transactions', headers=headers)
 
+        return response.text
+
+    @app.route('/tink_transaction_history/<access_token>')
+    def tink_account_info(access_token):
+
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+        }
+
+        response = requests.get('https://api.tink.com/data/v2/accounts', headers=headers)
+
+        return response.text
+
+
+    
+    # XXX: Debug only
+    @app.route('/user')
+    def user():
+        users = db.user.find()
+        data = []
+        for user in users:
+            data.append({
+                'id': str(user['_id']),
+            })
+
+        return jsonify(data=data)
+
+    @app.route('/image')
+    def image():
+        images = db.image.find()
+        data = []
+        for image in images:
+            data.append(Image.doc2Dict(image))
+
+        return jsonify(
+            status=True,
+            data=data
+        )
+
+    return app
+
+#hej
 if __name__ == "__main__":
     ENVIRONMENT_DEBUG = os.environ.get("APP_DEBUG", True)
     ENVIRONMENT_PORT = os.environ.get("APP_PORT", 5000)
-    application.run(host='0.0.0.0', port=ENVIRONMENT_PORT, debug=ENVIRONMENT_DEBUG)
+    app = create_app(RunConfig())
+    app.run(host='0.0.0.0', port=ENVIRONMENT_PORT, debug=ENVIRONMENT_DEBUG)
