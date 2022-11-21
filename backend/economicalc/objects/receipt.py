@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from .image import Image
@@ -9,9 +9,11 @@ class Receipt:
         self.id = id
         self.store = store
         self.items = items
-        self.date = date_of_purchase
         self.total_sum = total_sum
         self.image = image
+
+        date = date_of_purchase
+        self.date = datetime(date.year, date.month, date.day, tzinfo=timezone.utc)
 
     def to_dict(self):
         res = {
