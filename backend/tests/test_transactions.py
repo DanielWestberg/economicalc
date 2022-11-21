@@ -94,6 +94,15 @@ def db(app, images, users):
 
 class TestTransactions():
 
+    def compare_images_of(self, expected, actual):
+        if "image" not in expected:
+            assert "image" not in actual
+            return
+
+        expected_image = expected["image"]
+        actual_image = actual["image"]
+        assert expected_image["name"] == actual_image["name"]
+
     def compare_items(self, expected, actual):
         for key in ["name", "price_kr", "price_ore", "sum_kr", "sum_ore", "quantity"]:
             assert expected[key] == actual[key]
@@ -104,12 +113,7 @@ class TestTransactions():
 
         assert expected["date"] == parse(actual["date"])
 
-        if "image" not in expected:
-            assert "image" not in actual
-        else:
-            expected_image = expected["image"]
-            actual_image = actual["image"]
-            assert expected_image["name"] == actual_image["name"]
+        self.compare_images_of(expected, actual)
 
         for (expected_item, actual_item) in zip(expected["items"], actual["items"]):
             self.compare_items(expected_item, actual_item)
