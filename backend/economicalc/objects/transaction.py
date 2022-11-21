@@ -5,9 +5,9 @@ from .image import Image
 
 
 class Transaction:
-    def __init__(self, id: int, store: str, items: list, date_of_purchase: datetime, total_sum: int, image: Optional[Image] = None) -> None:
+    def __init__(self, id: int, recipient: str, items: list, date_of_purchase: datetime, total_sum: int, image: Optional[Image] = None) -> None:
         self.id = id
-        self.store = store
+        self.recipient = recipient
         self.items = items
         self.total_sum = total_sum
         self.image = image
@@ -18,7 +18,7 @@ class Transaction:
     def to_dict(self):
         res = {
             "id": self.id,
-            "store": self.store,
+            "recipient": self.recipient,
             "items": [item.to_dict() for item in self.items],
             "date": self.date,
             "total_sum": self.total_sum,

@@ -98,7 +98,7 @@ class TestTransactions():
             assert expected[key] == actual[key]
 
     def compare_transactions(self, expected, actual):
-        for key in ["id", "store", "total_sum"]:
+        for key in ["id", "recipient", "total_sum"]:
             assert expected[key] == actual[key]
 
         assert expected["date"] == parse(actual["date"])
