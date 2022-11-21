@@ -14,45 +14,6 @@ def create_app(config):
 
     db = create_db(app)
 
-    @app.route('/')
-    def index():
-        return jsonify(
-            status=True,
-            message='Welcome to the Dockerized Flask MongoDB app!'
-        )
-
-    @app.route('/transactions/<id>')
-    def fetch_transactions(id):
-        user = db.users.find_one_or_404({"bankId": id})
-        return jsonify(
-            status=True,
-            data=user['transactions']
-        )
-    
-    # XXX: Debug only
-    @app.route('/users')
-    def user():
-        users = db.user.find()
-        data = []
-        for user in users:
-            data.append({
-                'id': str(user['_id']),
-            })
-
-        return jsonify(data=data)
-
-    @app.route('/images')
-    def image():
-        images = db.images.find()
-        data = []
-        for image in images:
-            image.pop("_id", None)
-            data.append(image)
-
-        return jsonify(
-            data
-        )
-
     @app.route("/users/<bankId>/transactions")
     def transactions(bankId):
         user = db.users.find_one_or_404({"bankId": bankId})
