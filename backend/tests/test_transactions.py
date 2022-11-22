@@ -2,7 +2,7 @@ import pytest
 
 from datetime import datetime
 from dateutil.parser import *
-from typing import List
+from typing import List, Tuple
 
 from flask.json import loads
 from bson.objectid import ObjectId
@@ -19,6 +19,7 @@ def images() -> List[Image]:
     return [
         Image("coop_receipt.JPG"),
         Image("ica_receipt.JPG"),
+        Image("yeah.jpg"),
     ]
 
 
@@ -75,8 +76,45 @@ def users(transactions) -> List[User]:
     ]
 
 
+@pytest.fixture()
+def users_to_post() -> List[User]:
+    return [
+        User("test3", []),
+    ]
+
+
+@pytest.fixture()
+def images_to_post() -> List[Image]:
+    return [
+        Image("ica_receipt.JPG"),
+        Image("yeah.jpg"),
+    ]
+
+
+@pytest.fixture()
+def transactions_to_post(users, users_to_post, images_to_post) -> List[Tuple[User, Transaction]]:
+    return [
+        (users[1], Transaction(
+            "Specsavers",
+            Item("Glasögon", 1337, 50, 1337, 50, 1),
+            datetime(2022, 2, 24),
+            1337,
+            50,
+            images_to_post[0]
+        )), (User("test3", []), Transaction(
+            "Yes",
+            Item("Dood", 1, 1, 1, 1, 1),
+            datetime(1970, 1, 1),
+            1,
+            1,
+            images_to_post[1]
+        )),
+    ]
+
+
+
 @pytest.fixture(autouse=True)
-def db(app, images, users):
+def db(app, images, users, transactions_to_post):
     db = create_db(app)
     fs = GridFS(db)
 
@@ -148,3 +186,8 @@ class TestTransactions():
             for (expected_transaction, actual_transaction) in zip(user.transactions, response_transactions):
                 expected_transaction = expected_transaction.to_dict()
                 self.compare_transactions(expected_transaction, actual_transaction)
+
+    def test_post_user_transaction(self, transactions_to_post, client):
+        for (user, transaction) in transactions_to_post:
+            response = client.post(f"/users/{user.bankId}/transactions")
+            assert response.status == constants["created"]
