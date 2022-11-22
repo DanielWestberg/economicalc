@@ -1,3 +1,4 @@
+import 'package:economicalc_client/screens/results_screen.dart';
 import 'package:economicalc_client/screens/statistics_screen.dart';
 import 'package:economicalc_client/components/history_list.dart';
 import 'package:economicalc_client/screens/tink_login.dart';
@@ -5,6 +6,8 @@ import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../models/transaction_event.dart';
 
 late BuildContext _context;
 
@@ -19,6 +22,18 @@ class _HomeScreen extends State<HomeScreen> {
   GlobalKey<ScaffoldState> _globalKey = GlobalKey<ScaffoldState>();
   late String appName = "EconomiCalc";
 
+  static void goToResults(XFile? image, transaction) {
+    //process stuff
+
+    Navigator.push(
+        _context,
+        MaterialPageRoute(
+            builder: (_context) => ResultsScreen(
+                  image: image,
+                  transaction: transaction,
+                )));
+  }
+
   Widget iconSection = Container(
     color: Color(0xFFB8D8D8),
     padding: EdgeInsets.only(top: 10),
@@ -31,13 +46,21 @@ class _HomeScreen extends State<HomeScreen> {
                 final XFile? image =
                     await ImagePicker().pickImage(source: ImageSource.camera);
                 //process()
+                if (image == null) return;
+                //process stuff here and return result as TransactionEvent
+                TransactionEvent transaction =
+                    await fetchOneMockedTransaction();
+                goToResults(image, transaction);
               })),
           IconButton(
             icon: Icon(Icons.filter),
             onPressed: (() async {
               final XFile? image =
                   await ImagePicker().pickImage(source: ImageSource.gallery);
-              //process()
+              if (image == null) return;
+              //process stuff here and return result as TransactionEvent
+              TransactionEvent transaction = await fetchOneMockedTransaction();
+              goToResults(image, transaction);
             }),
           ),
           IconButton(

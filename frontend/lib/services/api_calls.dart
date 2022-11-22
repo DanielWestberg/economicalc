@@ -16,6 +16,15 @@ Future<List<TransactionEvent>> fetchMockedTransactions() async {
       .cast<TransactionEvent>();
 }
 
+Future<TransactionEvent> fetchOneMockedTransaction() async {
+  final String response =
+      await rootBundle.loadString('assets/random_generated_transactions.json');
+
+  TransactionEvent transaction =
+      TransactionEvent.fromJson(json.decode(response)[0]);
+  return transaction;
+}
+
 Future<List<ReceiptItem>> fetchMockedReceiptItems() async {
   final String response =
       await rootBundle.loadString('assets/random_generated_transactions.json');
