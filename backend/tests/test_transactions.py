@@ -8,7 +8,7 @@ from flask.json import loads
 from bson.objectid import ObjectId
 from gridfs import GridFS
 
-from .conftest import constants
+import economicalc.constants as constants
 
 from economicalc.objects import *
 from economicalc.app import create_db
@@ -179,7 +179,7 @@ class TestTransactions():
     def test_get_user_transactions(self, images, client, users):
         for user in users:
             response = client.get(f"/users/{user.bankId}/transactions")
-            assert response.status == constants["ok"]
+            assert response.status == constants.ok
 
             response_transactions = loads(response.data)["data"]
 
@@ -190,4 +190,4 @@ class TestTransactions():
     def test_post_user_transaction(self, transactions_to_post, client):
         for (user, transaction) in transactions_to_post:
             response = client.post(f"/users/{user.bankId}/transactions")
-            assert response.status == constants["created"]
+            assert response.status == constants.created
