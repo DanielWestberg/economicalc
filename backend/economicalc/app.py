@@ -14,8 +14,8 @@ def create_app(config):
 
     db = create_db(app)
 
-    @app.route("/users/<bankId>/transactions")
-    def transactions(bankId):
+    @app.route("/users/<bankId>/transactions", methods=["GET"])
+    def get_transactions(bankId):
         user = db.users.find_one_or_404({"bankId": bankId})
         transactions = user["transactions"]
         return jsonify(data=transactions)
