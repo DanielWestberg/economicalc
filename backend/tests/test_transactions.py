@@ -96,14 +96,14 @@ def transactions_to_post(users, users_to_post, images_to_post) -> List[Tuple[Use
     return [
         (users[1], Transaction(
             "Specsavers",
-            Item("Glasögon", 1337, 50, 1337, 50, 1),
+            [Item("Glasögon", 1337, 50, 1337, 50, 1)],
             datetime(2022, 2, 24),
             1337,
             50,
             images_to_post[0]
         )), (User("test3", []), Transaction(
             "Yes",
-            Item("Dood", 1, 1, 1, 1, 1),
+            [Item("Dood", 1, 1, 1, 1, 1)],
             datetime(1970, 1, 1),
             1,
             1,
@@ -111,6 +111,20 @@ def transactions_to_post(users, users_to_post, images_to_post) -> List[Tuple[Use
         )),
     ]
 
+
+def clean_users(db, users):
+    for user in users:
+        db.users.delete_many(user.to_dict())
+        assert db.users.find_one({"bankId": user.bankId}) is None
+
+        for transaction in user.transactions:
+            image = transaction.image
+            if image is not None:
+                fs.delete(ObjectId(image.id))
+
+                assert not fs.exists({"_id": ObjectId(image.id)})
+                assert not fs.exists({"filename": image.name})
+    
 
 
 @pytest.fixture(autouse=True)
@@ -133,17 +147,8 @@ def db(app, images, users, transactions_to_post):
 
     yield db
 
-    for user in users:
-        db.users.delete_many(user.to_dict())
-        assert db.users.find_one({"bankId": user.bankId}) is None
-
-        for transaction in user.transactions:
-            image = transaction.image
-            if image is not None:
-                fs.delete(ObjectId(image.id))
-
-                assert not fs.exists({"_id": ObjectId(image.id)})
-                assert not fs.exists({"filename": image.name})
+    clean_users(db, users)
+    clean_users(db, users_to_post)
 
 
 class TestTransactions():
@@ -187,7 +192,28 @@ class TestTransactions():
                 expected_transaction = expected_transaction.to_dict()
                 self.compare_transactions(expected_transaction, actual_transaction)
 
-    def test_post_user_transaction(self, transactions_to_post, client):
+    def transactions_equal(self, t1, t2):
+        for key in ["recipient", "total_sum_kr", "total_sum_ore"]:
+            print(f"{t1[key]}, {t2[key]}")
+            if t1[key] != t2[key]:
+                return False
+
+        print(f"{t1['date']}, {t2['date']}")
+        if t1["date"] != parse(t2["date"]):
+            return False
+
+        for (item1, item2) in zip(t1["items"], t2["items"]):
+            self.items_equal(item1, item2)
+
+        return self.images_equal(t1, t2)
+
+    def test_post_user_transaction(self, db, transactions_to_post, client):
         for (user, transaction) in transactions_to_post:
-            response = client.post(f"/users/{user.bankId}/transactions")
-            assert response.status == constants.created
+            post_response = client.post(f"/users/{user.bankId}/transactions")
+            assert post_response.status == constants.created
+            user.transactions.append(transaction)
+
+            transaction_dict = transaction.to_dict()
+            get_response = client.get(f"/users/{user.bankId}/transactions")
+            response_transactions = loads(get_response.data)["data"]
+            assert any([self.transactions_equal(transaction_dict, response_transaction) for response_transaction in response_transactions])
