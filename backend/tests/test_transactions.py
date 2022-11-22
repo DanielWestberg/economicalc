@@ -5,6 +5,7 @@ from dateutil.parser import *
 from typing import List
 
 from flask.json import loads
+from bson.objectid import ObjectId
 from gridfs import GridFS
 
 from .conftest import constants
@@ -16,8 +17,8 @@ from economicalc.app import create_db
 @pytest.fixture()
 def images() -> List[Image]:
     return [
-        Image("test.jpg"),
-        Image("rofl.jpg"),
+        Image("coop_receipt.JPG"),
+        Image("ica_receipt.JPG"),
     ]
 
 
@@ -80,12 +81,31 @@ def db(app, images, users):
     fs = GridFS(db)
 
     for user in users:
+
+        for transaction in user.transactions:
+            image = transaction.image
+            if image is None:
+                continue
+
+            with open(f"./tests/res/{image.name}", "rb") as f:
+                id = fs.put(f, filename=image.name, content_type=image.content_type)
+                image.id = str(id)
+
         db.users.insert_one(user.to_dict())
 
     yield db
 
     for user in users:
-        db.users.delete_one(user.to_dict())
+        db.users.delete_many(user.to_dict())
+        assert db.users.find_one({"bankId": user.bankId}) is None
+
+        for transaction in user.transactions:
+            image = transaction.image
+            if image is not None:
+                fs.delete(ObjectId(image.id))
+
+                assert not fs.exists({"_id": ObjectId(image.id)})
+                assert not fs.exists({"filename": image.name})
 
 
 class TestTransactions():
@@ -97,7 +117,11 @@ class TestTransactions():
 
         expected_image = expected["image"]
         actual_image = actual["image"]
+        print(expected_image)
+        print(actual_image)
+
         assert expected_image["name"] == actual_image["name"]
+        assert expected_image["_id"] == actual_image["_id"]
 
     def compare_items(self, expected, actual):
         for key in ["name", "price_kr", "price_ore", "sum_kr", "sum_ore", "quantity"]:
