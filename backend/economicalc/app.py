@@ -1,11 +1,12 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
 import requests
 
 from .objects import Image, User
 from .config import FlaskConfig
+from .constants import *
 
 
 def create_app(config):
@@ -19,6 +20,10 @@ def create_app(config):
         user = db.users.find_one_or_404({"bankId": bankId})
         transactions = user["transactions"]
         return jsonify(data=transactions)
+
+    @app.route("/users/<bankId>/transactions", methods=["POST"])
+    def post_transactions(bankId):
+        return make_response("", created)
 
     return app
 
