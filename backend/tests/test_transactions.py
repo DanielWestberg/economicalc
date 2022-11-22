@@ -5,6 +5,7 @@ from dateutil.parser import *
 from typing import List
 
 from flask.json import loads
+from gridfs import GridFS
 
 from .conftest import constants
 
@@ -76,9 +77,7 @@ def users(transactions) -> List[User]:
 @pytest.fixture(autouse=True)
 def db(app, images, users):
     db = create_db(app)
-
-    for image in images:
-        db.images.insert_one(image.to_dict())
+    fs = GridFS(db)
 
     for user in users:
         db.users.insert_one(user.to_dict())
@@ -87,9 +86,6 @@ def db(app, images, users):
 
     for user in users:
         db.users.delete_one(user.to_dict())
-
-    for image in images:
-        db.images.delete_one(image.to_dict())
 
 
 class TestTransactions():
