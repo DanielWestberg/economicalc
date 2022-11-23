@@ -14,8 +14,8 @@ def create_app(config):
     app = Flask(__name__)
     app.config["MONGO_URI"] = config.MONGO_URI
 
-    #db = PyMongo(app).db
-    db = create_db(app)
+    db = PyMongo(app).db
+    #db = create_db(app)
 
     @app.route('/')
     def index():
@@ -132,5 +132,5 @@ def create_app(config):
 if __name__ == "__main__":
     ENVIRONMENT_DEBUG = os.environ.get("APP_DEBUG", True)
     ENVIRONMENT_PORT = os.environ.get("APP_PORT", 5000)
-    app = create_app(RunConfig())
+    app = create_app(FlaskConfig())
     app.run(host='0.0.0.0', port=ENVIRONMENT_PORT, debug=ENVIRONMENT_DEBUG)

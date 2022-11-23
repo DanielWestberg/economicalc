@@ -1,6 +1,5 @@
 import os
 
-
 class FlaskConfig:
 
     def __init__(self):

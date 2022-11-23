@@ -19,7 +19,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - appdata:/var/www
+      - ./backend:/var/www
     depends_on:
       - mongodb
     networks:
@@ -54,8 +54,6 @@ networks:
 
 volumes:
   mongodbdata:
-    driver: local
-  appdata:
     driver: local
   nginxdata:
     driver: local
