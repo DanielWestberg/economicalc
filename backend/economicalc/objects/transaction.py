@@ -4,20 +4,16 @@ from typing import Optional, Dict, Any, List
 
 from .image import Image
 from .item import Item
+from .type_check import check_type
 
 
 class Transaction:
     def __init__(self, recipient: str, items: List[Item], date_of_purchase: datetime, total_sum_kr: int, total_sum_ore: int, image: Optional[Image] = None) -> None:
-        if type(recipient) != str:
-            raise TypeError("Field \"recipient\" must be a string")
-        if type(items) != list:
-            raise TypeError("Field \"items\" must be a list")
-        if type(date_of_purchase) != datetime:
-            raise TypeError("Field \"date\" must be a valid date")
-        if type(total_sum_kr) != int:
-            raise TypeError("Field \"total_sum_kr\" must be an integer")
-        if type(total_sum_ore) != int:
-            raise TypeError("Field \"total_sum_ore\" must be an integer")
+        check_type(recipient, str, "transaction.recipient")
+        check_type(items, list, "transaction.items")
+        check_type(date_of_purchase, datetime, "transaction.date")
+        check_type(total_sum_kr, int, "transaction.total_sum_kr")
+        check_type(total_sum_ore, int, "transaction.total_sum_ore")
 
         self.recipient = recipient
         self.items = items
