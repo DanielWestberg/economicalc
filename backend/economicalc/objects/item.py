@@ -30,6 +30,8 @@ class Item:
 
     @staticmethod
     def from_dict(d: Dict[str, Any]):
+        check_type(d, dict, "item")
+
         name = d["name"]
         price_kr = d["price_kr"]
         price_ore = d["price_ore"]
