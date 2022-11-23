@@ -47,5 +47,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+  	<string>Upload images from library for receipt scanning</string>
+  	<key>NSCameraUsageDescription</key>
+  <string>Upload image from camera for receipt scanning</string>
 </dict>
 </plist>

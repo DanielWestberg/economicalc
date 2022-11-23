@@ -1,6 +1,10 @@
+import 'package:economicalc_client/screens/statistics_screen.dart';
+import 'package:economicalc_client/components/history_list.dart';
+import 'package:economicalc_client/screens/tink_login.dart';
+import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
-import 'package:economicalc_client/camera_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 
 late BuildContext _context;
 
@@ -15,39 +19,25 @@ class _HomeScreen extends State<HomeScreen> {
   GlobalKey<ScaffoldState> _globalKey = GlobalKey<ScaffoldState>();
   late String appName = "EconomiCalc";
 
-  Widget titleSection(GlobalKey<ScaffoldState> _globalKey) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(10, 20, 0, 0),
-      child: Stack(
-        alignment: Alignment.topLeft,
-        children: [
-          IconButton(
-              onPressed: () {
-                _globalKey.currentState?.openDrawer();
-              },
-              icon: Icon(Icons.menu, size: 32),
-              color: Colors.black),
-          Container(
-              alignment: Alignment.topCenter,
-              child: Text(appName,
-                  style: TextStyle(
-                      color: new Color(0xff000000),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 36.0)))
-        ],
-      ),
-    );
-  }
-
   Widget iconSection = Container(
+    color: Color(0xFFB8D8D8),
+    padding: EdgeInsets.only(top: 10),
     child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
           IconButton(
-            icon: Icon(Icons.camera_alt_outlined),
-            onPressed: (() {
-              Navigator.push(_context,
-                  MaterialPageRoute(builder: (_context) => CameraScreen()));
+              icon: Icon(Icons.camera_alt_outlined),
+              onPressed: (() async {
+                final XFile? image =
+                    await ImagePicker().pickImage(source: ImageSource.camera);
+                //process()
+              })),
+          IconButton(
+            icon: Icon(Icons.filter),
+            onPressed: (() async {
+              final XFile? image =
+                  await ImagePicker().pickImage(source: ImageSource.gallery);
+              //process()
             }),
           ),
           IconButton(
@@ -59,16 +49,23 @@ class _HomeScreen extends State<HomeScreen> {
           IconButton(
             icon: Icon(Icons.auto_graph),
             onPressed: (() {
-              print("auto_graph");
+              Navigator.push(_context,
+                  MaterialPageRoute(builder: (_context) => StatisticsScreen()));
             }),
           ),
           IconButton(
-            icon: Icon(Icons.filter),
+            icon: Icon(Icons.abc),
+            onPressed: (() {
+              Navigator.push(_context,
+                  MaterialPageRoute(builder: (_context) => TinkLogin()));
+            }),
+          ),
+          IconButton(
+            icon: Icon(Icons.filter_alt),
             onPressed: (() {
               print("filter");
             }),
           ),
-          //TODO replace with figma svgs
         ]),
   );
 
@@ -125,11 +122,25 @@ class _HomeScreen extends State<HomeScreen> {
     _context = context;
     return SafeArea(
         child: Scaffold(
+            appBar: AppBar(
+              toolbarHeight: 80,
+              toolbarOpacity: 1,
+              backgroundColor: Color(0xFFB8D8D8),
+              foregroundColor: Colors.black,
+              title: Column(children: [
+                Text("EconomiCalc",
+                    style: TextStyle(
+                        color: Color(0xff000000),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 36.0)),
+              ]),
+              centerTitle: true,
+              elevation: 0,
+            ),
             key: _globalKey,
             drawer: drawer,
-            body: Wrap(
-              runSpacing: 50,
-              children: [titleSection(_globalKey), iconSection],
+            body: Column(
+              children: [iconSection, Expanded(child: HistoryList())],
             )));
   }
 }
