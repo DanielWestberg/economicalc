@@ -23,8 +23,16 @@ def create_app(config):
 
     @app.route("/users/<bankId>/transactions", methods=["POST"])
     def post_transactions(bankId):
+        try:
+            transaction = Transaction.from_dict(request.json)
+        except KeyError as e:
+            key = e.args[0]
+            return make_response(f"Missing required field \"{key}\"", unprocessable_entity)
+
+        if len(transaction.items) == 0:
+            return make_response("Field \"items\" may not be an empty list", unprocessable_entity)
+
         user = db.users.find_one({"bankId": bankId})
-        transaction = Transaction.from_dict(request.json)
         if user is None:
             user = User(bankId, [transaction])
             db.users.insert_one(user.to_dict())

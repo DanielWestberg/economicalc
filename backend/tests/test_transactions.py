@@ -19,7 +19,6 @@ def images() -> List[Image]:
     return [
         Image("coop_receipt.JPG"),
         Image("ica_receipt.JPG"),
-        Image("yeah.jpg"),
     ]
 
 
@@ -86,7 +85,6 @@ def users_to_post() -> List[User]:
 @pytest.fixture()
 def images_to_post() -> List[Image]:
     return [
-        Image("ica_receipt.JPG"),
         Image("yeah.jpg"),
     ]
 
@@ -99,15 +97,14 @@ def transactions_to_post(users, users_to_post, images_to_post) -> List[Tuple[Use
             [Item("Glasögon", 1337, 50, 1337, 50, 1)],
             datetime(2022, 2, 24),
             1337,
-            50,
-            images_to_post[0]
+            50
         )), (users_to_post[0], Transaction(
             "Yes",
             [Item("Dood", 1, 1, 1, 1, 1)],
             datetime(1970, 1, 1),
             1,
             1,
-            images_to_post[1]
+            images_to_post[0]
         )),
     ]
 
@@ -231,3 +228,13 @@ class TestTransactions():
             get_response = client.get(f"/users/{user.bankId}/transactions")
             response_transactions = get_response.json["data"]
             assert any([self.transactions_equal(transaction_dict, response_transaction) for response_transaction in response_transactions])
+
+    def test_post_missing_field(self, db, transactions_to_post, client):
+        transaction = transactions_to_post[0][1].to_dict()
+        transaction.pop("items", None)
+        post_response = client.post(f"/users/not-a-user/transactions", json=transaction)
+        assert post_response.status == constants.unprocessable_entity
+
+        transaction["items"] = []
+        post_response = client.post(f"/users/not-a-user/transactions", json=transaction)
+        assert post_response.status == constants.unprocessable_entity
