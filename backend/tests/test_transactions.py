@@ -229,12 +229,15 @@ class TestTransactions():
             response_transactions = get_response.json["data"]
             assert any([self.transactions_equal(transaction_dict, response_transaction) for response_transaction in response_transactions])
 
+    def post_errenous_transaction(self, transaction_dict, client):
+        response = client.post(f"/users/not-a-user/transactions", json=transaction_dict)
+        assert response.status == constants.unprocessable_entity
+
     def test_post_missing_field(self, db, transactions_to_post, client):
         transaction = transactions_to_post[0][1].to_dict()
         transaction.pop("items", None)
-        post_response = client.post(f"/users/not-a-user/transactions", json=transaction)
-        assert post_response.status == constants.unprocessable_entity
+        self.post_errenous_transaction(transaction, client)
 
         transaction["items"] = []
-        post_response = client.post(f"/users/not-a-user/transactions", json=transaction)
-        assert post_response.status == constants.unprocessable_entity
+        self.post_errenous_transaction(transaction, client)
+
