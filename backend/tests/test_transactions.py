@@ -230,7 +230,7 @@ class TestTransactions():
             assert any([self.transactions_equal(transaction_dict, response_transaction) for response_transaction in response_transactions])
 
     def post_errenous_transaction(self, transaction_dict, client):
-        response = client.post(f"/users/not-a-user/transactions", json=transaction_dict)
+        response = client.post("/users/not-a-user/transactions", json=transaction_dict)
         assert response.status == constants.unprocessable_entity
 
     def test_post_missing_field(self, db, transactions_to_post, client):
