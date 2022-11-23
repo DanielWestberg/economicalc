@@ -37,6 +37,12 @@ dependencies:
   cupertino_icons: ^1.0.2
   camera: ^0.10.0+4
   google_fonts: ^2.1.0
+  intl: ^0.17.0
+  syncfusion_flutter_charts: ^20.3.57
+  image_picker: ^0.8.6
+  easy_image_viewer: ^1.2.0
+  webview_flutter: ^3.0.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -88,3 +94,5 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+  assets:
+    - assets/random_generated_transactions.json
