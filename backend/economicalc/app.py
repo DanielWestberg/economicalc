@@ -28,6 +28,8 @@ def create_app(config):
         except KeyError as e:
             key = e.args[0]
             return make_response(f"Missing required field \"{key}\"", unprocessable_entity)
+        except TypeError as e:
+            return make_response(e.args[0], unprocessable_entity)
 
         if len(transaction.items) == 0:
             return make_response("Field \"items\" may not be an empty list", unprocessable_entity)

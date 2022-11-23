@@ -241,3 +241,12 @@ class TestTransactions():
         transaction["items"] = []
         self.post_errenous_transaction(transaction, client)
 
+    def test_post_weird_field(self, db, transactions_to_post, client):
+        transaction = transactions_to_post[0][1]
+        transaction_dict = transaction.to_dict()
+        transaction_dict["items"] = {"a": "a"}
+        self.post_errenous_transaction(transaction_dict, client)
+
+        transaction_dict = transaction.to_dict()
+        transaction_dict["recipient"] = 0
+        self.post_errenous_transaction(transaction_dict, client)
