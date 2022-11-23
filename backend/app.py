@@ -1,11 +1,13 @@
+#!/usr/bin/env python3
 import os
 from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
 import requests
 
-from .objects.image import Image
-from .config import RunConfig
+
+#from .objects.image import Image
+from .flaskconfig import FlaskConfig
 
 
 def create_app(config):
@@ -20,6 +22,7 @@ def create_app(config):
             status=True,
             message='Welcome to the Dockerized Flask MongoDB app!'
         )
+
 
     @app.route('/receipts/<id>')
     def fetch_receipts(id):
@@ -66,7 +69,13 @@ def create_app(config):
         return(
             response.text
         )
-    
+    def session_token_set(access_token):
+        return ""
+
+    def session_token_get(session_token):
+        return ""
+        
+        
 
     @app.route('/tink_transaction_history/<access_token>')
     def tink_transaction_history(access_token):
@@ -104,23 +113,23 @@ def create_app(config):
 
         return jsonify(data=data)
 
-    @app.route('/image')
-    def image():
-        images = db.image.find()
-        data = []
-        for image in images:
-            data.append(Image.doc2Dict(image))
+    #@app.route('/image')
+    #def image():
+    #    images = db.image.find()
+    #    data = []
+    #    for image in images:
+    #        data.append(Image.doc2Dict(image))
 
-        return jsonify(
-            status=True,
-            data=data
-        )
+    #    return jsonify(
+    #        status=True,
+    #        data=data
+    #    )
 
-    return app
+    #return app
 
 #hej
 if __name__ == "__main__":
     ENVIRONMENT_DEBUG = os.environ.get("APP_DEBUG", True)
     ENVIRONMENT_PORT = os.environ.get("APP_PORT", 5000)
-    app = create_app(RunConfig())
+    app = create_app(FlaskConfig())
     app.run(host='0.0.0.0', port=ENVIRONMENT_PORT, debug=ENVIRONMENT_DEBUG)

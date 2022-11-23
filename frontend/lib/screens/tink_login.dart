@@ -17,9 +17,9 @@ class TinkLogin extends StatelessWidget {
                 builder: (BuildContext context) => OpenLink(
                       title: "DigitalOcean",
                       clientId: "1a539460199a4e8bb374893752db14e6",
-                      redirectUri: "https%3A%2F%2Fconsole.tink.com",
+                      redirectUri: "hhttp://127.0.0.1:5000/Oath",
                       selectedUrl:
-                          "https://link.tink.com/1.0/transactions/connect-accounts/?client_id=1a539460199a4e8bb374893752db14e6&redirect_uri=https%3A%2F%2Fconsole.tink.com%2Fcallback&market=GB&locale=en_US&test=true",
+                          "https://link.tink.com/1.0/transactions/connect-accounts/?client_id=1a539460199a4e8bb374893752db14e6&redirect_uri=http://127.0.0.1:5000/Oath&market=GB&locale=en_US&test=true",
                     )));
           },
         ),
