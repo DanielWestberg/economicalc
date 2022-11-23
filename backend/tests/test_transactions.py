@@ -4,7 +4,7 @@ from datetime import datetime
 from dateutil.parser import *
 from typing import List, Tuple
 
-from flask.json import loads, dumps
+from flask.json import load, dump
 from bson.objectid import ObjectId
 from gridfs import GridFS
 
@@ -184,7 +184,7 @@ class TestTransactions():
             response = client.get(f"/users/{user.bankId}/transactions")
             assert response.status == constants.ok
 
-            response_transactions = loads(response.data)["data"]
+            response_transactions = response.json["data"]
 
             for (expected_transaction, actual_transaction) in zip(user.transactions, response_transactions):
                 expected_transaction = expected_transaction.to_dict()
@@ -223,11 +223,11 @@ class TestTransactions():
     def test_post_user_transaction(self, db, transactions_to_post, client):
         for (user, transaction) in transactions_to_post:
             transaction_dict = transaction.to_dict()
-            post_response = client.post(f"/users/{user.bankId}/transactions", json=dumps(transaction_dict))
+            post_response = client.post(f"/users/{user.bankId}/transactions", json=transaction_dict)
             assert post_response.status == constants.created
-            self.compare_transactions(transaction_dict, loads(post_response.data)["data"])
+            self.compare_transactions(transaction_dict, post_response.json["data"])
             user.transactions.append(transaction)
 
             get_response = client.get(f"/users/{user.bankId}/transactions")
-            response_transactions = loads(get_response.data)["data"]
+            response_transactions = get_response.json["data"]
             assert any([self.transactions_equal(transaction_dict, response_transaction) for response_transaction in response_transactions])

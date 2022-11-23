@@ -1,6 +1,5 @@
 import os
 from flask import Flask, request, jsonify, make_response
-from flask.json import loads
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
 import requests
@@ -25,7 +24,7 @@ def create_app(config):
     @app.route("/users/<bankId>/transactions", methods=["POST"])
     def post_transactions(bankId):
         user = db.users.find_one({"bankId": bankId})
-        transaction = Transaction.from_dict(loads(request.json))
+        transaction = Transaction.from_dict(request.json)
         if user is None:
             user = User(bankId, [transaction])
             db.users.insert_one(user.to_dict())
