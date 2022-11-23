@@ -1,7 +1,16 @@
 from typing import Dict, Any
 
+from .type_check import check_type
+
 class Item:
     def __init__(self, name: str, price_kr: int, price_ore: int, sum_kr: int, sum_ore: int, quantity: int) -> None:
+        check_type(name, str, "item.name")
+        check_type(price_kr, int, "item.price_kr")
+        check_type(price_ore, int, "item.price_ore")
+        check_type(sum_kr, int, "item.sum_kr")
+        check_type(sum_ore, int, "item.sum_ore")
+        check_type(quantity, int, "item.quantity")
+
         self.name = name
         self.price_kr = price_kr
         self.price_ore = price_ore

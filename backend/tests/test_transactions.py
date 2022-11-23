@@ -250,3 +250,14 @@ class TestTransactions():
         transaction_dict = transaction.to_dict()
         transaction_dict["recipient"] = 0
         self.post_errenous_transaction(transaction_dict, client)
+
+    def test_post_weird_items(self, db, transactions_to_post, client):
+        transaction = transactions_to_post[0][1]
+        transaction_dict = transaction.to_dict()
+        item_dict = transaction_dict["items"][0]
+        item_dict["name"] = 0
+        self.post_errenous_transaction(transaction_dict, client)
+
+        item_dict["name"] = "lmao"
+        item_dict["quantity"] = "lmao"
+        self.post_errenous_transaction(transaction_dict, client)
