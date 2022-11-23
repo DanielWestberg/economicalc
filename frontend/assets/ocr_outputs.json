@@ -1,0 +1,1976 @@
+[
+  {
+    "ocr_type": "receipts",
+    "request_id": "P_82.209.141.41_las8jwbo_c4o",
+    "ref_no": "my_ref_123",
+    "file_name": "DSC_0333.JPG",
+    "request_received_on": 1669122687588,
+    "success": true,
+    "image_width": 5504,
+    "image_height": 3096,
+    "image_rotation": -1.574,
+    "recognition_completed_on": 1669122694083,
+    "receipts": [
+      {
+        "merchant_name": "соор",
+        "merchant_address": null,
+        "merchant_phone": null,
+        "merchant_website": null,
+        "merchant_tax_reg_no": null,
+        "merchant_company_reg_no": null,
+        "region": null,
+        "mall": null,
+        "country": "US",
+        "receipt_no": "0107412570",
+        "date": "2022-02-16",
+        "time": "20:24",
+        "items": [
+          {
+            "amount": 18.95,
+            "category": null,
+            "description": "GURKA STYCK",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 20.0,
+            "category": null,
+            "description": "MAJS 3-PACK Kampanj",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 14.5,
+            "category": null,
+            "description": "MJUKA TORTILLAS 8 S",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 18.95,
+            "category": null,
+            "description": "SALLAD SÄSONGSMIX",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 72.4,
+            "category": null,
+            "description": "ATT BETALA ( 4 ARTIKLA",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 72.4,
+            "category": null,
+            "description": "KORTKÖP",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 0.0,
+            "category": null,
+            "description": "TILLBAKA - SAFEPAY",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 72.4,
+            "category": null,
+            "description": "Belopp: SEK",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 72.4,
+            "category": null,
+            "description": "12%7,76 64,64",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          }
+        ],
+        "currency": "USD",
+        "total": 72.4,
+        "subtotal": null,
+        "tax": null,
+        "service_charge": null,
+        "tip": null,
+        "payment_method": null,
+        "payment_details": null,
+        "credit_card_type": "MASTER",
+        "credit_card_number": "9716",
+        "ocr_text": "          соор\n                Ekeby\n              www.coop.se\n           Tel.nr: 0107412570\n Kvitto:  36906-001-37080\n Datum:   2022-02-16 20:24:24\n Kassör:  2132-Ebba\n Org Nr: 556030-5921",
+        "ocr_confidence": 96.74,
+        "width": 2637,
+        "height": 5445,
+        "avg_char_width": null,
+        "avg_line_height": 115.7136,
+        "source_locations": {
+          "date": [
+            [
+              {
+                "y": 2265,
+                "x": 1104
+              },
+              {
+                "y": 947,
+                "x": 1100
+              },
+              {
+                "y": 946,
+                "x": 1255
+              },
+              {
+                "y": 2265,
+                "x": 1259
+              }
+            ]
+          ],
+          "receipt_no": [
+            [
+              {
+                "y": 1669,
+                "x": 785
+              },
+              {
+                "y": 983,
+                "x": 777
+              },
+              {
+                "y": 982,
+                "x": 881
+              },
+              {
+                "y": 1668,
+                "x": 889
+              }
+            ]
+          ],
+          "credit_card_number": [
+            [
+              {
+                "y": 2819,
+                "x": 3694
+              },
+              {
+                "y": 2139,
+                "x": 3693
+              },
+              {
+                "y": 2139,
+                "x": 3813
+              },
+              {
+                "y": 2819,
+                "x": 3814
+              }
+            ]
+          ],
+          "merchant_name": [
+            [
+              {
+                "y": 2297,
+                "x": 35
+              },
+              {
+                "y": 635,
+                "x": 41
+              },
+              {
+                "y": 636,
+                "x": 517
+              },
+              {
+                "y": 2299,
+                "x": 511
+              }
+            ]
+          ],
+          "doc": [
+            [
+              {
+                "y": 2948,
+                "x": -213
+              },
+              {
+                "y": 47,
+                "x": -221
+              },
+              {
+                "y": 29,
+                "x": 5767
+              },
+              {
+                "y": 2930,
+                "x": 5776
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "ocr_type": "receipts",
+    "request_id": "P_82.209.141.41_las8lxmu_8eg",
+    "ref_no": "my_ref_123",
+    "file_name": "willys.jpg",
+    "request_received_on": 1669122782599,
+    "success": true,
+    "image_width": 1692,
+    "image_height": 4453,
+    "image_rotation": -0.006,
+    "recognition_completed_on": 1669122785376,
+    "receipts": [
+      {
+        "merchant_name": "Uppsala Stenhagen",
+        "merchant_address": null,
+        "merchant_phone": null,
+        "merchant_website": null,
+        "merchant_tax_reg_no": null,
+        "merchant_company_reg_no": null,
+        "region": null,
+        "mall": null,
+        "country": "US",
+        "receipt_no": null,
+        "date": "2022-11-04",
+        "time": "19:15",
+        "items": [
+          {
+            "amount": 12.9,
+            "category": null,
+            "description": "FUSILLI TRICOLORE",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 46.9,
+            "category": null,
+            "description": "ALMOND REMIX SWE/SAL",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 46.9,
+            "category": null,
+            "description": "MAGNUM DOUBLE GOLD",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 16.5,
+            "category": null,
+            "description": "PASTASAS RICOTTA",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 84.9,
+            "category": null,
+            "description": "SOLTORKADE TOMATER",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 29.9,
+            "category": null,
+            "description": "INGUINE BOLOGNESE",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 19.9,
+            "category": null,
+            "description": "TORK SOJASAS 500ML",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 29.8,
+            "category": null,
+            "description": "KOKOSMJÖLK 18%",
+            "flags": "",
+            "qty": 2,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": 14.9
+          },
+          {
+            "amount": 11.9,
+            "category": null,
+            "description": "POTATISKLYFTOR 750G",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 125.0,
+            "category": null,
+            "description": "LAXFILE BIT 400G",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": -37.5,
+            "category": null,
+            "description": "Prisnedsättning 30,0%",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 49.9,
+            "category": null,
+            "description": "SPARRIS 600G",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 16.9,
+            "category": null,
+            "description": "DRYCK MULTIVITAMIN",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 89.9,
+            "category": null,
+            "description": "VÄSTERBOTTENSOST",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": -20.0,
+            "category": null,
+            "description": "Rabatt: VÄSTERBOTTEN",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 13.5,
+            "category": null,
+            "description": "KVARG NAT 500G 0,3%",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 23.5,
+            "category": null,
+            "description": "HUMMUS KLASSISK",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 41.9,
+            "category": null,
+            "description": "LAX SKIV KALLROKT",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 42.96,
+            "category": null,
+            "description": "kr/kg",
+            "flags": "",
+            "qty": 361,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": 119.0
+          },
+          {
+            "amount": -12.89,
+            "category": null,
+            "description": "Prisnedsättning 30,0%",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 10.9,
+            "category": null,
+            "description": "MELLANMJÖLK 1L",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 14.9,
+            "category": null,
+            "description": "CHAMPINJONER 250G",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 3.9,
+            "category": null,
+            "description": "PAPPKASSE BRUN 32L",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 15.5,
+            "category": null,
+            "description": "TORTILLA ORI MEDIUM",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 14.9,
+            "category": null,
+            "description": "ISBERG FRISÉ",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 39.9,
+            "category": null,
+            "description": "ZUCCHINI GRON",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 5.9,
+            "category": null,
+            "description": "TOMAT BABYPLOMMON",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 755.57,
+            "category": null,
+            "description": "Mottaget Kontokort",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 745.77,
+            "category": null,
+            "description": "79,90665,87",
+            "flags": "",
+            "qty": 12.0,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 9.8,
+            "category": null,
+            "description": "1,967,84",
+            "flags": "",
+            "qty": 25.0,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          }
+        ],
+        "currency": "USD",
+        "total": 755.57,
+        "subtotal": null,
+        "tax": null,
+        "service_charge": null,
+        "tip": null,
+        "payment_method": null,
+        "payment_details": null,
+        "credit_card_type": "MASTER",
+        "credit_card_number": "7235",
+        "ocr_text": "    WILLY: S\n      affärsidé: Sveriges billigaste matkasse\n     Uppsala Stenhagen\n             Tfn: 018-700 99 10\n              Org: 556163-2232\n FUSILLI TRICOLORE                   12,90\n ALMOND REMIX SWE/SAL                46,90\n MAGNUM DOUBLE GOLD                  46,90\n PASTASAS RICOTTA                    16,50\n SOLTORKADE TOMATER",
+        "ocr_confidence": 95.18,
+        "width": 1330,
+        "height": 3993,
+        "avg_char_width": null,
+        "avg_line_height": 48.138,
+        "source_locations": {
+          "date": [
+            [
+              {
+                "y": 3042,
+                "x": 127
+              },
+              {
+                "y": 3039,
+                "x": 672
+              },
+              {
+                "y": 3111,
+                "x": 672
+              },
+              {
+                "y": 3114,
+                "x": 127
+              }
+            ]
+          ],
+          "total": [
+            [
+              {
+                "y": 2537,
+                "x": 786
+              },
+              {
+                "y": 2524,
+                "x": 1439
+              },
+              {
+                "y": 2584,
+                "x": 1440
+              },
+              {
+                "y": 2598,
+                "x": 787
+              }
+            ]
+          ],
+          "credit_card_number": [
+            [
+              {
+                "y": 2751,
+                "x": 134
+              },
+              {
+                "y": 2740,
+                "x": 471
+              },
+              {
+                "y": 2790,
+                "x": 472
+              },
+              {
+                "y": 2801,
+                "x": 136
+              }
+            ]
+          ],
+          "merchant_name": [
+            [
+              {
+                "y": 622,
+                "x": 221
+              },
+              {
+                "y": 621,
+                "x": 1244
+              },
+              {
+                "y": 684,
+                "x": 1244
+              },
+              {
+                "y": 685,
+                "x": 221
+              }
+            ]
+          ],
+          "doc": [
+            [
+              {
+                "y": 86,
+                "x": 61
+              },
+              {
+                "y": 77,
+                "x": 1524
+              },
+              {
+                "y": 4470,
+                "x": 1550
+              },
+              {
+                "y": 4478,
+                "x": 87
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "ocr_type": "receipts",
+    "request_id": "P_82.209.141.41_las3p4j9_55m",
+    "ref_no": "my_ref_123",
+    "file_name": "DSC_0332.JPG",
+    "request_received_on": 1669114533429,
+    "success": true,
+    "image_width": 5504,
+    "image_height": 3096,
+    "image_rotation": -1.582,
+    "recognition_completed_on": 1669114540192,
+    "receipts": [
+      {
+        "merchant_name": "FOLKES LIVS",
+        "merchant_address": null,
+        "merchant_phone": null,
+        "merchant_website": null,
+        "merchant_tax_reg_no": null,
+        "merchant_company_reg_no": null,
+        "region": null,
+        "mall": null,
+        "country": "US",
+        "receipt_no": "2810",
+        "date": "2022-02-18",
+        "time": null,
+        "items": [
+          {
+            "amount": 25.8,
+            "category": null,
+            "description": "Arla Mellanfil",
+            "flags": "",
+            "qty": 2,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": 12.9
+          },
+          {
+            "amount": 12.9,
+            "category": null,
+            "description": "Bakpulver",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 16.9,
+            "category": null,
+            "description": "Havredr nat",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 14.9,
+            "category": null,
+            "description": "Tutti Frutti Orig",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 10.9,
+            "category": null,
+            "description": "Vanillinsocker",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 38.9,
+            "category": null,
+            "description": "Ägg frigående S",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 26.9,
+            "category": null,
+            "description": "Ögon Cacao",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          }
+        ],
+        "currency": "USD",
+        "total": 147.2,
+        "subtotal": null,
+        "tax": null,
+        "service_charge": null,
+        "tip": null,
+        "payment_method": null,
+        "payment_details": null,
+        "credit_card_type": "MASTER",
+        "credit_card_number": "9716",
+        "ocr_text": "          FOLKES LIVS\n          Butiken med Uppsalas\n            bästa öppettider!!!\n",
+        "ocr_confidence": 97.86,
+        "width": 2697,
+        "height": 4712,
+        "avg_char_width": null,
+        "avg_line_height": 119.711,
+        "source_locations": {
+          "date": [
+            [
+              {
+                "y": 2574,
+                "x": 1571
+              },
+              {
+                "y": 1890,
+                "x": 1564
+              },
+              {
+                "y": 1889,
+                "x": 1689
+              },
+              {
+                "y": 2572,
+                "x": 1696
+              }
+            ]
+          ],
+          "total": [
+            [
+              {
+                "y": 1509,
+                "x": 2977
+              },
+              {
+                "y": 299,
+                "x": 2979
+              },
+              {
+                "y": 298,
+                "x": 3112
+              },
+              {
+                "y": 1508,
+                "x": 3110
+              }
+            ]
+          ],
+          "receipt_no": [
+            [
+              {
+                "y": 641,
+                "x": 1366
+              },
+              {
+                "y": 342,
+                "x": 1350
+              },
+              {
+                "y": 336,
+                "x": 1486
+              },
+              {
+                "y": 634,
+                "x": 1501
+              }
+            ]
+          ],
+          "merchant_name": [
+            [
+              {
+                "y": 2491,
+                "x": 598
+              },
+              {
+                "y": 1027,
+                "x": 537
+              },
+              {
+                "y": 1018,
+                "x": 766
+              },
+              {
+                "y": 2482,
+                "x": 828
+              }
+            ]
+          ],
+          "doc": [
+            [
+              {
+                "y": 3183,
+                "x": 336
+              },
+              {
+                "y": 216,
+                "x": 303
+              },
+              {
+                "y": 159,
+                "x": 5486
+              },
+              {
+                "y": 3126,
+                "x": 5519
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "ocr_type": "receipts",
+    "request_id": "P_217.23.3.91_lath0626_ula",
+    "ref_no": "my_ref_123",
+    "file_name": "DSC_0323.JPG",
+    "request_received_on": 1669197349807,
+    "success": true,
+    "image_width": 5504,
+    "image_height": 3096,
+    "image_rotation": -1.561,
+    "recognition_completed_on": 1669197355744,
+    "receipts": [
+      {
+        "merchant_name": "Therese",
+        "merchant_address": "Östra Agatan 35A",
+        "merchant_phone": null,
+        "merchant_website": null,
+        "merchant_tax_reg_no": null,
+        "merchant_company_reg_no": null,
+        "region": null,
+        "mall": null,
+        "country": "US",
+        "receipt_no": "690906-1423",
+        "date": "2022-10-10",
+        "time": null,
+        "items": [
+          {
+            "amount": 400.0,
+            "category": null,
+            "description": "Klippning 1st",
+            "flags": " SEK",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          }
+        ],
+        "currency": "USD",
+        "total": 400.0,
+        "subtotal": null,
+        "tax": null,
+        "service_charge": null,
+        "tip": null,
+        "payment_method": null,
+        "payment_details": null,
+        "credit_card_type": null,
+        "credit_card_number": null,
+        "ocr_text": "                     Therese\n Östra Agatan 35A        Tel. 018-133900\n 753 22 Uppsala       Org.nr. 690906-1423\n Personal: 2 Kassa: 6         Nr: 11560\n Datum: 2022-10-10           Tid: 11:36\n PosPlus: PPLUS000000006999\n                                  1\n Klippning 1st",
+        "ocr_confidence": 96.71,
+        "width": 2819,
+        "height": 4592,
+        "avg_char_width": null,
+        "avg_line_height": 117.3067,
+        "source_locations": {
+          "date": [
+            [
+              {
+                "y": 2629,
+                "x": 1894
+              },
+              {
+                "y": 1980,
+                "x": 1900
+              },
+              {
+                "y": 1981,
+                "x": 2029
+              },
+              {
+                "y": 2630,
+                "x": 2023
+              }
+            ]
+          ],
+          "total": [
+            [
+              {
+                "y": 1369,
+                "x": 2697
+              },
+              {
+                "y": 178,
+                "x": 2698
+              },
+              {
+                "y": 178,
+                "x": 2827
+              },
+              {
+                "y": 1369,
+                "x": 2826
+              }
+            ]
+          ],
+          "receipt_no": [
+            [
+              {
+                "y": 1302,
+                "x": 1367
+              },
+              {
+                "y": 559,
+                "x": 1339
+              },
+              {
+                "y": 553,
+                "x": 1489
+              },
+              {
+                "y": 1296,
+                "x": 1517
+              }
+            ]
+          ],
+          "merchant_name": [
+            [
+              {
+                "y": 1809,
+                "x": 829
+              },
+              {
+                "y": 1335,
+                "x": 832
+              },
+              {
+                "y": 1337,
+                "x": 1040
+              },
+              {
+                "y": 1810,
+                "x": 1037
+              }
+            ]
+          ],
+          "doc": [
+            [
+              {
+                "y": 3164,
+                "x": 573
+              },
+              {
+                "y": 62,
+                "x": 603
+              },
+              {
+                "y": 110,
+                "x": 5654
+              },
+              {
+                "y": 3212,
+                "x": 5624
+              }
+            ]
+          ],
+          "merchant_address": [
+            [
+              {
+                "y": 3063,
+                "x": 1245
+              },
+              {
+                "y": 2031,
+                "x": 1232
+              },
+              {
+                "y": 2029,
+                "x": 1367
+              },
+              {
+                "y": 3062,
+                "x": 1380
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "ocr_type": "receipts",
+    "request_id": "P_217.23.3.91_lath2871_orz",
+    "ref_no": "my_ref_123",
+    "file_name": "DSC_0335.JPG",
+    "request_received_on": 1669197445885,
+    "success": true,
+    "image_width": 5504,
+    "image_height": 3096,
+    "image_rotation": -1.562,
+    "recognition_completed_on": 1669197452574,
+    "receipts": [
+      {
+        "merchant_name": "FOLKES LIVS",
+        "merchant_address": null,
+        "merchant_phone": null,
+        "merchant_website": null,
+        "merchant_tax_reg_no": null,
+        "merchant_company_reg_no": null,
+        "region": null,
+        "mall": null,
+        "country": "US",
+        "receipt_no": "4554",
+        "date": "2022-02-11",
+        "time": null,
+        "items": [
+          {
+            "amount": 11.9,
+            "category": null,
+            "description": "Hayremat",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 16.9,
+            "category": null,
+            "description": "Körsbärstomat",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 14.93,
+            "category": null,
+            "description": "Svamp Champinjon",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          }
+        ],
+        "currency": "USD",
+        "total": 43.73,
+        "subtotal": null,
+        "tax": null,
+        "service_charge": null,
+        "tip": null,
+        "payment_method": null,
+        "payment_details": null,
+        "credit_card_type": null,
+        "credit_card_number": "9716",
+        "ocr_text": "         FOLKES LIVS\n         Butiken med Uppsalas\n           bästa öppettider!!!\n                 6-23: 31\n Saljare: 137",
+        "ocr_confidence": 95.2,
+        "width": 2850,
+        "height": 4844,
+        "avg_char_width": null,
+        "avg_line_height": 121.443,
+        "source_locations": {
+          "date": [
+            [
+              {
+                "y": 2573,
+                "x": 1678
+              },
+              {
+                "y": 1859,
+                "x": 1684
+              },
+              {
+                "y": 1860,
+                "x": 1834
+              },
+              {
+                "y": 2574,
+                "x": 1828
+              }
+            ]
+          ],
+          "total": [
+            [
+              {
+                "y": 1334,
+                "x": 2672
+              },
+              {
+                "y": 165,
+                "x": 2680
+              },
+              {
+                "y": 167,
+                "x": 2813
+              },
+              {
+                "y": 1335,
+                "x": 2806
+              }
+            ]
+          ],
+          "receipt_no": [
+            [
+              {
+                "y": 500,
+                "x": 1539
+              },
+              {
+                "y": 183,
+                "x": 1534
+              },
+              {
+                "y": 181,
+                "x": 1676
+              },
+              {
+                "y": 498,
+                "x": 1681
+              }
+            ]
+          ],
+          "credit_card_number": [
+            [
+              {
+                "y": 1690,
+                "x": 3534
+              },
+              {
+                "y": 476,
+                "x": 3568
+              },
+              {
+                "y": 481,
+                "x": 3695
+              },
+              {
+                "y": 1693,
+                "x": 3661
+              }
+            ]
+          ],
+          "merchant_name": [
+            [
+              {
+                "y": 2472,
+                "x": 646
+              },
+              {
+                "y": 869,
+                "x": 647
+              },
+              {
+                "y": 869,
+                "x": 910
+              },
+              {
+                "y": 2473,
+                "x": 910
+              }
+            ]
+          ],
+          "doc": [
+            [
+              {
+                "y": 3144,
+                "x": 397
+              },
+              {
+                "y": 8,
+                "x": 424
+              },
+              {
+                "y": 55,
+                "x": 5753
+              },
+              {
+                "y": 3191,
+                "x": 5725
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "ocr_type": "receipts",
+    "request_id": "P_217.23.3.91_lath3ipx_zbg",
+    "ref_no": "my_ref_123",
+    "file_name": "DSC_0336.JPG",
+    "request_received_on": 1669197506182,
+    "success": true,
+    "image_width": 5504,
+    "image_height": 3096,
+    "image_rotation": -1.56,
+    "recognition_completed_on": 1669197512942,
+    "receipts": [
+      {
+        "merchant_name": "FOLKES LIVS",
+        "merchant_address": null,
+        "merchant_phone": null,
+        "merchant_website": null,
+        "merchant_tax_reg_no": null,
+        "merchant_company_reg_no": null,
+        "region": null,
+        "mall": null,
+        "country": "US",
+        "receipt_no": "2291",
+        "date": "2022-02-10",
+        "time": null,
+        "items": [
+          {
+            "amount": 25.8,
+            "category": null,
+            "description": "Arla Mellanfil",
+            "flags": "",
+            "qty": 2,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": 12.9
+          },
+          {
+            "amount": 8.9,
+            "category": null,
+            "description": "Kidneybönor",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 8.9,
+            "category": null,
+            "description": "Kikärtor",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 19.9,
+            "category": null,
+            "description": "Morot nyskördade",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 7.34,
+            "category": null,
+            "description": "Palsternacka",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 27.8,
+            "category": null,
+            "description": "Pan Pizza chili ch",
+            "flags": "",
+            "qty": 2,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": 13.9
+          },
+          {
+            "amount": 27.8,
+            "category": null,
+            "description": "Pizza Vegetaria",
+            "flags": "",
+            "qty": 2,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": 13.9
+          },
+          {
+            "amount": 9.4,
+            "category": null,
+            "description": "Potatis fast",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 22.9,
+            "category": null,
+            "description": "Röda linser",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 8.9,
+            "category": null,
+            "description": "S ora vita bönor",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": -5.6,
+            "category": null,
+            "description": "Rabatt: bönor 2/15:",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 8.9,
+            "category": null,
+            "description": "Svarta bönor",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 31.93,
+            "category": null,
+            "description": "Apple Jonagolc",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          }
+        ],
+        "currency": "USD",
+        "total": 202.87,
+        "subtotal": null,
+        "tax": null,
+        "service_charge": null,
+        "tip": null,
+        "payment_method": null,
+        "payment_details": null,
+        "credit_card_type": "MASTER",
+        "credit_card_number": "9716",
+        "ocr_text": "         FOLKES LIVS\n         Butiken med Uppsalas\n           bästa öppettider!!!\n                 6-23: 31\n Säljare: 86",
+        "ocr_confidence": 96.09,
+        "width": 2401,
+        "height": 5083,
+        "avg_char_width": null,
+        "avg_line_height": 104.3679,
+        "source_locations": {
+          "date": [
+            [
+              {
+                "y": 2386,
+                "x": 1189
+              },
+              {
+                "y": 1767,
+                "x": 1195
+              },
+              {
+                "y": 1769,
+                "x": 1315
+              },
+              {
+                "y": 2388,
+                "x": 1308
+              }
+            ]
+          ],
+          "total": [
+            [
+              {
+                "y": 1482,
+                "x": 3210
+              },
+              {
+                "y": 347,
+                "x": 3233
+              },
+              {
+                "y": 349,
+                "x": 3349
+              },
+              {
+                "y": 1484,
+                "x": 3326
+              }
+            ]
+          ],
+          "receipt_no": [
+            [
+              {
+                "y": 638,
+                "x": 1072
+              },
+              {
+                "y": 370,
+                "x": 1067
+              },
+              {
+                "y": 368,
+                "x": 1191
+              },
+              {
+                "y": 636,
+                "x": 1196
+              }
+            ]
+          ],
+          "merchant_name": [
+            [
+              {
+                "y": 2281,
+                "x": 329
+              },
+              {
+                "y": 954,
+                "x": 362
+              },
+              {
+                "y": 959,
+                "x": 558
+              },
+              {
+                "y": 2286,
+                "x": 526
+              }
+            ]
+          ],
+          "doc": [
+            [
+              {
+                "y": 2866,
+                "x": 77
+              },
+              {
+                "y": 224,
+                "x": 106
+              },
+              {
+                "y": 285,
+                "x": 5698
+              },
+              {
+                "y": 2927,
+                "x": 5669
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "ocr_type": "receipts",
+    "request_id": "P_217.23.3.91_lath4q6v_x5m",
+    "ref_no": "my_ref_123",
+    "file_name": "DSC_0337.JPG",
+    "request_received_on": 1669197562519,
+    "success": true,
+    "image_width": 5504,
+    "image_height": 3096,
+    "image_rotation": -1.56,
+    "recognition_completed_on": 1669197569145,
+    "receipts": [
+      {
+        "merchant_name": "FOLKES LIVS",
+        "merchant_address": null,
+        "merchant_phone": null,
+        "merchant_website": null,
+        "merchant_tax_reg_no": null,
+        "merchant_company_reg_no": null,
+        "region": null,
+        "mall": null,
+        "country": "US",
+        "receipt_no": "5201",
+        "date": "2022-02-05",
+        "time": null,
+        "items": [
+          {
+            "amount": 25.8,
+            "category": null,
+            "description": "Arla Mellanfil",
+            "flags": "",
+            "qty": 2,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": 12.9
+          },
+          {
+            "amount": 27.9,
+            "category": null,
+            "description": "Gårdsg norm.salt",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 27.8,
+            "category": null,
+            "description": "Pan Pizza Halloumi",
+            "flags": "",
+            "qty": 2,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": 13.9
+          },
+          {
+            "amount": 31.45,
+            "category": null,
+            "description": "C,Kr/kg",
+            "flags": "",
+            "qty": 525,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": 59.9
+          },
+          {
+            "amount": 23.9,
+            "category": null,
+            "description": "Paprikapulver",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 27.8,
+            "category": null,
+            "description": "Pizza Vegetaria",
+            "flags": "",
+            "qty": 2,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": 13.9
+          },
+          {
+            "amount": 23.9,
+            "category": null,
+            "description": "Sojabönor",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 19.9,
+            "category": null,
+            "description": "Spiskummin",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 13.9,
+            "category": null,
+            "description": "Tomatpure tub",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          }
+        ],
+        "currency": "USD",
+        "total": 260.25,
+        "subtotal": null,
+        "tax": null,
+        "service_charge": null,
+        "tip": null,
+        "payment_method": null,
+        "payment_details": null,
+        "credit_card_type": "MASTER",
+        "credit_card_number": "9716",
+        "ocr_text": "         FOLKES LIVS\n         Butiken med Uppsalas\n           bästa öppettider!!!\n                 6-23: 31\n Säljare: 141",
+        "ocr_confidence": 95.87,
+        "width": 2631,
+        "height": 5039,
+        "avg_char_width": null,
+        "avg_line_height": 114.766,
+        "source_locations": {
+          "date": [
+            [
+              {
+                "y": 2598,
+                "x": 1282
+              },
+              {
+                "y": 1938,
+                "x": 1289
+              },
+              {
+                "y": 1940,
+                "x": 1416
+              },
+              {
+                "y": 2600,
+                "x": 1409
+              }
+            ]
+          ],
+          "total": [
+            [
+              {
+                "y": 1606,
+                "x": 3174
+              },
+              {
+                "y": 382,
+                "x": 3190
+              },
+              {
+                "y": 383,
+                "x": 3312
+              },
+              {
+                "y": 1607,
+                "x": 3297
+              }
+            ]
+          ],
+          "receipt_no": [
+            [
+              {
+                "y": 720,
+                "x": 1116
+              },
+              {
+                "y": 444,
+                "x": 1104
+              },
+              {
+                "y": 438,
+                "x": 1241
+              },
+              {
+                "y": 714,
+                "x": 1253
+              }
+            ]
+          ],
+          "merchant_name": [
+            [
+              {
+                "y": 2495,
+                "x": 365
+              },
+              {
+                "y": 1080,
+                "x": 367
+              },
+              {
+                "y": 1080,
+                "x": 575
+              },
+              {
+                "y": 2495,
+                "x": 574
+              }
+            ]
+          ],
+          "doc": [
+            [
+              {
+                "y": 3128,
+                "x": 101
+              },
+              {
+                "y": 234,
+                "x": 134
+              },
+              {
+                "y": 296,
+                "x": 5677
+              },
+              {
+                "y": 3190,
+                "x": 5645
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "ocr_type": "receipts",
+    "request_id": "P_217.23.3.91_lath6hsd_1ll",
+    "ref_no": "my_ref_123",
+    "file_name": "DSC_0324.JPG",
+    "request_received_on": 1669197644944,
+    "success": true,
+    "image_width": 5504,
+    "image_height": 3096,
+    "image_rotation": -1.582,
+    "recognition_completed_on": 1669197651438,
+    "receipts": [
+      {
+        "merchant_name": "Helens Gottis AB",
+        "merchant_address": null,
+        "merchant_phone": null,
+        "merchant_website": null,
+        "merchant_tax_reg_no": null,
+        "merchant_company_reg_no": null,
+        "region": null,
+        "mall": null,
+        "country": "US",
+        "receipt_no": "559197-1907",
+        "date": "2022-09-30",
+        "time": "15:27",
+        "items": [
+          {
+            "amount": 55.0,
+            "category": null,
+            "description": "Öppen Godis",
+            "flags": "",
+            "qty": 1,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 0.0,
+            "category": null,
+            "description": "49,11 5,89",
+            "flags": "",
+            "qty": 0.0,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          },
+          {
+            "amount": 5.89,
+            "category": null,
+            "description": "Moms 12%",
+            "flags": "",
+            "qty": null,
+            "remarks": null,
+            "tags": null,
+            "unitPrice": null
+          }
+        ],
+        "currency": "USD",
+        "total": null,
+        "subtotal": null,
+        "tax": null,
+        "service_charge": null,
+        "tip": null,
+        "payment_method": null,
+        "payment_details": null,
+        "credit_card_type": "MASTER",
+        "credit_card_number": "9716",
+        "ocr_text": "               Helens Gottis AB\n               Helens Gottis AB\n               Drottninggatan 1\n                753 10 Uppsala\n              Org.nr: 559197-1907\n              Telefon: 0729150908\n",
+        "ocr_confidence": 97.75,
+        "width": 2640,
+        "height": 5073,
+        "avg_char_width": null,
+        "avg_line_height": 113.4019,
+        "source_locations": {
+          "date": [
+            [
+              {
+                "y": 2204,
+                "x": 1816
+              },
+              {
+                "y": 974,
+                "x": 1802
+              },
+              {
+                "y": 972,
+                "x": 1937
+              },
+              {
+                "y": 2203,
+                "x": 1951
+              }
+            ]
+          ],
+          "receipt_no": [
+            [
+              {
+                "y": 1721,
+                "x": 947
+              },
+              {
+                "y": 1007,
+                "x": 925
+              },
+              {
+                "y": 1003,
+                "x": 1051
+              },
+              {
+                "y": 1717,
+                "x": 1075
+              }
+            ]
+          ],
+          "credit_card_number": [
+            [
+              {
+                "y": 2927,
+                "x": 3575
+              },
+              {
+                "y": 2252,
+                "x": 3575
+              },
+              {
+                "y": 2252,
+                "x": 3715
+              },
+              {
+                "y": 2927,
+                "x": 3714
+              }
+            ]
+          ],
+          "merchant_name": [
+            [
+              {
+                "y": 2113,
+                "x": 324
+              },
+              {
+                "y": 1082,
+                "x": 286
+              },
+              {
+                "y": 1075,
+                "x": 473
+              },
+              {
+                "y": 2106,
+                "x": 512
+              }
+            ]
+          ],
+          "doc": [
+            [
+              {
+                "y": 3111,
+                "x": 55
+              },
+              {
+                "y": 206,
+                "x": 22
+              },
+              {
+                "y": 142,
+                "x": 5602
+              },
+              {
+                "y": 3047,
+                "x": 5635
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  }
+]

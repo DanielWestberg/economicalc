@@ -19,7 +19,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   DateTime endDate = DateTime(2022, 12, 31);
   String dropdownValue = dropdownList.first;
 
-  final columns = ["Items", "Price", "Qty", "Sum"];
+  final columns = ["Items", "Sum"];
   late Future<List<ReceiptItem>> dataFuture;
   List<ReceiptItem> rows = [];
 
@@ -179,12 +179,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
 
   List<DataRow> getRows(List<ReceiptItem> items) =>
       items.map((ReceiptItem item) {
-        final cells = [
-          item.itemName,
-          item.priceStr,
-          item.quantity,
-          item.sumStr
-        ];
+        final cells = [item.itemName, item.amount];
         return DataRow(cells: getCells(cells));
       }).toList();
 
@@ -196,14 +191,8 @@ class StatisticsScreenState extends State<StatisticsScreen> {
       rows.sort((row1, row2) =>
           compareString(ascending, row1.itemName, row2.itemName));
     } else if (columnIndex == 1) {
-      rows.sort((row1, row2) =>
-          compareString(ascending, row1.priceStr, row2.priceStr));
-    } else if (columnIndex == 2) {
-      rows.sort((row1, row2) =>
-          compareNumber(ascending, row1.quantity, row2.quantity));
-    } else if (columnIndex == 3) {
       rows.sort(
-          (row1, row2) => compareString(ascending, row1.sumStr, row2.sumStr));
+          (row1, row2) => compareNumber(ascending, row1.amount, row2.amount));
     }
 
     setState(() {
@@ -215,16 +204,16 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   double getMaxSum(List<ReceiptItem> items) {
     var max = items.first;
     items.forEach((e) {
-      if (e.sumKr > max.sumKr) {
+      if (e.amount > max.amount) {
         max = e;
       }
     });
-    return (max.sumKr + max.sumOre.toDouble() / 100);
+    return max.amount.toDouble();
   }
 
   @override
   Widget itemsChart() {
-    rows.sort((a, b) => compareNumber(true, a.sumKr, b.sumKr));
+    rows.sort((a, b) => compareNumber(true, a.amount, b.amount));
     return Container(
         padding: EdgeInsets.all(5),
         child: SfCartesianChart(
@@ -240,7 +229,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
               BarSeries<ReceiptItem, String>(
                   dataSource: rows,
                   xValueMapper: (ReceiptItem rows, _) => rows.itemName,
-                  yValueMapper: (ReceiptItem rows, _) => rows.sumKr,
+                  yValueMapper: (ReceiptItem rows, _) => rows.amount,
                   name: '',
                   dataLabelSettings: DataLabelSettings(isVisible: true),
                   color: Color.fromARGB(255, 68, 104, 107))

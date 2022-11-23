@@ -1,9 +1,9 @@
-import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/transaction_event.dart';
 import 'package:economicalc_client/screens/transaction_details_screen.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class HistoryList extends StatefulWidget {
   @override
@@ -11,7 +11,7 @@ class HistoryList extends StatefulWidget {
 }
 
 class HistoryListState extends State<HistoryList> {
-  late Future<List<TransactionEvent>> dataFuture;
+  late Future<List<Receipt>> dataFuture;
 
   @override
   void initState() {
@@ -38,7 +38,7 @@ class HistoryListState extends State<HistoryList> {
             if (snapshot.hasError) {
               return Text("${snapshot.error}");
             } else if (snapshot.hasData) {
-              List<TransactionEvent> transactions = snapshot.data!;
+              List<Receipt> transactions = snapshot.data!;
               // sort by date
               return Expanded(
                   child: ListView.builder(
@@ -60,7 +60,7 @@ class HistoryListState extends State<HistoryList> {
                                     fontWeight: FontWeight.w600, fontSize: 18),
                               ),
                               subtitle: Text(
-                                "${transactions[index].totalSumStr} kr",
+                                "${transactions[index].total} kr",
                                 style: TextStyle(
                                     fontWeight: FontWeight.w600, fontSize: 16),
                               ),
@@ -85,8 +85,9 @@ class HistoryListState extends State<HistoryList> {
                             ));
                       }));
             } else {
-              return Text(
-                  'Waiting....'); // TODO: add waiting animation https://pub.dev/packages/loading_animation_widget
+              return Center(
+                  child: LoadingAnimationWidget.threeArchedCircle(
+                      color: Colors.black, size: 20));
             }
           })
     ]);
