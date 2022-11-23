@@ -7,7 +7,7 @@ import requests
 
 
 #from .objects.image import Image
-from .flaskconfig import FlaskConfig
+from config import RunConfig
 
 
 def create_app(config):
@@ -131,5 +131,5 @@ def create_app(config):
 if __name__ == "__main__":
     ENVIRONMENT_DEBUG = os.environ.get("APP_DEBUG", True)
     ENVIRONMENT_PORT = os.environ.get("APP_PORT", 5000)
-    app = create_app(FlaskConfig())
+    app = create_app(RunConfig())
     app.run(host='0.0.0.0', port=ENVIRONMENT_PORT, debug=ENVIRONMENT_DEBUG)
