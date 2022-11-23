@@ -1,10 +1,11 @@
 import os
 from flask import Flask, request, jsonify, make_response
+from flask.json import loads
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
 import requests
 
-from .objects import Image, User
+from .objects import Transaction, User
 from .config import FlaskConfig
 from .constants import *
 
@@ -23,7 +24,16 @@ def create_app(config):
 
     @app.route("/users/<bankId>/transactions", methods=["POST"])
     def post_transactions(bankId):
-        return make_response("", created)
+        user = db.users.find_one({"bankId": bankId})
+        transaction = Transaction.from_dict(loads(request.json))
+        if user is None:
+            user = User(bankId, [transaction])
+            db.users.insert_one(user.to_dict())
+        else:
+            update_action = {"$push": {"transactions": transaction.to_dict()}}
+            db.users.update_one({"_id": user["_id"]}, update_action)
+
+        return make_response(jsonify(data=transaction.to_dict()), created)
 
     return app
 

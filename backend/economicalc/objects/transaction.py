@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from dateutil.parser import *
 from typing import Optional, Dict, Any, List
 
 from .image import Image
@@ -29,3 +30,13 @@ class Transaction:
             res["image"] = self.image.to_dict()
 
         return res
+
+    @staticmethod
+    def from_dict(d: Dict[str, Any]):
+        recipient = d["recipient"]
+        items = [Item.from_dict(d_item) for d_item in d["items"]]
+        date = parse(d["date"]) if type(d["date"]) == str else d["date"]
+        total_sum_kr = d["total_sum_kr"]
+        total_sum_ore = d["total_sum_ore"]
+        image = Image.from_dict(d["image"]) if "image" in d else None
+        return Transaction(recipient, items, date, total_sum_kr, total_sum_ore, image)

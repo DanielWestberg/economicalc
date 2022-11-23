@@ -14,3 +14,11 @@ class Image:
             'name': self.name,
             '_id': self.id
         }
+
+    @staticmethod
+    def from_dict(d: Dict[str, Any]):
+        image = Image(d["name"])
+        if "_id" in d:
+            image.id = d["_id"]
+
+        return image

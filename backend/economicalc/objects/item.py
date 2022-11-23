@@ -18,3 +18,14 @@ class Item:
             "sum_ore": self.sum_ore,
             "quantity": self.quantity,
         }
+
+    @staticmethod
+    def from_dict(d: Dict[str, Any]):
+        name = d["name"]
+        price_kr = d["price_kr"]
+        price_ore = d["price_ore"]
+        sum_kr = d["sum_kr"]
+        sum_ore = d["sum_ore"]
+        quantity = d["quantity"]
+
+        return Item(name, price_kr, price_ore, sum_kr, sum_ore, quantity)

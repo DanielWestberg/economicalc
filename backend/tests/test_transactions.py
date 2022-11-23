@@ -4,7 +4,7 @@ from datetime import datetime
 from dateutil.parser import *
 from typing import List, Tuple
 
-from flask.json import loads
+from flask.json import loads, dumps
 from bson.objectid import ObjectId
 from gridfs import GridFS
 
@@ -101,7 +101,7 @@ def transactions_to_post(users, users_to_post, images_to_post) -> List[Tuple[Use
             1337,
             50,
             images_to_post[0]
-        )), (User("test3", []), Transaction(
+        )), (users_to_post[0], Transaction(
             "Yes",
             [Item("Dood", 1, 1, 1, 1, 1)],
             datetime(1970, 1, 1),
@@ -112,23 +112,23 @@ def transactions_to_post(users, users_to_post, images_to_post) -> List[Tuple[Use
     ]
 
 
-def clean_users(db, users):
-    for user in users:
-        db.users.delete_many(user.to_dict())
-        assert db.users.find_one({"bankId": user.bankId}) is None
+def clean_users(database, gridfs, user_list):
+    for user in user_list:
+        database.users.delete_many(user.to_dict())
+        assert database.users.find_one({"bankId": user.bankId}) is None
 
         for transaction in user.transactions:
             image = transaction.image
             if image is not None:
-                fs.delete(ObjectId(image.id))
+                gridfs.delete(ObjectId(image.id))
 
-                assert not fs.exists({"_id": ObjectId(image.id)})
-                assert not fs.exists({"filename": image.name})
+                assert not gridfs.exists({"_id": ObjectId(image.id)})
+                assert not gridfs.exists({"filename": image.name})
     
 
 
 @pytest.fixture(autouse=True)
-def db(app, images, users, transactions_to_post):
+def db(app, images, users, transactions_to_post, users_to_post):
     db = create_db(app)
     fs = GridFS(db)
 
@@ -147,8 +147,8 @@ def db(app, images, users, transactions_to_post):
 
     yield db
 
-    clean_users(db, users)
-    clean_users(db, users_to_post)
+    clean_users(db, fs, users)
+    clean_users(db, fs, users_to_post)
 
 
 class TestTransactions():
@@ -160,8 +160,6 @@ class TestTransactions():
 
         expected_image = expected["image"]
         actual_image = actual["image"]
-        print(expected_image)
-        print(actual_image)
 
         assert expected_image["name"] == actual_image["name"]
         assert expected_image["_id"] == actual_image["_id"]
@@ -192,28 +190,44 @@ class TestTransactions():
                 expected_transaction = expected_transaction.to_dict()
                 self.compare_transactions(expected_transaction, actual_transaction)
 
+    def items_equal(self, i1, i2):
+        for key in ["name", "price_kr", "price_ore", "sum_kr", "sum_ore", "quantity"]:
+            if (i1[key] != i2[key]):
+                return False
+
+        return True
+
+    def images_of_transactions_equal(self, t1, t2):
+        if "image" not in t1:
+            return "image" not in t2
+
+        i1 = t1["image"]
+        i2 = t2["image"]
+
+        return i1["name"] == i2["name"] and i1["_id"] == i2["_id"]
+
+
     def transactions_equal(self, t1, t2):
         for key in ["recipient", "total_sum_kr", "total_sum_ore"]:
-            print(f"{t1[key]}, {t2[key]}")
             if t1[key] != t2[key]:
                 return False
 
-        print(f"{t1['date']}, {t2['date']}")
         if t1["date"] != parse(t2["date"]):
             return False
 
         for (item1, item2) in zip(t1["items"], t2["items"]):
             self.items_equal(item1, item2)
 
-        return self.images_equal(t1, t2)
+        return self.images_of_transactions_equal(t1, t2)
 
     def test_post_user_transaction(self, db, transactions_to_post, client):
         for (user, transaction) in transactions_to_post:
-            post_response = client.post(f"/users/{user.bankId}/transactions")
+            transaction_dict = transaction.to_dict()
+            post_response = client.post(f"/users/{user.bankId}/transactions", json=dumps(transaction_dict))
             assert post_response.status == constants.created
+            self.compare_transactions(transaction_dict, loads(post_response.data)["data"])
             user.transactions.append(transaction)
 
-            transaction_dict = transaction.to_dict()
             get_response = client.get(f"/users/{user.bankId}/transactions")
             response_transactions = loads(get_response.data)["data"]
             assert any([self.transactions_equal(transaction_dict, response_transaction) for response_transaction in response_transactions])
