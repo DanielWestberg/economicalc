@@ -25,7 +25,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
         child: Scaffold(
             appBar: AppBar(
               toolbarHeight: 180,
-              backgroundColor: Color(0xFFB8D8D8),
+              backgroundColor: Utils.backgroundColor,
               foregroundColor: Colors.black,
               title: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,10 +139,10 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   void onSort(int columnIndex, bool ascending) {
     if (columnIndex == 0) {
       widget.transaction.items.sort((row1, row2) =>
-          compareString(ascending, row1.itemName, row2.itemName));
+          Utils.compareString(ascending, row1.itemName, row2.itemName));
     } else if (columnIndex == 1) {
-      widget.transaction.items.sort(
-          (row1, row2) => compareNumber(ascending, row1.amount, row2.amount));
+      widget.transaction.items.sort((row1, row2) =>
+          Utils.compareNumber(ascending, row1.amount, row2.amount));
     }
 
     setState(() {

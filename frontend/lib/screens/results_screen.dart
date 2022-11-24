@@ -41,14 +41,14 @@ class ResultsScreenState extends State<ResultsScreen> {
     return SafeArea(
         child: isLoading
             ? Scaffold(
-                backgroundColor: Color(0xFFB8D8D8),
+                backgroundColor: Utils.backgroundColor,
                 body: Center(
                     child: LoadingAnimationWidget.threeArchedCircle(
                         color: Colors.black, size: 20)))
             : Scaffold(
                 appBar: AppBar(
                   toolbarHeight: 180,
-                  backgroundColor: Color(0xFFB8D8D8),
+                  backgroundColor: Utils.backgroundColor,
                   foregroundColor: Colors.black,
                   title: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,10 +217,10 @@ class ResultsScreenState extends State<ResultsScreen> {
   void onSort(int columnIndex, bool ascending) {
     if (columnIndex == 0) {
       transaction.items.sort((row1, row2) =>
-          compareString(ascending, row1.itemName, row2.itemName));
+          Utils.compareString(ascending, row1.itemName, row2.itemName));
     } else if (columnIndex == 1) {
-      transaction.items.sort(
-          (row1, row2) => compareNumber(ascending, row1.amount, row2.amount));
+      transaction.items.sort((row1, row2) =>
+          Utils.compareNumber(ascending, row1.amount, row2.amount));
     }
 
     setState(() {

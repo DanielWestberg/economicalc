@@ -1,4 +1,5 @@
 import 'package:economicalc_client/helpers/sqlite.dart';
+import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/screens/results_screen.dart';
 import 'dart:io';
 
@@ -30,15 +31,13 @@ class _HomeScreen extends State<HomeScreen> {
   static void goToResults(XFile? image) {
     //process stuff
 
-  Navigator.of(_context)
-  .push(MaterialPageRoute(
-     builder: (context) => ResultsScreen(image: image)
-  ))
-  .then((value) {
-    print("hoooo");
-    Phoenix.rebirth(_context);
-  });
-
+    Navigator.of(_context)
+        .push(MaterialPageRoute(
+            builder: (context) => ResultsScreen(image: image)))
+        .then((value) {
+      print("hoooo");
+      Phoenix.rebirth(_context);
+    });
 
     /*Navigator.push(_context,
         MaterialPageRoute(builder: (_context) => ResultsScreen(image: image))
@@ -48,7 +47,7 @@ class _HomeScreen extends State<HomeScreen> {
   }
 
   Widget iconSection = Container(
-    color: Color(0xFFB8D8D8),
+    color: Utils.backgroundColor,
     padding: EdgeInsets.only(top: 10),
     child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -101,15 +100,15 @@ class _HomeScreen extends State<HomeScreen> {
   );
 
   Widget drawer = Drawer(
-    backgroundColor: new Color(0xff69A3A7),
+    backgroundColor: Utils.drawerColor,
     child: ListView(
       padding: EdgeInsets.fromLTRB(0, 80, 0, 0),
       itemExtent: 70.0,
       children: [
         ListTile(
-          tileColor: new Color(0xffD4E6F3),
+          tileColor: Utils.tileColor,
           shape: RoundedRectangleBorder(
-            side: BorderSide(color: new Color(0xff69A3A7), width: 10),
+            side: BorderSide(color: Utils.drawerColor, width: 10),
           ),
           title: Text('History',
               style:
@@ -120,9 +119,9 @@ class _HomeScreen extends State<HomeScreen> {
           },
         ),
         ListTile(
-          tileColor: new Color(0xffD4E6F3),
+          tileColor: Utils.tileColor,
           shape: RoundedRectangleBorder(
-            side: BorderSide(color: new Color(0xff69A3A7), width: 10),
+            side: BorderSide(color: Utils.drawerColor, width: 10),
           ),
           title: Text('Scan',
               style:
@@ -132,9 +131,9 @@ class _HomeScreen extends State<HomeScreen> {
           },
         ),
         ListTile(
-          tileColor: new Color(0xffD4E6F3),
+          tileColor: Utils.tileColor,
           shape: RoundedRectangleBorder(
-            side: BorderSide(color: new Color(0xff69A3A7), width: 10),
+            side: BorderSide(color: Utils.drawerColor, width: 10),
           ),
           title: Text('Settings',
               style:
@@ -156,7 +155,7 @@ class _HomeScreen extends State<HomeScreen> {
             appBar: AppBar(
               toolbarHeight: 80,
               toolbarOpacity: 1,
-              backgroundColor: Color(0xFFB8D8D8),
+              backgroundColor: Utils.backgroundColor,
               foregroundColor: Colors.black,
               title: Column(children: [
                 Text("EconomiCalc",

@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:economicalc_client/helpers/sqlite.dart';
+import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/transaction_event.dart';
 import 'package:economicalc_client/screens/transaction_details_screen.dart';
 import 'package:economicalc_client/services/api_calls.dart';
@@ -11,7 +12,6 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 class HistoryList extends StatefulWidget {
   @override
   HistoryListState createState() => HistoryListState();
-
 }
 
 class HistoryListState extends State<HistoryList> {
@@ -22,7 +22,6 @@ class HistoryListState extends State<HistoryList> {
   void initState() {
     super.initState();
     fetchTransactions();
-    
   }
 
   void fetchTransactions() {
@@ -34,7 +33,7 @@ class HistoryListState extends State<HistoryList> {
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Container(
-        color: Color(0xFFB8D8D8),
+        color: Utils.backgroundColor,
         padding: const EdgeInsets.all(20),
         child: Text(
           "History",
@@ -59,7 +58,7 @@ class HistoryListState extends State<HistoryList> {
                         return Padding(
                             padding: EdgeInsets.only(top: 5.0),
                             child: ListTile(
-                              tileColor: Color(0xffD4E6F3),
+                              tileColor: Utils.tileColor,
                               shape: ContinuousRectangleBorder(
                                   side: BorderSide(
                                 width: 1.0,
