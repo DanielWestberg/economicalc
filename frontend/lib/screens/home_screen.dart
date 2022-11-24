@@ -1,4 +1,6 @@
 import 'package:economicalc_client/screens/results_screen.dart';
+import 'dart:io';
+
 import 'package:economicalc_client/screens/statistics_screen.dart';
 import 'package:economicalc_client/components/history_list.dart';
 import 'package:economicalc_client/screens/tink_login.dart';
@@ -22,16 +24,11 @@ class _HomeScreen extends State<HomeScreen> {
   GlobalKey<ScaffoldState> _globalKey = GlobalKey<ScaffoldState>();
   late String appName = "EconomiCalc";
 
-  static void goToResults(XFile? image, transaction) {
+  static void goToResults(XFile? image) {
     //process stuff
 
-    Navigator.push(
-        _context,
-        MaterialPageRoute(
-            builder: (_context) => ResultsScreen(
-                  image: image,
-                  transaction: transaction,
-                )));
+    Navigator.push(_context,
+        MaterialPageRoute(builder: (_context) => ResultsScreen(image: image)));
   }
 
   Widget iconSection = Container(
@@ -47,10 +44,7 @@ class _HomeScreen extends State<HomeScreen> {
                     await ImagePicker().pickImage(source: ImageSource.camera);
                 //process()
                 if (image == null) return;
-                //process stuff here and return result as TransactionEvent
-                TransactionEvent transaction =
-                    await fetchOneMockedTransaction();
-                goToResults(image, transaction);
+                goToResults(image);
               })),
           IconButton(
             icon: Icon(Icons.filter),
@@ -58,9 +52,7 @@ class _HomeScreen extends State<HomeScreen> {
               final XFile? image =
                   await ImagePicker().pickImage(source: ImageSource.gallery);
               if (image == null) return;
-              //process stuff here and return result as TransactionEvent
-              TransactionEvent transaction = await fetchOneMockedTransaction();
-              goToResults(image, transaction);
+              goToResults(image);
             }),
           ),
           IconButton(

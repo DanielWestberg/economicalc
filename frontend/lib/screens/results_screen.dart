@@ -1,20 +1,17 @@
 import 'dart:io';
-
 import 'package:camera/camera.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:economicalc_client/models/transaction_event.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../services/api_calls.dart';
 
 class ResultsScreen extends StatefulWidget {
-  final TransactionEvent transaction;
   final XFile? image;
 
-  const ResultsScreen(
-      {super.key, required this.image, required this.transaction});
+  const ResultsScreen({super.key, required this.image});
 
   @override
   ResultsScreenState createState() => ResultsScreenState();
@@ -24,36 +21,52 @@ class ResultsScreenState extends State<ResultsScreen> {
   int? sortColumnIndex;
   bool isAscending = false;
   double fontSize = 14;
-  final columns = ["Items", "Price", "Qty", "Sum"];
+  final columns = ["Items", "Total"];
+  bool isLoading = false;
+  late Future<Receipt> dataFuture;
+  late Receipt transaction;
+
+  @override
+  void initState() {
+    super.initState();
+    isLoading = true;
+    dataFuture = getTransactionFromImage(widget.image);
+  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-        child: Scaffold(
-            appBar: AppBar(
-              toolbarHeight: 180,
-              backgroundColor: Color(0xFFB8D8D8),
-              foregroundColor: Colors.black,
-              title: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                        padding: EdgeInsets.only(left: 10),
-                        child: Text("EconomiCalc",
-                            style: TextStyle(
-                                color: Color(0xff000000),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 36.0))),
-                  ]),
-              centerTitle: false,
-              elevation: 0,
-            ),
-            body: ListView(children: [
-              photoArea(),
-              buttonArea(),
-              headerInfo(),
-              buildDataTable()
-            ])));
+        child: isLoading
+            ? Scaffold(
+                backgroundColor: Color(0xFFB8D8D8),
+                body: Center(
+                    child: LoadingAnimationWidget.threeArchedCircle(
+                        color: Colors.black, size: 20)))
+            : Scaffold(
+                appBar: AppBar(
+                  toolbarHeight: 180,
+                  backgroundColor: Color(0xFFB8D8D8),
+                  foregroundColor: Colors.black,
+                  title: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                            padding: EdgeInsets.only(left: 10),
+                            child: Text("EconomiCalc",
+                                style: TextStyle(
+                                    color: Color(0xff000000),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 36.0))),
+                      ]),
+                  centerTitle: false,
+                  elevation: 0,
+                ),
+                body: ListView(children: [
+                  photoArea(),
+                  buttonArea(),
+                  headerInfo(),
+                  buildDataTable()
+                ])));
   }
 
   Widget photoArea() {
@@ -82,79 +95,104 @@ class ResultsScreenState extends State<ResultsScreen> {
   }
 
   Widget headerInfo() {
-    return Container(
-        padding: EdgeInsets.only(top: 10, left: 50, bottom: 20),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Icon(Icons.category),
-                  Padding(
-                      padding: EdgeInsets.only(left: 5),
-                      child: Text(
-                        "Mat & Dryck",
-                        style: TextStyle(
-                            fontSize: fontSize, fontWeight: FontWeight.w600),
-                      )),
-                ]),
-                Row(
+    return FutureBuilder(
+        future: dataFuture,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Text("${snapshot.error}");
+          } else if (snapshot.hasData) {
+            transaction = snapshot.data!;
+            return Container(
+                padding: EdgeInsets.only(top: 10, left: 50, bottom: 20),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Icon(Icons.store),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          Icon(Icons.category),
+                          Padding(
+                              padding: EdgeInsets.only(left: 5),
+                              child: Text(
+                                "Mat & Dryck",
+                                style: TextStyle(
+                                    fontSize: fontSize,
+                                    fontWeight: FontWeight.w600),
+                              )),
+                        ]),
+                        Row(
+                          children: [
+                            Icon(Icons.store),
+                            Padding(
+                                padding: EdgeInsets.only(left: 5),
+                                child: Text(
+                                  transaction.recipient,
+                                  style: TextStyle(
+                                      fontSize: fontSize,
+                                      fontWeight: FontWeight.w600),
+                                )),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Icon(Icons.date_range),
+                            Padding(
+                                padding: EdgeInsets.only(left: 5),
+                                child: Text(
+                                  DateFormat("yyyy-MM-dd")
+                                      .format(transaction.date)
+                                      .toString(),
+                                  style: TextStyle(
+                                      fontSize: fontSize,
+                                      fontWeight: FontWeight.w600),
+                                )),
+                          ],
+                        )
+                      ],
+                    ),
                     Padding(
-                        padding: EdgeInsets.only(left: 5),
-                        child: Text(
-                          widget.transaction.recipient,
-                          style: TextStyle(
-                              fontSize: fontSize, fontWeight: FontWeight.w600),
-                        )),
+                        padding: EdgeInsets.all(10),
+                        child: Column(children: [
+                          Icon(Icons.payment),
+                          Text("${transaction.total} kr",
+                              style: TextStyle(
+                                  fontSize: fontSize,
+                                  fontWeight: FontWeight.w600))
+                        ])),
+                    IconButton(
+                        padding: EdgeInsets.all(10),
+                        onPressed: (() {
+                          print("receipt");
+                        }),
+                        icon: Icon(Icons.receipt_long))
                   ],
-                ),
-                Row(
-                  children: [
-                    Icon(Icons.date_range),
-                    Padding(
-                        padding: EdgeInsets.only(left: 5),
-                        child: Text(
-                          DateFormat("yyyy-MM-dd")
-                              .format(widget.transaction.date)
-                              .toString(),
-                          style: TextStyle(
-                              fontSize: fontSize, fontWeight: FontWeight.w600),
-                        )),
-                  ],
-                )
-              ],
-            ),
-            Padding(
-                padding: EdgeInsets.all(10),
-                child: Column(children: [
-                  Icon(Icons.payment),
-                  Text(
-                      "${NumberFormat('###,###,###.0#', 'sv-se').format(widget.transaction.totalSum)} kr",
-                      style: TextStyle(
-                          fontSize: fontSize, fontWeight: FontWeight.w600))
-                ])),
-            IconButton(
-                padding: EdgeInsets.all(10),
-                onPressed: (() {
-                  print("receipt");
-                }),
-                icon: Icon(Icons.receipt_long))
-          ],
-        ));
+                ));
+          } else {
+            return Text("Unexpected error");
+          }
+        });
   }
 
   Widget buildDataTable() {
-    return DataTable(
-        columnSpacing: 30,
-        sortAscending: isAscending,
-        sortColumnIndex: sortColumnIndex,
-        columns: getColumns(columns),
-        rows: getRows(widget.transaction.items as List<ReceiptItem>));
+    return FutureBuilder(
+        future: dataFuture,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Text("${snapshot.error}");
+          } else if (snapshot.hasData) {
+            transaction = snapshot.data!;
+            return DataTable(
+                columnSpacing: 30,
+                sortAscending: isAscending,
+                sortColumnIndex: sortColumnIndex,
+                columns: getColumns(columns),
+                rows: getRows(transaction.items as List<ReceiptItem>));
+          } else {
+            return Text("Unexpected error");
+          }
+        });
   }
 
   List<DataColumn> getColumns(List<String> columns) => columns
@@ -166,14 +204,7 @@ class ResultsScreenState extends State<ResultsScreen> {
 
   List<DataRow> getRows(List<ReceiptItem> items) =>
       items.map((ReceiptItem item) {
-        final cells = [
-          item.itemName,
-          // item.price,
-          NumberFormat('###,###,###.0#', 'sv-se').format(item.price),
-          item.quantity,
-          NumberFormat('###,###,###.0#', 'sv-se').format(item.sum)
-          // double.parse((item.sum).toStringAsFixed(2))
-        ];
+        final cells = [item.itemName, item.amount];
         return DataRow(cells: getCells(cells));
       }).toList();
 
@@ -182,17 +213,11 @@ class ResultsScreenState extends State<ResultsScreen> {
 
   void onSort(int columnIndex, bool ascending) {
     if (columnIndex == 0) {
-      widget.transaction.items.sort((row1, row2) =>
+      transaction.items.sort((row1, row2) =>
           compareString(ascending, row1.itemName, row2.itemName));
     } else if (columnIndex == 1) {
-      widget.transaction.items.sort(
-          (row1, row2) => compareNumber(ascending, row1.price, row2.price));
-    } else if (columnIndex == 2) {
-      widget.transaction.items.sort((row1, row2) =>
-          compareNumber(ascending, row1.quantity, row2.quantity));
-    } else if (columnIndex == 3) {
-      widget.transaction.items
-          .sort((row1, row2) => compareNumber(ascending, row1.sum, row2.sum));
+      transaction.items.sort(
+          (row1, row2) => compareNumber(ascending, row1.amount, row2.amount));
     }
 
     setState(() {
@@ -201,9 +226,16 @@ class ResultsScreenState extends State<ResultsScreen> {
     });
   }
 
-  int compareString(bool ascending, String value1, String value2) =>
-      ascending ? value1.compareTo(value2) : value2.compareTo(value1);
+  Future<Receipt> getTransactionFromImage(image) async {
+    final imageFile = File(image.path);
+    var response = await processImageWithAsprise(imageFile);
 
-  int compareNumber(bool ascending, num value1, num value2) =>
-      ascending ? value1.compareTo(value2) : value2.compareTo(value1);
+    Receipt transaction = Receipt.fromJson(response);
+
+    setState(() {
+      isLoading = false;
+    });
+
+    return transaction;
+  }
 }
