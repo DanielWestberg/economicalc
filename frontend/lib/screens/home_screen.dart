@@ -1,3 +1,4 @@
+import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/screens/results_screen.dart';
 import 'dart:io';
 
@@ -6,6 +7,7 @@ import 'package:economicalc_client/components/history_list.dart';
 import 'package:economicalc_client/screens/tink_login.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -23,12 +25,26 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreen extends State<HomeScreen> {
   GlobalKey<ScaffoldState> _globalKey = GlobalKey<ScaffoldState>();
   late String appName = "EconomiCalc";
+  final SQFLite dbConnector = SQFLite.instance;
 
   static void goToResults(XFile? image) {
     //process stuff
 
-    Navigator.push(_context,
-        MaterialPageRoute(builder: (_context) => ResultsScreen(image: image)));
+  Navigator.of(_context)
+  .push(MaterialPageRoute(
+     builder: (context) => ResultsScreen(image: image)
+  ))
+  .then((value) {
+    print("hoooo");
+    Phoenix.rebirth(_context);
+  });
+
+
+    /*Navigator.push(_context,
+        MaterialPageRoute(builder: (_context) => ResultsScreen(image: image))
+        .then() {
+          dbConnector.transactions
+        });*/
   }
 
   Widget iconSection = Container(

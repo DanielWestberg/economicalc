@@ -1,3 +1,6 @@
+import 'dart:developer';
+
+import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/models/transaction_event.dart';
 import 'package:economicalc_client/screens/transaction_details_screen.dart';
 import 'package:economicalc_client/services/api_calls.dart';
@@ -8,16 +11,24 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 class HistoryList extends StatefulWidget {
   @override
   HistoryListState createState() => HistoryListState();
+
 }
 
 class HistoryListState extends State<HistoryList> {
   late Future<List<Receipt>> dataFuture;
   late List<TransactionEvent> transactions;
+  final SQFLite dbConnector = SQFLite.instance;
 
   @override
   void initState() {
     super.initState();
-    dataFuture = fetchMockedTransactions();
+    fetchTransactions();
+    
+  }
+
+  void fetchTransactions() {
+    dbConnector.initDatabase();
+    dataFuture = dbConnector.transactions();
   }
 
   void sortByDate() {

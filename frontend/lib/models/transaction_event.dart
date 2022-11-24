@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:intl/intl.dart';
 
 class Receipt {
@@ -22,9 +24,24 @@ class Receipt {
       this.totalSumStr,
       required this.items});
 
+  Map<String, dynamic> toMap() {
+    
+    return {
+      'userId': userId,
+      'transactionId': transactionId,
+      'recipient': recipient,
+      'date': date.toIso8601String(),
+      'total': total,
+      'totalSumKr': totalSumKr,
+      'totalSumOre': totalSumOre,
+      'totalSumStr': totalSumStr,
+      'items': jsonEncode(items),
+    };
+  }
+
   factory Receipt.fromJson(Map<String, dynamic> json) {
     List<ReceiptItem> items = json['receipts'][0]["items"]
-        .map((e) => ReceiptItem.fromJson(e))
+        .map((e) => ReceiptItem.fromJsonScanned(e))
         .toList()
         .cast<ReceiptItem>();
 
@@ -35,6 +52,7 @@ class Receipt {
         total: json['receipts'][0]['total'],
         items: items);
   }
+
 }
 
 class ReceiptItem {
@@ -61,9 +79,31 @@ class ReceiptItem {
       this.priceStr,
       this.sumStr});
 
-  factory ReceiptItem.fromJson(Map<String, dynamic> json) {
+  Map<String, dynamic> toJson() {
+    return {
+      'itemName': itemName,
+      'amount': amount,
+      'itemId': itemId,
+      'quantity': quantity,
+      'priceKr':priceKr,
+      'priceOre': priceOre,
+      'sumKr': sumKr,
+      'sumOre':sumOre,
+      'priceStr': priceStr,
+      'sumStr': sumStr,
+    };
+  }
+
+  factory ReceiptItem.fromJsonScanned(Map<String, dynamic> json) {
     return ReceiptItem(
       itemName: json['description'],
+      amount: json['amount'],
+    );
+  }
+
+  factory ReceiptItem.fromJson(Map<String, dynamic> json) {
+    return ReceiptItem(
+      itemName: json['itemName'],
       amount: json['amount'],
     );
   }

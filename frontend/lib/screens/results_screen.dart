@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
+import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:economicalc_client/models/transaction_event.dart';
@@ -25,12 +26,14 @@ class ResultsScreenState extends State<ResultsScreen> {
   bool isLoading = false;
   late Future<Receipt> dataFuture;
   late Receipt transaction;
+  final dbConnector = SQFLite.instance;
 
   @override
   void initState() {
     super.initState();
     isLoading = true;
     dataFuture = getTransactionFromImage(widget.image);
+    dbConnector.initDatabase();
   }
 
   @override
@@ -86,8 +89,8 @@ class ResultsScreenState extends State<ResultsScreen> {
     return Container(
       padding: EdgeInsets.only(bottom: 30),
       child: GestureDetector(
-          onTap: () {
-            //store in db
+          onTap: () async {
+            await dbConnector.inserttransaction(transaction);
             Navigator.pop(context);
           },
           child: Icon(Icons.check)),
@@ -229,7 +232,6 @@ class ResultsScreenState extends State<ResultsScreen> {
   Future<Receipt> getTransactionFromImage(image) async {
     final imageFile = File(image.path);
     var response = await processImageWithAsprise(imageFile);
-
     Receipt transaction = Receipt.fromJson(response);
 
     setState(() {
