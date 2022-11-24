@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class TransactionDetailsScreen extends StatefulWidget {
-  final TransactionEvent transaction;
+  final Receipt transaction;
 
   TransactionDetailsScreen(Key? key, this.transaction) : super(key: key);
 
@@ -17,7 +17,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   int? sortColumnIndex;
   bool isAscending = false;
   double fontSize = 14;
-  final columns = ["Items", "Price", "Qty", "Sum"];
+  final columns = ["Items", "Sum"];
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +97,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                 padding: EdgeInsets.all(10),
                 child: Column(children: [
                   Icon(Icons.payment),
-                  Text("${widget.transaction.totalSumStr} kr",
+                  Text("${widget.transaction.total} kr",
                       style: TextStyle(
                           fontSize: fontSize, fontWeight: FontWeight.w600))
                 ])),
@@ -129,12 +129,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
 
   List<DataRow> getRows(List<ReceiptItem> items) =>
       items.map((ReceiptItem item) {
-        final cells = [
-          item.itemName,
-          item.priceStr,
-          item.quantity,
-          item.sumStr
-        ];
+        final cells = [item.itemName, item.amount];
         return DataRow(cells: getCells(cells));
       }).toList();
 
@@ -146,14 +141,8 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
       widget.transaction.items.sort((row1, row2) =>
           compareString(ascending, row1.itemName, row2.itemName));
     } else if (columnIndex == 1) {
-      widget.transaction.items.sort((row1, row2) =>
-          compareString(ascending, row1.priceStr, row2.priceStr));
-    } else if (columnIndex == 2) {
-      widget.transaction.items.sort((row1, row2) =>
-          compareNumber(ascending, row1.quantity, row2.quantity));
-    } else if (columnIndex == 3) {
       widget.transaction.items.sort(
-          (row1, row2) => compareString(ascending, row1.sumStr, row2.sumStr));
+          (row1, row2) => compareNumber(ascending, row1.amount, row2.amount));
     }
 
     setState(() {
