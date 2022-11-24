@@ -1,6 +1,7 @@
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/screens/results_screen.dart';
+import 'package:economicalc_client/screens/settings_screen.dart';
 import 'dart:io';
 
 import 'package:economicalc_client/screens/statistics_screen.dart';
@@ -114,8 +115,8 @@ class _HomeScreen extends State<HomeScreen> {
               style:
                   GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
           onTap: () {
-            // Update the state of the app.
-            // ...
+            Navigator.push(_context,
+                MaterialPageRoute(builder: (_context) => HomeScreen()));
           },
         ),
         ListTile(
@@ -139,8 +140,8 @@ class _HomeScreen extends State<HomeScreen> {
               style:
                   GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
           onTap: () {
-            // Update the state of the app.
-            // ...
+            Navigator.push(_context,
+                MaterialPageRoute(builder: (_context) => SettingsScreen()));
           },
         ),
       ],
@@ -166,6 +167,16 @@ class _HomeScreen extends State<HomeScreen> {
               ]),
               centerTitle: true,
               elevation: 0,
+              actions: [
+                IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                          _context,
+                          MaterialPageRoute(
+                              builder: (_context) => SettingsScreen()));
+                    },
+                    icon: Icon(Icons.settings))
+              ],
             ),
             key: _globalKey,
             drawer: drawer,

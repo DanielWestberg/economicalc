@@ -1,3 +1,4 @@
+import 'package:economicalc_client/models/category.dart';
 import 'package:flutter/material.dart';
 
 class Utils {
@@ -10,4 +11,12 @@ class Utils {
   static Color backgroundColor = Color(0xFFB8D8D8);
   static Color tileColor = Color(0xffD4E6F3);
   static Color drawerColor = Color(0xff69A3A7);
+
+  static List<Category> categories = [
+    Category(description: "Groceries", color: Colors.blue),
+    Category(description: "Transportation", color: Colors.purple),
+    Category(description: "Stuff", color: Colors.green),
+    Category(
+        description: "My proud collection of teddy bears", color: Colors.brown),
+  ];
 }
