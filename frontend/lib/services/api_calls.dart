@@ -1,3 +1,4 @@
+import 'package:economicalc_client/models/response.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/models/transaction_event.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +10,7 @@ import 'dart:convert' as convert;
 
 import '../models/transaction.dart';
 
-const apiServer = "127.0.0.1:5000/";
+const String apiServer = "192.168.1.6:5000";
 
 Future<List<TransactionEvent>> fetchMockedTransactions() async {
   final String response =
@@ -33,25 +34,38 @@ Future<List<ReceiptItem>> fetchMockedReceiptItems() async {
 }
 
 Future<List<Transaction>> fetchTransactions(String access_token) async {
+  print("INSIDE TRANSACTIOn");
   String path = '/tink_transaction_history/';
   path += access_token;
-  final response = await http.get(Uri.https(apiServer, path));
+  final response = await http.get(Uri.http(apiServer, path));
   if (response.statusCode == 200) {
-    List<Transaction> transactions = convert.jsonDecode(response.body);
-    return transactions;
+    List<dynamic> transactions =
+        convert.jsonDecode(response.body)["transactions"];
+    print(transactions);
+    List<Transaction> resTrans = [];
+    transactions.forEach((transaction) {
+      resTrans.add(Transaction.fromJson(transaction));
+    });
+    print("RESTRANSACT");
+    print(resTrans);
+
+    return resTrans;
   } else {
     throw Exception("No transactions associated with user");
   }
 }
 
-Future<String> CodeToAccessToken(String code) async {
+Future<Response> CodeToAccessToken(String code) async {
   String path = '/tink_access_token/';
   path += code;
-  final response = await http.get(Uri.https(apiServer, path));
-  if (response.statusCode == 200) {
-    String access_token = convert.jsonDecode(response.body);
-    return access_token;
-  } else {
-    return "ERROR WITH CODE";
-  }
+  print("PATH: " + path);
+  print("APISERVER: " + apiServer);
+  print("URIU PÅATH");
+  print(Uri.https(apiServer, path));
+  final response = await http.get(Uri.http(apiServer, path));
+  print("Hej");
+  print("response: ${response.body}");
+  Response accessToken = Response.fromJson(convert.jsonDecode(response.body));
+  print("after response convert");
+  return accessToken;
 }

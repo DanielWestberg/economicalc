@@ -15,6 +15,12 @@ def create_app(config):
 
     db = create_db(app)
 
+    @app.route('/')
+    def index():
+        return jsonify(
+            status=True,
+            message='Welcome to the Dockerized Flask MongoDB app!'
+        )
     @app.route('/initiate_bank_session/')
     def initiate_bank_session():
         appUri = ""
@@ -79,6 +85,8 @@ def create_app(config):
         }
 
         response = requests.get('https://api.tink.com/data/v2/accounts', headers=headers)
+        print("TRANSACTIONS:::")
+        print(response.text)
 
         return response.text
 

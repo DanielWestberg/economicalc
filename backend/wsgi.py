@@ -4,4 +4,4 @@ from economicalc.config import FlaskConfig
 application = create_app(FlaskConfig())
 
 if __name__ == "__main__":
-    application.run()
+    application.run(ssl_context='adhoc')
