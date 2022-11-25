@@ -1,8 +1,8 @@
 # General
-.idea/
 .vscode/
 **.swp
 **/__pycache__
+
 **/.idea
 
 # Frontend
@@ -12,3 +12,4 @@ frontend/.flutter-plugins
 frontend/.flutter-plugins-dependencies
 
 # Backend
+
