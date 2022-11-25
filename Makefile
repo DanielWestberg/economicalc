@@ -2,7 +2,10 @@
 all: Dockerfile.backend
 	@docker-compose build
 
-.PHONY: run run_detach stop clean
+.PHONY: run run_detach stop clean test all
+
+test:
+	@docker-compose run --rm back_flask pytest
 
 run:
 	@docker-compose up
