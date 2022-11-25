@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:core';
 
 import 'package:economicalc_client/models/response.dart';
 import 'package:economicalc_client/models/transaction.dart';
@@ -66,13 +67,10 @@ class OpenLinkState extends State<OpenLink> {
               credential_id = credential_id.split("=")[1];
 
               setState(() async {
+                // flutter klagar på detta, Varför??? Måste kanske fixas?
                 response = await CodeToAccessToken(code);
                 transactions = fetchTransactions(response.accessToken);
-                print("inside set state");
-                print(transactions);
               });
-              print("after collection");
-              print(transactions);
 
               return NavigationDecision.prevent;
             } else if (action.url

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class TransactionDetailsScreen extends StatefulWidget {
-  final TransactionEvent transaction;
+  final Receipt transaction;
 
   TransactionDetailsScreen(Key? key, this.transaction) : super(key: key);
 
@@ -17,7 +17,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   int? sortColumnIndex;
   bool isAscending = false;
   double fontSize = 14;
-  final columns = ["Items", "Price", "Qty", "Sum"];
+  final columns = ["Items", "Sum"];
 
   @override
   Widget build(BuildContext context) {
@@ -97,8 +97,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                 padding: EdgeInsets.all(10),
                 child: Column(children: [
                   Icon(Icons.payment),
-                  Text(
-                      "${NumberFormat('###,###,###.0#', 'sv-se').format(widget.transaction.totalSum)} kr",
+                  Text("${widget.transaction.total} kr",
                       style: TextStyle(
                           fontSize: fontSize, fontWeight: FontWeight.w600))
                 ])),
@@ -130,14 +129,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
 
   List<DataRow> getRows(List<ReceiptItem> items) =>
       items.map((ReceiptItem item) {
-        final cells = [
-          item.itemName,
-          // item.price,
-          NumberFormat('###,###,###.0#', 'sv-se').format(item.price),
-          item.quantity,
-          NumberFormat('###,###,###.0#', 'sv-se').format(item.sum)
-          // double.parse((item.sum).toStringAsFixed(2))
-        ];
+        final cells = [item.itemName, item.amount];
         return DataRow(cells: getCells(cells));
       }).toList();
 
@@ -150,13 +142,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
           compareString(ascending, row1.itemName, row2.itemName));
     } else if (columnIndex == 1) {
       widget.transaction.items.sort(
-          (row1, row2) => compareNumber(ascending, row1.price, row2.price));
-    } else if (columnIndex == 2) {
-      widget.transaction.items.sort((row1, row2) =>
-          compareNumber(ascending, row1.quantity, row2.quantity));
-    } else if (columnIndex == 3) {
-      widget.transaction.items
-          .sort((row1, row2) => compareNumber(ascending, row1.sum, row2.sum));
+          (row1, row2) => compareNumber(ascending, row1.amount, row2.amount));
     }
 
     setState(() {
@@ -164,10 +150,4 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
       isAscending = ascending;
     });
   }
-
-  int compareString(bool ascending, String value1, String value2) =>
-      ascending ? value1.compareTo(value2) : value2.compareTo(value1);
-
-  int compareNumber(bool ascending, num value1, num value2) =>
-      ascending ? value1.compareTo(value2) : value2.compareTo(value1);
 }

@@ -1,22 +1,33 @@
-import 'package:economicalc_client/helpers/utils.dart';
+import 'dart:developer';
+
+import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/models/transaction_event.dart';
 import 'package:economicalc_client/screens/transaction_details_screen.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class HistoryList extends StatefulWidget {
   @override
   HistoryListState createState() => HistoryListState();
+
 }
 
 class HistoryListState extends State<HistoryList> {
-  late Future<List<TransactionEvent>> dataFuture;
+  late Future<List<Receipt>> dataFuture;
+  final SQFLite dbConnector = SQFLite.instance;
 
   @override
   void initState() {
     super.initState();
-    dataFuture = fetchMockedTransactions();
+    fetchTransactions();
+    
+  }
+
+  void fetchTransactions() {
+    dbConnector.initDatabase();
+    dataFuture = dbConnector.transactions();
   }
 
   @override
@@ -38,7 +49,7 @@ class HistoryListState extends State<HistoryList> {
             if (snapshot.hasError) {
               return Text("${snapshot.error}");
             } else if (snapshot.hasData) {
-              List<TransactionEvent> transactions = snapshot.data!;
+              List<Receipt> transactions = snapshot.data!;
               // sort by date
               return Expanded(
                   child: ListView.builder(
@@ -60,8 +71,7 @@ class HistoryListState extends State<HistoryList> {
                                     fontWeight: FontWeight.w600, fontSize: 18),
                               ),
                               subtitle: Text(
-                                "${NumberFormat('###,###,###.0#', 'sv-se').format(transactions[index].totalSum)} kr",
-                                // "${transactions[index].totalSum.toStringAsFixed(2)} kr",
+                                "${transactions[index].total} kr",
                                 style: TextStyle(
                                     fontWeight: FontWeight.w600, fontSize: 16),
                               ),
@@ -86,8 +96,9 @@ class HistoryListState extends State<HistoryList> {
                             ));
                       }));
             } else {
-              return Text(
-                  'Waiting....'); // TODO: add waiting animation https://pub.dev/packages/loading_animation_widget
+              return Center(
+                  child: LoadingAnimationWidget.threeArchedCircle(
+                      color: Colors.black, size: 20));
             }
           })
     ]);

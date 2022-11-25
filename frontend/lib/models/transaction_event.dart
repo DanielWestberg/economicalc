@@ -1,58 +1,110 @@
+import 'dart:convert';
+
 import 'package:intl/intl.dart';
 
-class TransactionEvent {
-  String userId;
+class Receipt {
+  String? userId;
   String transactionId;
   String recipient;
   DateTime date;
-  double totalSum;
+  double? total;
+  int? totalSumKr;
+  int? totalSumOre;
+  String? totalSumStr;
   List<ReceiptItem> items;
 
-  TransactionEvent(
-      {required this.userId,
+  Receipt(
+      {this.userId,
       required this.transactionId,
       required this.recipient,
       required this.date,
-      required this.totalSum,
+      this.total,
+      this.totalSumKr,
+      this.totalSumOre,
+      this.totalSumStr,
       required this.items});
 
-  factory TransactionEvent.fromJson(Map<String, dynamic> json) {
-    List<ReceiptItem> items = json["items"]
-        .map((e) => ReceiptItem.fromJson(e))
+  Map<String, dynamic> toMap() {
+    
+    return {
+      'userId': userId,
+      'transactionId': transactionId,
+      'recipient': recipient,
+      'date': date.toIso8601String(),
+      'total': total,
+      'totalSumKr': totalSumKr,
+      'totalSumOre': totalSumOre,
+      'totalSumStr': totalSumStr,
+      'items': jsonEncode(items),
+    };
+  }
+
+  factory Receipt.fromJson(Map<String, dynamic> json) {
+    List<ReceiptItem> items = json['receipts'][0]["items"]
+        .map((e) => ReceiptItem.fromJsonScanned(e))
         .toList()
         .cast<ReceiptItem>();
 
-    return TransactionEvent(
-        userId: json['userId'],
-        transactionId: json['transactionId'],
-        recipient: json['recipient'],
-        date: DateFormat('yyyy-MM-dd').parse(json['date']),
-        totalSum: items.fold(0, (totalSum, item) => totalSum + item.sum),
+    return Receipt(
+        transactionId: json['request_id'],
+        recipient: json['receipts'][0]['merchant_name'],
+        date: DateFormat('yyyy-MM-dd').parse(json['receipts'][0]['date']),
+        total: json['receipts'][0]['total'],
         items: items);
   }
+
 }
 
 class ReceiptItem {
-  String itemId;
+  String? itemId;
   String itemName;
-  int quantity;
-  double price;
-  double sum;
+  int? quantity;
+  double amount;
+  int? priceKr;
+  int? priceOre;
+  int? sumKr;
+  int? sumOre;
+  String? priceStr;
+  String? sumStr;
 
   ReceiptItem(
-      {required this.itemId,
-      required this.itemName,
-      required this.quantity,
-      required this.price,
-      required this.sum});
+      {required this.itemName,
+      required this.amount,
+      this.itemId,
+      this.quantity,
+      this.priceKr,
+      this.priceOre,
+      this.sumKr,
+      this.sumOre,
+      this.priceStr,
+      this.sumStr});
+
+  Map<String, dynamic> toJson() {
+    return {
+      'itemName': itemName,
+      'amount': amount,
+      'itemId': itemId,
+      'quantity': quantity,
+      'priceKr':priceKr,
+      'priceOre': priceOre,
+      'sumKr': sumKr,
+      'sumOre':sumOre,
+      'priceStr': priceStr,
+      'sumStr': sumStr,
+    };
+  }
+
+  factory ReceiptItem.fromJsonScanned(Map<String, dynamic> json) {
+    return ReceiptItem(
+      itemName: json['description'],
+      amount: json['amount'],
+    );
+  }
 
   factory ReceiptItem.fromJson(Map<String, dynamic> json) {
     return ReceiptItem(
-      itemId: json['itemId'],
       itemName: json['itemName'],
-      quantity: json['quantity'],
-      price: json['price'],
-      sum: json['quantity'] * json['price'],
+      amount: json['amount'],
     );
   }
 }
