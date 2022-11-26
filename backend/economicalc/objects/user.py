@@ -8,8 +8,8 @@ class User:
         self.bankId = bankId
         self.transactions = transactions
 
-    def to_dict(self) -> None:
+    def to_dict(self, json_serializable=False) -> None:
         return {
             "bankId": self.bankId,
-            "transactions": [transaction.to_dict() for transaction in self.transactions],
+            "transactions": [transaction.to_dict(json_serializable) for transaction in self.transactions],
         }
