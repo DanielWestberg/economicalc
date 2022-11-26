@@ -220,3 +220,14 @@ class TestTransactions():
         item_dict["name"] = "lmao"
         item_dict["quantity"] = "lmao"
         self.post_errenous_transaction(transaction_dict, client)
+
+
+    def test_get_image(self, db, users, client):
+        for user in users:
+            for transaction in user.transactions:
+                response = client.get(f"/users/{user.bankId}/transactions/{transaction.id}/image")
+                assert response.status == constants.ok
+
+                response_transaction_dict = response.json["data"]
+                response_transaction = Transaction.from_dict(response_transaction_dict)
+                assert transaction == response_transaction

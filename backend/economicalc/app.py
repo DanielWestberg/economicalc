@@ -24,6 +24,7 @@ def create_app(config):
 
         return jsonify(data=transactions)
 
+
     @app.route("/users/<bankId>/transactions", methods=["POST"])
     def post_transactions(bankId):
         try:
@@ -46,6 +47,15 @@ def create_app(config):
             db.users.update_one({"_id": user["_id"]}, update_action)
 
         return make_response(jsonify(data=transaction.to_dict(True)), created)
+
+
+    @app.route("/users/<bankId>/transactions/<ObjectId:transactionId>/image", methods=["GET"])
+    def get_image(bankId, transactionId):
+        user = db.users.find_one_or_404({"transactions._id": transactionId}, {"_id": 0, "transactions.$": 1})
+        transaction = user["transactions"][0]
+        transaction["_id"] = str(transaction["_id"])
+        return jsonify(data=transaction)
+
 
     return app
 
