@@ -19,6 +19,9 @@ def create_app(config):
     def get_transactions(bankId):
         user = db.users.find_one_or_404({"bankId": bankId})
         transactions = user["transactions"]
+        for transaction in transactions:
+            transaction["_id"] = str(transaction["_id"])
+
         return jsonify(data=transactions)
 
     @app.route("/users/<bankId>/transactions", methods=["POST"])
@@ -37,12 +40,12 @@ def create_app(config):
         user = db.users.find_one({"bankId": bankId})
         if user is None:
             user = User(bankId, [transaction])
-            db.users.insert_one(user.to_dict())
+            db.users.insert_one(user.to_dict(True))
         else:
-            update_action = {"$push": {"transactions": transaction.to_dict()}}
+            update_action = {"$push": {"transactions": transaction.to_dict(True)}}
             db.users.update_one({"_id": user["_id"]}, update_action)
 
-        return make_response(jsonify(data=transaction.to_dict()), created)
+        return make_response(jsonify(data=transaction.to_dict(True)), created)
 
     return app
 

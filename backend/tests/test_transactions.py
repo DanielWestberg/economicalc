@@ -38,6 +38,7 @@ def items() -> List[Item]:
 def transactions(items, images) -> List[Transaction]:
     return [
         Transaction(
+            None,
             "Ica",
             [items[0], items[1], items[3]],
             datetime(2022, 6, 30),
@@ -45,12 +46,14 @@ def transactions(items, images) -> List[Transaction]:
             0,
             images[1]
         ), Transaction(
+            None,
             "Coop",
             [items[2], items[3], items[4], items[5]],
             datetime(2022, 7, 1),
             141,
             30
         ), Transaction(
+            None,
             "Willy's",
             [items[1], items[5]],
             datetime(2021, 12, 13),
@@ -93,12 +96,14 @@ def images_to_post() -> List[Image]:
 def transactions_to_post(users, users_to_post, images_to_post) -> List[Tuple[User, Transaction]]:
     return [
         (users[1], Transaction(
+            None,
             "Specsavers",
             [Item("Glasögon", 1337, 50, 1337, 50, 1)],
             datetime(2022, 2, 24),
             1337,
             50
         )), (users_to_post[0], Transaction(
+            None,
             "Yes",
             [Item("Dood", 1, 1, 1, 1, 1)],
             datetime(1970, 1, 1),
@@ -111,7 +116,7 @@ def transactions_to_post(users, users_to_post, images_to_post) -> List[Tuple[Use
 
 def clean_users(database, gridfs, user_list):
     for user in user_list:
-        database.users.delete_many(user.to_dict())
+        database.users.delete_many({"bankId": user.bankId})
         assert database.users.find_one({"bankId": user.bankId}) is None
 
         for transaction in user.transactions:
@@ -184,7 +189,7 @@ class TestTransactions():
             response_transactions = response.json["data"]
 
             for (expected_transaction, actual_transaction) in zip(user.transactions, response_transactions):
-                expected_transaction = expected_transaction.to_dict()
+                expected_transaction = expected_transaction.to_dict(True)
                 self.compare_transactions(expected_transaction, actual_transaction)
 
     def items_equal(self, i1, i2):
@@ -219,7 +224,7 @@ class TestTransactions():
 
     def test_post_user_transaction(self, db, transactions_to_post, client):
         for (user, transaction) in transactions_to_post:
-            transaction_dict = transaction.to_dict()
+            transaction_dict = transaction.to_dict(True)
             post_response = client.post(f"/users/{user.bankId}/transactions", json=transaction_dict)
             assert post_response.status == constants.created
             self.compare_transactions(transaction_dict, post_response.json["data"])
@@ -234,7 +239,7 @@ class TestTransactions():
         assert response.status == constants.unprocessable_entity
 
     def test_post_missing_field(self, db, transactions_to_post, client):
-        transaction = transactions_to_post[0][1].to_dict()
+        transaction = transactions_to_post[0][1].to_dict(True)
         transaction.pop("items", None)
         self.post_errenous_transaction(transaction, client)
 
@@ -243,17 +248,17 @@ class TestTransactions():
 
     def test_post_weird_field(self, db, transactions_to_post, client):
         transaction = transactions_to_post[0][1]
-        transaction_dict = transaction.to_dict()
+        transaction_dict = transaction.to_dict(True)
         transaction_dict["items"] = {"a": "a"}
         self.post_errenous_transaction(transaction_dict, client)
 
-        transaction_dict = transaction.to_dict()
+        transaction_dict = transaction.to_dict(True)
         transaction_dict["recipient"] = 0
         self.post_errenous_transaction(transaction_dict, client)
 
     def test_post_weird_items(self, db, transactions_to_post, client):
         transaction = transactions_to_post[0][1]
-        transaction_dict = transaction.to_dict()
+        transaction_dict = transaction.to_dict(True)
         item_dict = transaction_dict["items"][0]
         item_dict["name"] = 0
         self.post_errenous_transaction(transaction_dict, client)
