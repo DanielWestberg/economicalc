@@ -10,11 +10,11 @@ from .type_check import check_type
 
 
 class Transaction:
-    def __init__(self, id: Optional[Union[str, ObjectId]], recipient: str, items: List[Item], date_of_purchase: datetime, total_sum_kr: int, total_sum_ore: int, image: Optional[Image] = None) -> None:
+    def __init__(self, id: Optional[Union[str, ObjectId]], recipient: str, items: List[Item], date: datetime, total_sum_kr: int, total_sum_ore: int, image: Optional[Image] = None) -> None:
         check_type(id, [type(None), str, ObjectId], "transaction._id")
         check_type(recipient, str, "transaction.recipient")
         check_type(items, list, "transaction.items")
-        check_type(date_of_purchase, datetime, "transaction.date")
+        check_type(date, datetime, "transaction.date")
         check_type(total_sum_kr, int, "transaction.total_sum_kr")
         check_type(total_sum_ore, int, "transaction.total_sum_ore")
 
@@ -25,8 +25,19 @@ class Transaction:
         self.total_sum_ore = total_sum_ore
         self.image = image
 
-        date = date_of_purchase
         self.date = datetime(date.year, date.month, date.day, tzinfo=timezone.utc)
+
+    def __eq__(self, other: Any) -> bool:
+        return (
+            type(self) == type(other) and
+            self.id == other.id and
+            self.recipient == other.recipient and
+            all([expected == actual for (expected, actual) in zip(self.items, other.items)]) and
+            self.total_sum_kr == other.total_sum_kr and
+            self.total_sum_ore == other.total_sum_ore and
+            self.image == other.image and
+            self.date == other.date
+        )
 
     def to_dict(self, json_serializable=False) -> Dict[str, Any]:
         res = {

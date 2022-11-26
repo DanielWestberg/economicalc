@@ -6,8 +6,14 @@ from mimetypes import guess_type
 class Image:
     def __init__(self, name: str) -> None:
         self.name = name
-        (self.content_type, _) = guess_type(name)
         self.id = None
+
+    def __eq__(self, other: Any) -> bool:
+        return (
+            type(self) == type(other) and
+            self.name == other.name and
+            self.id == other.id
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
