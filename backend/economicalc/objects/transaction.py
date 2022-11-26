@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 from dateutil.parser import *
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Union
+
+from bson.objectid import ObjectId
 
 from .image import Image
 from .item import Item
@@ -8,13 +10,15 @@ from .type_check import check_type
 
 
 class Transaction:
-    def __init__(self, recipient: str, items: List[Item], date_of_purchase: datetime, total_sum_kr: int, total_sum_ore: int, image: Optional[Image] = None) -> None:
+    def __init__(self, id: Optional[Union[str, ObjectId]], recipient: str, items: List[Item], date_of_purchase: datetime, total_sum_kr: int, total_sum_ore: int, image: Optional[Image] = None) -> None:
+        check_type(id, [type(None), str, ObjectId], "transaction._id")
         check_type(recipient, str, "transaction.recipient")
         check_type(items, list, "transaction.items")
         check_type(date_of_purchase, datetime, "transaction.date")
         check_type(total_sum_kr, int, "transaction.total_sum_kr")
         check_type(total_sum_ore, int, "transaction.total_sum_ore")
 
+        self.id = ObjectId(id)
         self.recipient = recipient
         self.items = items
         self.total_sum_kr = total_sum_kr
@@ -24,7 +28,7 @@ class Transaction:
         date = date_of_purchase
         self.date = datetime(date.year, date.month, date.day, tzinfo=timezone.utc)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, json_serializable=False) -> Dict[str, Any]:
         res = {
             "recipient": self.recipient,
             "items": [item.to_dict() for item in self.items],
@@ -35,6 +39,8 @@ class Transaction:
 
         if self.image is not None:
             res["image"] = self.image.to_dict()
+
+        res["_id"] = str(self.id) if json_serializable else self.id
 
         return res
 
@@ -49,5 +55,6 @@ class Transaction:
         total_sum_kr = d["total_sum_kr"]
         total_sum_ore = d["total_sum_ore"]
         image = Image.from_dict(d["image"]) if "image" in d else None
+        id = d["_id"] if "_id" in d else None
 
-        return Transaction(recipient, items, date, total_sum_kr, total_sum_ore, image)
+        return Transaction(id, recipient, items, date, total_sum_kr, total_sum_ore, image)
