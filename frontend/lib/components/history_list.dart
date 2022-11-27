@@ -16,6 +16,7 @@ class HistoryList extends StatefulWidget {
 
 class HistoryListState extends State<HistoryList> {
   late Future<List<Receipt>> dataFuture;
+  late List<TransactionEvent> transactions;
   final SQFLite dbConnector = SQFLite.instance;
 
   @override
@@ -28,6 +29,10 @@ class HistoryListState extends State<HistoryList> {
   void fetchTransactions() {
     dbConnector.initDatabase();
     dataFuture = dbConnector.transactions();
+  }
+
+  void sortByDate() {
+    transactions.sort((t1, t2) => t2.date.compareTo(t1.date));
   }
 
   @override
@@ -49,10 +54,14 @@ class HistoryListState extends State<HistoryList> {
             if (snapshot.hasError) {
               return Text("${snapshot.error}");
             } else if (snapshot.hasData) {
-              List<Receipt> transactions = snapshot.data!;
-              // sort by date
+              transactions = snapshot.data!;
+              sortByDate();
               return Expanded(
-                  child: ListView.builder(
+                  child: RefreshIndicator(
+                      onRefresh: () => fetchMockedTransactions(),
+                      backgroundColor: Color(0xFFB8D8D8),
+                      color: Colors.black,
+                      child: ListView.builder(
                       padding: EdgeInsets.all(20.0),
                       itemCount: transactions.length,
                       itemBuilder: (BuildContext ctx, int index) {
@@ -94,7 +103,7 @@ class HistoryListState extends State<HistoryList> {
                                                 null, transactions[index]))));
                               },
                             ));
-                      }));
+                      })));
             } else {
               return Center(
                   child: LoadingAnimationWidget.threeArchedCircle(
