@@ -87,14 +87,14 @@ def users_to_post() -> List[User]:
 
 
 @pytest.fixture()
-def images_to_post() -> List[str]:
+def images_to_put() -> List[str]:
     return [
-        "yeah.jpg",
+        "tsu.jpg",
     ]
 
 
 @pytest.fixture()
-def transactions_to_post(users, users_to_post, images_to_post) -> List[Tuple[User, Transaction, Optional[str]]]:
+def transactions_to_post(users, users_to_post, images_to_put) -> List[Tuple[User, Transaction, Optional[str]]]:
     return [
         (users[1], Transaction(
             None,
@@ -110,7 +110,7 @@ def transactions_to_post(users, users_to_post, images_to_post) -> List[Tuple[Use
             datetime(1970, 1, 1),
             1,
             1
-        ), images_to_post[0]),
+        ), images_to_put[0]),
     ]
 
 
@@ -177,10 +177,15 @@ class TestTransactions():
     def test_post_user_transaction(self, db, transactions_to_post, client):
         for (user, transaction, _) in transactions_to_post:
             transaction_dict = transaction.to_dict(True)
+            transaction_dict.pop("_id", None)
+
             response = client.post(f"/users/{user.bankId}/transactions", json=transaction_dict)
             assert response.status == constants.created
 
             response_dict = response.json["data"]
+            assert "_id" in response_dict
+
+            transaction.id = ObjectId(response_dict["_id"])
             response_transaction = Transaction.from_dict(response_dict)
             assert transaction == response_transaction
 

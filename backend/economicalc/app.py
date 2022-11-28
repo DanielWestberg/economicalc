@@ -27,6 +27,9 @@ def create_app(config):
 
     @app.route("/users/<bankId>/transactions", methods=["POST"])
     def post_transactions(bankId):
+        transaction_dict = request.json
+        transaction_dict.pop("_id", None)
+
         try:
             transaction = Transaction.from_dict(request.json)
         except KeyError as e:
@@ -59,7 +62,6 @@ def create_app(config):
             return make_response("No image found", not_found)
 
         return send_file(image, mimetype=image.content_type[0])
-
 
     return app
 
