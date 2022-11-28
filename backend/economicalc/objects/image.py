@@ -1,23 +1,23 @@
-from typing import Dict, Any
+from typing import Any, Dict, Optional, Union
 
-from mimetypes import guess_type
+from bson.objectid import ObjectId
+
+from .type_check import check_type
 
 
 class Image:
-    def __init__(self, name: str) -> None:
-        self.name = name
-        self.id = None
+    def __init__(self, id: Optional[Union[ObjectId, str]]) -> None:
+        check_type(id, [type(None), str, ObjectId], "image.id")
+        self.id = ObjectId(id)
 
     def __eq__(self, other: Any) -> bool:
         return (
             type(self) == type(other) and
-            self.name == other.name and
             self.id == other.id
         )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            'name': self.name,
             '_id': self.id
         }
 

@@ -21,6 +21,8 @@ def create_app(config):
         transactions = user["transactions"]
         for transaction in transactions:
             transaction["_id"] = str(transaction["_id"])
+            if "image_id" in transaction:
+                transaction["image_id"] = str(transaction["image_id"])
 
         return jsonify(data=transactions)
 
@@ -54,6 +56,9 @@ def create_app(config):
         user = db.users.find_one_or_404({"transactions._id": transactionId}, {"_id": 0, "transactions.$": 1})
         transaction = user["transactions"][0]
         transaction["_id"] = str(transaction["_id"])
+        if "image_id" in transaction:
+            transaction["image_id"] = str(transaction["image_id"])
+
         return jsonify(data=transaction)
 
 

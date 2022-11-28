@@ -2,7 +2,7 @@ import pytest
 
 from datetime import datetime
 from dateutil.parser import *
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from flask.json import load, dump
 from bson.objectid import ObjectId
@@ -15,10 +15,10 @@ from economicalc.app import create_db
 
 
 @pytest.fixture()
-def images() -> List[Image]:
+def images() -> List[Tuple[str, ObjectId]]:
     return [
-        Image("coop_receipt.JPG"),
-        Image("ica_receipt.JPG"),
+        ("coop_receipt.JPG", ObjectId()),
+        ("ica_receipt.JPG", ObjectId()),
     ]
 
 
@@ -44,7 +44,7 @@ def transactions(items, images) -> List[Transaction]:
             datetime(2022, 6, 30),
             163,
             0,
-            images[1]
+            images[1][1]
         ), Transaction(
             None,
             "Coop",
@@ -59,7 +59,7 @@ def transactions(items, images) -> List[Transaction]:
             datetime(2021, 12, 13),
             101,
             50,
-            images[0]
+            images[0][1]
         )
     ]
 
@@ -86,14 +86,14 @@ def users_to_post() -> List[User]:
 
 
 @pytest.fixture()
-def images_to_post() -> List[Image]:
+def images_to_post() -> List[str]:
     return [
-        Image("yeah.jpg"),
+        "yeah.jpg",
     ]
 
 
 @pytest.fixture()
-def transactions_to_post(users, users_to_post, images_to_post) -> List[Tuple[User, Transaction]]:
+def transactions_to_post(users, users_to_post, images_to_post) -> List[Tuple[User, Transaction, Optional[str]]]:
     return [
         (users[1], Transaction(
             None,
@@ -102,15 +102,14 @@ def transactions_to_post(users, users_to_post, images_to_post) -> List[Tuple[Use
             datetime(2022, 2, 24),
             1337,
             50
-        )), (users_to_post[0], Transaction(
+        ), None), (users_to_post[0], Transaction(
             None,
             "Yes",
             [Item("Dood", 1, 1, 1, 1, 1)],
             datetime(1970, 1, 1),
             1,
-            1,
-            images_to_post[0]
-        )),
+            1
+        ), images_to_post[0]),
     ]
 
 
@@ -120,12 +119,12 @@ def clean_users(database, gridfs, user_list):
         assert database.users.find_one({"bankId": user.bankId}) is None
 
         for transaction in user.transactions:
-            image = transaction.image
-            if image is not None:
-                gridfs.delete(ObjectId(image.id))
+            image_id = transaction.image_id
+            if image_id is not None:
+                assert type(image_id) == ObjectId
 
-                assert not gridfs.exists({"_id": ObjectId(image.id)})
-                assert not gridfs.exists({"filename": image.name})
+                gridfs.delete(image_id)
+                assert not gridfs.exists(image_id)
     
 
 
@@ -134,16 +133,15 @@ def db(app, images, users, transactions_to_post, users_to_post):
     db = create_db(app)
     fs = GridFS(db)
 
+    for image in images:
+        with open(f"./tests/res/{image[0]}", "rb") as f:
+            assert fs.put(f, _id = image[1]) == image[1]
+
     for user in users:
 
         for transaction in user.transactions:
-            image = transaction.image
-            if image is None:
-                continue
-
-            with open(f"./tests/res/{image.name}", "rb") as f:
-                id = fs.put(f, filename=image.name)
-                image.id = str(id)
+            if transaction.image_id is not None:
+                assert fs.exists(transaction.image_id)
 
         db.users.insert_one(user.to_dict())
 
@@ -151,6 +149,9 @@ def db(app, images, users, transactions_to_post, users_to_post):
 
     clean_users(db, fs, users)
     clean_users(db, fs, users_to_post)
+
+    for image in images:
+        assert not fs.exists(image[1])
 
 
 class TestTransactions():
@@ -168,7 +169,7 @@ class TestTransactions():
 
 
     def test_post_user_transaction(self, db, transactions_to_post, client):
-        for (user, transaction) in transactions_to_post:
+        for (user, transaction, _) in transactions_to_post:
             transaction_dict = transaction.to_dict(True)
             response = client.post(f"/users/{user.bankId}/transactions", json=transaction_dict)
             assert response.status == constants.created
