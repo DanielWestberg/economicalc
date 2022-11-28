@@ -16,6 +16,7 @@ class HistoryList extends StatefulWidget {
 
 class HistoryListState extends State<HistoryList> {
   late Future<List<Receipt>> dataFuture;
+  late List<Receipt> transactions;
   final SQFLite dbConnector = SQFLite.instance;
 
   @override
@@ -27,6 +28,10 @@ class HistoryListState extends State<HistoryList> {
   void fetchTransactions() {
     dbConnector.initDatabase();
     dataFuture = dbConnector.transactions();
+  }
+
+  void sortByDate() {
+    transactions.sort((t1, t2) => t2.date.compareTo(t1.date));
   }
 
   @override
@@ -48,52 +53,59 @@ class HistoryListState extends State<HistoryList> {
             if (snapshot.hasError) {
               return Text("${snapshot.error}");
             } else if (snapshot.hasData) {
-              List<Receipt> transactions = snapshot.data!;
-              // sort by date
+              transactions = snapshot.data!;
+              sortByDate();
               return Expanded(
-                  child: ListView.builder(
-                      padding: EdgeInsets.all(20.0),
-                      itemCount: transactions.length,
-                      itemBuilder: (BuildContext ctx, int index) {
-                        return Padding(
-                            padding: EdgeInsets.only(top: 5.0),
-                            child: ListTile(
-                              tileColor: Utils.tileColor,
-                              shape: ContinuousRectangleBorder(
-                                  side: BorderSide(
-                                width: 1.0,
-                                color: Colors.transparent,
-                              )),
-                              title: Text(
-                                transactions[index].recipient,
-                                style: TextStyle(
-                                    fontWeight: FontWeight.w600, fontSize: 18),
-                              ),
-                              subtitle: Text(
-                                "${transactions[index].total} kr",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.w600, fontSize: 16),
-                              ),
-                              leading: Text(
-                                DateFormat('yyyy-MM-dd')
-                                    .format(transactions[index].date),
-                                style: TextStyle(
-                                    fontWeight: FontWeight.w600, fontSize: 16),
-                              ),
-                              trailing: const Icon(
-                                Icons.arrow_right_alt_sharp,
-                                size: 50,
-                              ),
-                              onTap: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: ((context) =>
-                                            TransactionDetailsScreen(
-                                                null, transactions[index]))));
-                              },
-                            ));
-                      }));
+                  child: RefreshIndicator(
+                      onRefresh: () => fetchMockedTransactions(),
+                      backgroundColor: Color(0xFFB8D8D8),
+                      color: Colors.black,
+                      child: ListView.builder(
+                          padding: EdgeInsets.all(20.0),
+                          itemCount: transactions.length,
+                          itemBuilder: (BuildContext ctx, int index) {
+                            return Padding(
+                                padding: EdgeInsets.only(top: 5.0),
+                                child: ListTile(
+                                  tileColor: Color(0xffD4E6F3),
+                                  shape: ContinuousRectangleBorder(
+                                      side: BorderSide(
+                                    width: 1.0,
+                                    color: Colors.transparent,
+                                  )),
+                                  title: Text(
+                                    transactions[index].recipient,
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 18),
+                                  ),
+                                  subtitle: Text(
+                                    "${transactions[index].total} kr",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16),
+                                  ),
+                                  leading: Text(
+                                    DateFormat('yyyy-MM-dd')
+                                        .format(transactions[index].date),
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16),
+                                  ),
+                                  trailing: const Icon(
+                                    Icons.arrow_right_alt_sharp,
+                                    size: 50,
+                                  ),
+                                  onTap: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: ((context) =>
+                                                TransactionDetailsScreen(null,
+                                                    transactions[index]))));
+                                  },
+                                ));
+                          })));
             } else {
               return Center(
                   child: LoadingAnimationWidget.threeArchedCircle(
