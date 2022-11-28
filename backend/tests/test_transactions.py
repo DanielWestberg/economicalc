@@ -3,6 +3,7 @@ import pytest
 from datetime import datetime
 from dateutil.parser import *
 from typing import List, Optional, Tuple
+from mimetypes import guess_type
 
 from flask.json import load, dump
 from bson.objectid import ObjectId
@@ -135,7 +136,7 @@ def db(app, images, users, transactions_to_post, users_to_post):
 
     for image in images:
         with open(f"./tests/res/{image[0]}", "rb") as f:
-            assert fs.put(f, _id = image[1]) == image[1]
+            assert fs.put(f, _id = image[1], content_type = guess_type(image[0])) == image[1]
 
     for user in users:
 
@@ -152,6 +153,11 @@ def db(app, images, users, transactions_to_post, users_to_post):
 
     for image in images:
         assert not fs.exists(image[1])
+
+
+@pytest.fixture()
+def fs(db):
+    yield GridFS(db)
 
 
 class TestTransactions():
@@ -223,12 +229,22 @@ class TestTransactions():
         self.post_errenous_transaction(transaction_dict, client)
 
 
-    def test_get_image(self, db, users, client):
+    def test_get_image(self, tmp_path, db, fs, users, client):
+        tmp_file = tmp_path / "response_image"
         for user in users:
             for transaction in user.transactions:
                 response = client.get(f"/users/{user.bankId}/transactions/{transaction.id}/image")
-                assert response.status == constants.ok
+                if transaction.image_id is None:
+                    assert response.status == constants.not_found
+                    continue
 
-                response_transaction_dict = response.json["data"]
-                response_transaction = Transaction.from_dict(response_transaction_dict)
-                assert transaction == response_transaction
+                assert response.status == constants.ok
+                assert response.is_streamed
+
+                with tmp_file.open("wb") as f:
+                    for data in response.response:
+                        f.write(data)
+
+                with tmp_file.open("rb") as f:
+                    for (expected, actual) in zip(fs.find_one(transaction.image_id), f):
+                        assert expected == actual

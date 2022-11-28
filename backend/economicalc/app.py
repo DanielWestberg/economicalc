@@ -1,7 +1,8 @@
 import os
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, send_file
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
+from gridfs import GridFS
 import requests
 
 from .objects import Transaction, User
@@ -14,6 +15,7 @@ def create_app(config):
     app.config["MONGO_URI"] = config.MONGO_URI
 
     db = create_db(app)
+    fs = GridFS(db)
 
     @app.route("/users/<bankId>/transactions", methods=["GET"])
     def get_transactions(bankId):
@@ -51,9 +53,12 @@ def create_app(config):
     def get_image(bankId, transactionId):
         user = db.users.find_one_or_404({"transactions._id": transactionId}, {"_id": 0, "transactions.$": 1})
         transaction = user["transactions"][0]
-        Transaction.make_json_serializable(transaction)
+        image_id = transaction["image_id"] if "image_id" in transaction else None
+        image = fs.find_one(ObjectId(image_id)) if image_id is not None else None
+        if image is None:
+            return make_response("No image found", not_found)
 
-        return jsonify(data=transaction)
+        return send_file(image, mimetype=image.content_type[0])
 
 
     return app
