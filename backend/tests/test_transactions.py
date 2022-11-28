@@ -87,14 +87,12 @@ def users_to_post() -> List[User]:
 
 
 @pytest.fixture()
-def images_to_put() -> List[str]:
-    return [
-        "tsu.jpg",
-    ]
+def image_to_put() -> str:
+    return "tsu.jpg"
 
 
 @pytest.fixture()
-def transactions_to_post(users, users_to_post, images_to_put) -> List[Tuple[User, Transaction, Optional[str]]]:
+def transactions_to_post(users, users_to_post) -> List[Tuple[User, Transaction]]:
     return [
         (users[1], Transaction(
             None,
@@ -103,14 +101,14 @@ def transactions_to_post(users, users_to_post, images_to_put) -> List[Tuple[User
             datetime(2022, 2, 24),
             1337,
             50
-        ), None), (users_to_post[0], Transaction(
+        )), (users_to_post[0], Transaction(
             None,
             "Yes",
             [Item("Dood", 1, 1, 1, 1, 1)],
             datetime(1970, 1, 1),
             1,
             1
-        ), images_to_put[0]),
+        ))
     ]
 
 
@@ -175,7 +173,7 @@ class TestTransactions():
 
 
     def test_post_user_transaction(self, db, transactions_to_post, client):
-        for (user, transaction, _) in transactions_to_post:
+        for (user, transaction) in transactions_to_post:
             transaction_dict = transaction.to_dict(True)
             transaction_dict.pop("_id", None)
 
