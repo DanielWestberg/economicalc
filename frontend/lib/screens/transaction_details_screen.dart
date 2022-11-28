@@ -1,7 +1,11 @@
 import 'package:economicalc_client/helpers/utils.dart';
-import 'package:economicalc_client/models/transaction_event.dart';
+import 'package:economicalc_client/models/category.dart';
+import 'package:economicalc_client/models/receipt.dart';
+import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+var dropDownItems = Utils.categories;
 
 class TransactionDetailsScreen extends StatefulWidget {
   final Receipt transaction;
@@ -18,6 +22,18 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   bool isAscending = false;
   double fontSize = 14;
   final columns = ["Items", "Sum"];
+  final dbConnector = SQFLite.instance;
+  late String? dropdownValue;
+
+  @override
+  void initState() {
+    super.initState();
+    dbConnector.initDatabase();
+    dropdownValue = Category.getCategory(
+            widget.transaction.categoryDesc ?? dropDownItems[0].description,
+            dropDownItems)
+        .description;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +61,34 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
             body: ListView(children: [buildDataTable()])));
   }
 
+  Widget dropDown() {
+    return SizedBox(
+        width: 110,
+        height: 30,
+        child: DropdownButton<String>(
+          isDense: true,
+          isExpanded: true,
+          value: dropdownValue,
+          onChanged: (value) {
+            setState(() {
+              dropdownValue = value;
+              widget.transaction.categoryDesc = dropdownValue;
+            });
+            dbConnector.inserttransaction(widget.transaction);
+          },
+          items:
+              dropDownItems.map<DropdownMenuItem<String>>((Category category) {
+            return DropdownMenuItem<String>(
+              value: category.description,
+              child: Text(category.description,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: fontSize, fontWeight: FontWeight.w600)),
+            );
+          }).toList(),
+        ));
+  }
+
   Widget headerInfo() {
     return Container(
         padding: EdgeInsets.only(top: 10),
@@ -57,13 +101,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
               children: [
                 Row(children: [
                   Icon(Icons.category),
-                  Padding(
-                      padding: EdgeInsets.only(left: 5),
-                      child: Text(
-                        "Mat & Dryck",
-                        style: TextStyle(
-                            fontSize: fontSize, fontWeight: FontWeight.w600),
-                      )),
+                  Padding(padding: EdgeInsets.only(left: 5), child: dropDown()),
                 ]),
                 Row(
                   children: [

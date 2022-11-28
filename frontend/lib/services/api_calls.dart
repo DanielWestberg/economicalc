@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:economicalc_client/models/transaction_event.dart';
+import 'package:economicalc_client/models/receipt.dart';
 
 const apiServer = "";
 

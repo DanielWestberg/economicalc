@@ -2,7 +2,7 @@ import 'dart:developer';
 
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
-import 'package:economicalc_client/models/transaction_event.dart';
+import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/screens/transaction_details_screen.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
@@ -97,7 +97,7 @@ class HistoryListState extends State<HistoryList> {
             } else {
               return Center(
                   child: LoadingAnimationWidget.threeArchedCircle(
-                      color: Colors.black, size: 20));
+                      color: Colors.black, size: 40));
             }
           })
     ]);

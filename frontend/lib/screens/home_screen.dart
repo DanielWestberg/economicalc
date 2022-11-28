@@ -13,7 +13,7 @@ import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../models/transaction_event.dart';
+import '../models/receipt.dart';
 
 late BuildContext _context;
 
