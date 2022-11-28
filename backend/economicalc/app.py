@@ -63,6 +63,19 @@ def create_app(config):
 
         return send_file(image, mimetype=image.content_type[0])
 
+    
+    @app.route("/users/<bankId>/transactions/<ObjectId:transactionId>/image", methods=["PUT"])
+    def put_image(bankId, transactionId):
+        user = db.users.find_one_or_404({"bankId": bankId, "transactions._id": transactionId}, {"_id": 0, "transactions.$": 1})
+        transaction = user["transactions"][0]
+        image_id = transaction["image_id"] if "image_id" in transaction else None
+        image_id = ObjectId(image_id)
+        fs.delete(image_id)
+        fs.put(request.stream, _id=image_id, content_type=request.mimetype)
+        db.users.update_one({"bankId": bankId, "transactions._id": transactionId}, {"$set": {"transactions.$.image_id": image_id}})
+
+        return make_response("", no_content)
+
     return app
 
 

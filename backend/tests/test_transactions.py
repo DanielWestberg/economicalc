@@ -251,3 +251,26 @@ class TestTransactions():
                 with tmp_file.open("rb") as f:
                     for (expected, actual) in zip(fs.find_one(transaction.image_id), f):
                         assert expected == actual
+
+
+    def test_put_image(self, db, fs, users, image_to_put, client):
+        filename = f"./tests/res/{image_to_put}"
+        filetype = guess_type(filename)[0]
+
+        for user in users:
+            for transaction in user.transactions:
+                if transaction.image_id is not None:
+                    continue
+
+                with open(filename, "rb") as f:
+                    response = client.put(f"/users/{user.bankId}/transactions/{transaction.id}/image", data = f, content_type = filetype)
+                    assert response.status == constants.no_content
+
+                    response = client.get(f"/users/{user.bankId}/transactions/{transaction.id}/image")
+                    assert response.status == constants.ok
+
+                    fs_image = fs.find_one(transaction.image_id)
+                    f.seek(0)
+
+                    for (expected, actual) in zip(fs_image, f):
+                        assert expected == actual
