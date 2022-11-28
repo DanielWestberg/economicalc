@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, Dict, List
 
 from .transaction import Transaction
 
@@ -20,3 +20,8 @@ class User:
             "bankId": self.bankId,
             "transactions": [transaction.to_dict(json_serializable) for transaction in self.transactions],
         }
+
+    @staticmethod
+    def make_json_serializable(user_dict: Dict[str, Any]) -> None:
+        for transaction_dict in user_dict["transactions"]:
+            Transaction.make_json_serializable(transaction_dict)

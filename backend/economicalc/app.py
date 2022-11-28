@@ -18,13 +18,9 @@ def create_app(config):
     @app.route("/users/<bankId>/transactions", methods=["GET"])
     def get_transactions(bankId):
         user = db.users.find_one_or_404({"bankId": bankId})
-        transactions = user["transactions"]
-        for transaction in transactions:
-            transaction["_id"] = str(transaction["_id"])
-            if "image_id" in transaction:
-                transaction["image_id"] = str(transaction["image_id"])
+        User.make_json_serializable(user)
 
-        return jsonify(data=transactions)
+        return jsonify(data=user["transactions"])
 
 
     @app.route("/users/<bankId>/transactions", methods=["POST"])
@@ -55,9 +51,7 @@ def create_app(config):
     def get_image(bankId, transactionId):
         user = db.users.find_one_or_404({"transactions._id": transactionId}, {"_id": 0, "transactions.$": 1})
         transaction = user["transactions"][0]
-        transaction["_id"] = str(transaction["_id"])
-        if "image_id" in transaction:
-            transaction["image_id"] = str(transaction["image_id"])
+        Transaction.make_json_serializable(transaction)
 
         return jsonify(data=transaction)
 
