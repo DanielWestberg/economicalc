@@ -33,6 +33,7 @@ class SQFLite {
         );
   }
 
+  
     Map<String, dynamic> encodeTransaction(Receipt transaction) {
       return transaction.toMap();
     }
