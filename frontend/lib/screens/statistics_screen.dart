@@ -26,7 +26,8 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   @override
   void initState() {
     super.initState();
-    dataFuture = fetchMockedReceiptItemsBetweenDates(startDate, endDate);
+    dataFuture = fetchMockedReceiptItemsBetweenDates(startDate, endDate)
+        as Future<List<ReceiptItem>>;
   }
 
   @override

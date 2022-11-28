@@ -1,0 +1,97 @@
+{
+      "transactions" : [
+      {
+         "id":"c9ae8be0b4fd4820881f0faeae502a6f",
+         "accountId":"8c90db09536e4d35b82e99138cb5d069",
+         "amount":{
+            "value":{
+               "unscaledValue":"-2999",
+               "scale":"1"
+            },
+            "currencyCode":"SEK"
+         },
+         "descriptions":{
+            "original":"ICA",
+            "display":"Ica"
+         },
+         "dates":{
+            "booked":"2022-11-21"
+         },
+         "types":{
+            "type":"DEFAULT"
+         },
+         "status":"PENDING",
+         "providerMutability":"MUTABILITY_UNDEFINED"
+      },
+      {
+         "id":"c9f3c9af754642638902b41fbf9077b2",
+         "accountId":"8c90db09536e4d35b82e99138cb5d069",
+         "amount":{
+            "value":{
+               "unscaledValue":"-2790",
+               "scale":"1"
+            },
+            "currencyCode":"SEK"
+         },
+         "descriptions":{
+            "original":"Storstockholms Lokaltrafik",
+            "display":"Storstockholms Lokaltrafik"
+         },
+         "dates":{
+            "booked":"2022-11-21"
+         },
+         "types":{
+            "type":"DEFAULT"
+         },
+         "status":"PENDING",
+         "providerMutability":"MUTABILITY_UNDEFINED"
+      },
+      {
+         "id":"28bccac0740340f0982f99018103c4c1",
+         "accountId":"8c90db09536e4d35b82e99138cb5d069",
+         "amount":{
+            "value":{
+               "unscaledValue":"-1290",
+               "scale":"1"
+            },
+            "currencyCode":"SEK"
+         },
+         "descriptions":{
+            "original":"Arlanda Express",
+            "display":"Arlanda Express"
+         },
+         "dates":{
+            "booked":"2022-11-20"
+         },
+         "types":{
+            "type":"DEFAULT"
+         },
+         "status":"PENDING",
+         "providerMutability":"MUTABILITY_UNDEFINED"
+      },
+      {
+         "id":"7a440c60578344e2bbf359a3da9dc250",
+         "accountId":"8c90db09536e4d35b82e99138cb5d069",
+         "amount":{
+            "value":{
+               "unscaledValue":"-1967",
+               "scale":"1"
+            },
+            "currencyCode":"SEK"
+         },
+         "descriptions":{
+            "original":"Lidl",
+            "display":"Lidl"
+         },
+         "dates":{
+            "booked":"2022-11-20"
+         },
+         "types":{
+            "type":"DEFAULT"
+         },
+         "status":"PENDING",
+         "providerMutability":"MUTABILITY_UNDEFINED"
+      }
+   ]
+}
+     
