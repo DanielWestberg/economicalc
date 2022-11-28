@@ -253,9 +253,10 @@ class TestTransactions():
                         assert expected == actual
 
 
-    def test_put_image(self, db, fs, users, image_to_put, client):
+    def test_put_image(self, tmp_path, db, fs, users, image_to_put, client):
         filename = f"./tests/res/{image_to_put}"
         filetype = guess_type(filename)[0]
+        tmp_file = tmp_path / "response_image"
 
         for user in users:
             for transaction in user.transactions:
@@ -269,8 +270,12 @@ class TestTransactions():
                     response = client.get(f"/users/{user.bankId}/transactions/{transaction.id}/image")
                     assert response.status == constants.ok
 
-                    fs_image = fs.find_one(transaction.image_id)
+                    with tmp_file.open("wb") as eff:
+                        for data in response.response:
+                            eff.write(data)
+
                     f.seek(0)
 
-                    for (expected, actual) in zip(fs_image, f):
-                        assert expected == actual
+                    with tmp_file.open("rb") as eff:
+                        for (expected, actual) in zip(f, eff):
+                            assert expected == actual
