@@ -24,15 +24,15 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   final columns = ["Items", "Sum"];
   final dbConnector = SQFLite.instance;
   late String? dropdownValue;
+  late Future<List<Category>> categoriesFutureBuilder;
+  late List<Category> categories;
 
   @override
   void initState() {
     super.initState();
     dbConnector.initDatabase();
-    dropdownValue = Category.getCategory(
-            widget.transaction.categoryDesc ?? dropDownItems[0].description,
-            dropDownItems)
-        .description;
+    dropdownValue = widget.transaction.categoryDesc;
+    categoriesFutureBuilder = getCategories(dbConnector);
   }
 
   @override
@@ -62,31 +62,45 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   }
 
   Widget dropDown() {
-    return SizedBox(
-        width: 110,
-        height: 30,
-        child: DropdownButton<String>(
-          isDense: true,
-          isExpanded: true,
-          value: dropdownValue,
-          onChanged: (value) {
-            setState(() {
-              dropdownValue = value;
-              widget.transaction.categoryDesc = dropdownValue;
-            });
-            dbConnector.inserttransaction(widget.transaction);
-          },
-          items:
-              dropDownItems.map<DropdownMenuItem<String>>((Category category) {
-            return DropdownMenuItem<String>(
-              value: category.description,
-              child: Text(category.description,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      fontSize: fontSize, fontWeight: FontWeight.w600)),
-            );
-          }).toList(),
-        ));
+    return FutureBuilder(
+        future: categoriesFutureBuilder,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Text("${snapshot.error}");
+          } else if (snapshot.hasData) {
+            categories = snapshot.data!;
+
+            return SizedBox(
+                width: 110,
+                height: 30,
+                child: DropdownButton<String>(
+                    isDense: true,
+                    isExpanded: true,
+                    value: dropdownValue,
+                    onChanged: (value) {
+                      setState(() {
+                        dropdownValue = value;
+                        widget.transaction.categoryDesc = dropdownValue;
+                      });
+                      dbConnector.updatetransaction(widget.transaction);
+                    },
+                    items: categories
+                        .map<DropdownMenuItem<String>>((Category category) {
+                      return DropdownMenuItem<String>(
+                        value: category.description,
+                        child: Text(category.description,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontSize: fontSize,
+                                fontWeight: FontWeight.w600,
+                                color: category.color))
+                                ,
+                      );
+                    }).toList()));
+          } else {
+            return Text("Unexpected error");
+          }
+        });
   }
 
   Widget headerInfo() {
@@ -187,5 +201,8 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
       sortColumnIndex = columnIndex;
       isAscending = ascending;
     });
+  }
+  Future<List<Category>> getCategories(SQFLite dbConnector) async {
+    return await dbConnector.categories();
   }
 }

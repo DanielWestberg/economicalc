@@ -6,6 +6,7 @@ import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/screens/transaction_details_screen.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
@@ -57,7 +58,7 @@ class HistoryListState extends State<HistoryList> {
               sortByDate();
               return Expanded(
                   child: RefreshIndicator(
-                      onRefresh: () => fetchMockedTransactions(),
+                      onRefresh: () async => fetchTransactions(),
                       backgroundColor: Color(0xFFB8D8D8),
                       color: Colors.black,
                       child: ListView.builder(

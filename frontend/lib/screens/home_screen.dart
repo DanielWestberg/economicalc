@@ -12,8 +12,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import '../models/category.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
-
 import '../models/receipt.dart';
 
 late BuildContext _context;
@@ -37,7 +37,6 @@ class _HomeScreen extends State<HomeScreen> {
         .push(MaterialPageRoute(
             builder: (context) => ResultsScreen(image: image)))
         .then((value) {
-      print("hoooo");
       Phoenix.rebirth(_context);
     });
 
@@ -142,8 +141,12 @@ class _HomeScreen extends State<HomeScreen> {
               style:
                   GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
           onTap: () {
-            Navigator.push(_context,
-                MaterialPageRoute(builder: (_context) => SettingsScreen()));
+            Navigator.of(_context)
+                .push(
+                    MaterialPageRoute(builder: (_context) => SettingsScreen()))
+                .then((value) {
+              Phoenix.rebirth(_context);
+            });
           },
         ),
       ],
@@ -172,10 +175,12 @@ class _HomeScreen extends State<HomeScreen> {
               actions: [
                 IconButton(
                     onPressed: () {
-                      Navigator.push(
-                          _context,
-                          MaterialPageRoute(
-                              builder: (_context) => SettingsScreen()));
+                      Navigator.of(_context)
+                          .push(MaterialPageRoute(
+                              builder: (_context) => SettingsScreen()))
+                          .then((value) {
+                        Phoenix.rebirth(_context);
+                      });
                     },
                     icon: Icon(Icons.settings))
               ],

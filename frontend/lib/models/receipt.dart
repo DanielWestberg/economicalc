@@ -4,6 +4,7 @@ import 'package:economicalc_client/models/category.dart';
 import 'package:intl/intl.dart';
 
 class Receipt {
+  int? id;
   String? userId;
   String transactionId;
   String recipient;
@@ -14,9 +15,12 @@ class Receipt {
   String? totalSumStr;
   String? categoryDesc;
   List<ReceiptItem> items;
+  int? categoryID;
 
   Receipt(
-      {this.userId,
+      {
+      this.id,
+      this.userId,
       required this.transactionId,
       required this.recipient,
       required this.date,
@@ -24,8 +28,9 @@ class Receipt {
       this.totalSumKr,
       this.totalSumOre,
       this.totalSumStr,
+      required this.items,
       this.categoryDesc,
-      required this.items});
+      this.categoryID});
 
   Map<String, dynamic> toMap() {
     return {
@@ -39,6 +44,7 @@ class Receipt {
       'totalSumStr': totalSumStr,
       'categoryDesc': categoryDesc,
       'items': jsonEncode(items),
+      'categoryID': categoryID
     };
   }
 
