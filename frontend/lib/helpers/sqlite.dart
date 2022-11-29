@@ -56,6 +56,7 @@ class SQFLite {
 
   Future<void> insertDefaultCategories(Database db) async {
     List<Category> categories = [
+      Category(description: "Uncategorized", color: Colors.grey),
       Category(description: "Groceries", color: Colors.blue),
       Category(description: "Hardware", color: Colors.black),
       Category(description: "Transportation", color: Colors.purple),
@@ -102,6 +103,10 @@ class SQFLite {
 
   Future<void> deleteCategory(int id) async {
     final db = await instance.database;
+    int? uncategorizedID = await getcategoryIDfromDescription("Uncategorized");
+
+    await db?.rawQuery(
+        'UPDATE transactions SET categoryID = ${uncategorizedID}, categoryDesc = "Uncategorized" WHERE categoryID = ${id} ');
 
     // Remove the transaction from the database.
     await db?.delete(
@@ -130,7 +135,6 @@ class SQFLite {
 
   Future<List<Category>> categories() async {
     final db = await instance.database;
-    print("bajsen");
     final List<Map<String, dynamic?>>? maps = await db?.query('categories');
     return List.generate(maps!.length, (i) {
       return Category(

@@ -37,7 +37,6 @@ class _HomeScreen extends State<HomeScreen> {
         .push(MaterialPageRoute(
             builder: (context) => ResultsScreen(image: image)))
         .then((value) {
-      print("hoooo");
       Phoenix.rebirth(_context);
     });
 
@@ -93,7 +92,7 @@ class _HomeScreen extends State<HomeScreen> {
                   MaterialPageRoute(builder: (_context) => TinkLogin()));
             }),
           ),
-          IconButton( 
+          IconButton(
             icon: Icon(Icons.filter_alt),
             onPressed: (() {
               print("filter");
@@ -142,8 +141,12 @@ class _HomeScreen extends State<HomeScreen> {
               style:
                   GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
           onTap: () {
-            Navigator.push(_context,
-                MaterialPageRoute(builder: (_context) => SettingsScreen()));
+            Navigator.of(_context)
+                .push(
+                    MaterialPageRoute(builder: (_context) => SettingsScreen()))
+                .then((value) {
+              Phoenix.rebirth(_context);
+            });
           },
         ),
       ],
@@ -172,10 +175,12 @@ class _HomeScreen extends State<HomeScreen> {
               actions: [
                 IconButton(
                     onPressed: () {
-                      Navigator.push(
-                          _context,
-                          MaterialPageRoute(
-                              builder: (_context) => SettingsScreen()));
+                      Navigator.of(_context)
+                          .push(MaterialPageRoute(
+                              builder: (_context) => SettingsScreen()))
+                          .then((value) {
+                        Phoenix.rebirth(_context);
+                      });
                     },
                     icon: Icon(Icons.settings))
               ],
