@@ -33,6 +33,18 @@ def create_app(config):
         return jsonify(data=user["transactions"])
 
 
+    def parse_transaction_or_make_response(transaction_dict):
+        try:
+            transaction = Transaction.from_dict(transaction_dict)
+        except KeyError as e:
+            key = e.args[0]
+            return make_response(f"Missing required field \"{key}\"", unprocessable_entity)
+        except TypeError as e:
+            return make_response(e.args[0], unprocessable_entity)
+
+        return transaction
+
+
     def post_transactions(bankId, request):
         if request.content_type != "application/json":
             return make_response(f"Expected content type application/json, not {request.content_type}", unsupported_media_type)
@@ -40,13 +52,9 @@ def create_app(config):
         transaction_dict.pop("_id", None)
         transaction_dict.pop("image_id", None)
 
-        try:
-            transaction = Transaction.from_dict(request.json)
-        except KeyError as e:
-            key = e.args[0]
-            return make_response(f"Missing required field \"{key}\"", unprocessable_entity)
-        except TypeError as e:
-            return make_response(e.args[0], unprocessable_entity)
+        transaction = parse_transaction_or_make_response(transaction_dict)
+        if type(transaction) != Transaction:
+            return transaction
 
         if len(transaction.items) == 0:
             return make_response("Field \"items\" may not be an empty list", unprocessable_entity)
