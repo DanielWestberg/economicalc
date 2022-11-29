@@ -23,5 +23,6 @@ class User:
 
     @staticmethod
     def make_json_serializable(user_dict: Dict[str, Any]) -> None:
+        user_dict.pop("_id", None)
         for transaction_dict in user_dict["transactions"]:
             Transaction.make_json_serializable(transaction_dict)

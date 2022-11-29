@@ -192,6 +192,12 @@ class TestTransactions():
             response = client.get(f"/users/{user.bankId}/transactions")
             response_transaction_dicts = response.json["data"]
             response_transactions = [Transaction.from_dict(d) for d in response_transaction_dicts]
+
+            db_transaction_dicts = db.users.find_one({"bankId": user.bankId})["transactions"]
+            db_transaction_ids = [d["_id"] for d in db_transaction_dicts]
+            assert all([type(id) == ObjectId for id in db_transaction_ids])
+            assert transaction.id in db_transaction_ids
+
             assert transaction in response_transactions
 
 
