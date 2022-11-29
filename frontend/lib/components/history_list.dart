@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/receipt.dart';
+import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/screens/transaction_details_screen.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
@@ -16,8 +17,8 @@ class HistoryList extends StatefulWidget {
 }
 
 class HistoryListState extends State<HistoryList> {
-  late Future<List<Receipt>> dataFuture;
-  late List<Receipt> transactions;
+  late Future<List<Transaction>> dataFuture;
+  late List<Transaction> transactions;
   final SQFLite dbConnector = SQFLite.instance;
 
   @override
@@ -28,7 +29,7 @@ class HistoryListState extends State<HistoryList> {
 
   void fetchTransactions() {
     dbConnector.initDatabase();
-    dataFuture = dbConnector.transactions();
+    dataFuture = dbConnector.getAllTransactions();
   }
 
   void sortByDate() {
@@ -75,13 +76,13 @@ class HistoryListState extends State<HistoryList> {
                                     color: Colors.transparent,
                                   )),
                                   title: Text(
-                                    transactions[index].recipient,
+                                    transactions[index].store!,
                                     style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 18),
                                   ),
                                   subtitle: Text(
-                                    "${transactions[index].total} kr",
+                                    "${transactions[index].totalAmount} kr",
                                     style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 16),

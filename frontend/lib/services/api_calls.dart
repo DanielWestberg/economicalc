@@ -1,5 +1,5 @@
 import 'package:economicalc_client/models/response.dart';
-import 'package:economicalc_client/models/transaction.dart';
+import 'package:economicalc_client/models/bank_transaction.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:flutter/material.dart';
 
@@ -43,7 +43,7 @@ Future<List<ReceiptItem>> fetchMockedReceiptItems() async {
       .items;
 }
 
-Future<List<Transaction>> fetchTransactions(String access_token) async {
+Future<List<BankTransaction>> fetchTransactions(String access_token) async {
   //print("INSIDE TRANSACTIOn");
   String path = '/tink_transaction_history/';
   path += access_token;
@@ -52,9 +52,9 @@ Future<List<Transaction>> fetchTransactions(String access_token) async {
     List<dynamic> transactions =
         convert.jsonDecode(response.body)["transactions"];
     //print(transactions);
-    List<Transaction> resTrans = [];
+    List<BankTransaction> resTrans = [];
     transactions.forEach((transaction) {
-      resTrans.add(Transaction.fromJson(transaction));
+      resTrans.add(BankTransaction.fromJson(transaction));
     });
     //print("RESTRANSACT");
     //print(resTrans);

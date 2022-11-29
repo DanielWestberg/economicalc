@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:economicalc_client/models/bank_transaction.dart';
 import 'package:economicalc_client/models/category.dart';
+import 'package:economicalc_client/models/transaction.dart';
 import 'package:flutter/material.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:sqflite/sqflite.dart' hide Transaction;
 
 class SQFLite {
   static Database? _database;
@@ -32,26 +34,254 @@ class SQFLite {
         version: _databaseVersion, onCreate: _onCreate);
   }
 
+  Future<void> wipeDB() async {
+    await deleteDatabase(join(await getDatabasesPath(), _databaseName));
+  }
+
   Future _onCreate(Database db, int version) async {
     await db.execute(
-      'CREATE TABLE transactions(id INTEGER PRIMARY KEY AUTOINCREMENT, userId TEXT, transactionId TEXT, recipient TEXT, date TEXT, total REAL, totalSumKr INTEGER, totalSumOre INTEGER, totalSumStr TEXT, items TEXT, categoryDesc TEXT, categoryID INTEGER, FOREIGN KEY (categoryID) REFERENCES category (id) )',
+      '''CREATE TABLE transactions(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT,
+        totalAmount REAL,
+        store TEXT,
+        bankTransactionID INTEGER,
+        receiptID INTEGER,
+        categoryID INTEGER,
+        categoryDesc TEXT,
+        FOREIGN KEY (bankTransactionID) REFERENCES bankTransaction (id),
+        FOREIGN KEY (receiptID) REFERENCES receipt (id),
+        FOREIGN KEY (categoryID) REFERENCES category (id) )''',
     );
+
     await db.execute(
-      'CREATE TABLE categories(id INTEGER PRIMARY KEY AUTOINCREMENT, description TEXT, color INTEGER)',
+      '''CREATE TABLE receipts(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId TEXT, transactionId TEXT,
+        recipient TEXT,
+        date TEXT,
+        total REAL,
+        totalSumKr INTEGER,
+        totalSumOre INTEGER,
+        totalSumStr TEXT,
+        items TEXT,
+        categoryDesc TEXT,
+        categoryID INTEGER,
+        FOREIGN KEY (categoryID) REFERENCES category (id) )''',
+    );
+
+    await db.execute(
+      '''CREATE TABLE bankTransactions(
+        id INTEGER PRIMARY KEY AUTOINCREMENT)''',
+    );
+
+    await db.execute(
+      '''CREATE TABLE categories(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        description TEXT,
+        color INTEGER)''',
     );
 
     await insertDefaultCategories(db);
   }
 
-  Map<String, dynamic> encodeTransaction(Receipt transaction) {
+  /*************************** TRANSACTIONS *******************************/
+
+  // Define a function that inserts transactions into the database
+  Future<void> insertTransaction(Transaction transaction) async {
+    // Get a reference to the database.
+    final db = await instance.database;
+    await db?.insert(
+      'transactions',
+      encodeTransaction(transaction),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  // A method that retrieves all the transactions from the transactions table.
+  Future<List<Transaction>> getAllTransactions() async {
+    final db = await instance.database;
+
+    final List<Map<String, dynamic?>>? maps = await db?.query('transactions');
+
+    // Convert the List<Map<String, dynamic> into a List<transaction>.
+    return List.generate(maps!.length, (i) {
+      return Transaction(
+        id: maps[i]['id'],
+        store: maps[i]['store'],
+        date: DateTime.parse(maps[i]['date']),
+        totalAmount: maps[i]['totalAmount'],
+        bankTransactionID: maps[i]['bankTransactionID'],
+        receiptID: maps[i]['receiptID'],
+        categoryID: maps[i]['categoryID'],
+        categoryDesc: maps[i]['categoryDesc'],
+      );
+    });
+  }
+
+  Future<void> updateTransaction(Transaction transaction) async {
+    // Get a reference to the database.
+    final db = await instance.database;
+
+    int? categoryID =
+        await getCategoryIDfromDescription(transaction.categoryDesc!);
+    transaction.categoryID = categoryID;
+
+    // Update the given transaction.
+    await db?.update(
+      'transactions',
+      transaction.toMap(),
+      // Ensure that the transaction has a matching id.
+      where: 'id = ?',
+      // Pass the transaction's id as a whereArg to prevent SQL injection.
+      whereArgs: [transaction.id],
+    );
+  }
+
+  Future<void> deleteTransaction(int id) async {
+    final db = await instance.database;
+
+    // Remove the transaction from the database.
+    await db?.delete(
+      'transactions',
+      // Use a `where` clause to delete a specific transaction.
+      where: 'id = ?',
+      // Pass the transaction's id as a whereArg to prevent SQL injection.
+      whereArgs: [id],
+    );
+  }
+
+  Map<String, dynamic> encodeTransaction(Transaction transaction) {
     return transaction.toMap();
   }
 
-  Future<int?> getcategoryIDfromDescription(String description) async {
+  /*************************** BANKTRANSACTIONS *******************************/
+
+  // Future<BankTransaction> getBankTransactionfromID(int id) async {
+  //  similar to getReceiptFromID
+  // }
+
+  /*************************** RECEIPTS *******************************/
+
+  // Define a function that inserts receipts into the database
+  Future<int> insertReceipt(Receipt receipt, String categoryDesc) async {
+    // Get a reference to the database.
+    int? categoryID = await getCategoryIDfromDescription(categoryDesc);
+    final db = await instance.database;
+    receipt.categoryDesc = categoryDesc;
+    receipt.categoryID = categoryID;
+    return db!.insert(
+      'receipts',
+      encodeReceipt(receipt),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  // A method that retrieves all the receipts from the receipts table.
+  Future<List<Receipt>> getAllReceipts() async {
+    final db = await instance.database;
+
+    final List<Map<String, dynamic?>>? maps = await db?.query('receipts');
+
+    // Convert the List<Map<String, dynamic> into a List<receipts>.
+    return List.generate(maps!.length, (i) {
+      return Receipt(
+        id: maps[i]['id'],
+        userId: maps[i]['userId'],
+        transactionId: maps[i]['transactionId'],
+        recipient: maps[i]['recipient'],
+        date: DateTime.parse(maps[i]['date']),
+        total: maps[i]['total'],
+        items: parseReceiptItems(maps[i]['items']),
+        totalSumKr: maps[i]['totalSumKr'],
+        totalSumOre: maps[i]['totalSumOre'],
+        totalSumStr: maps[i]['totalSumStr'],
+        categoryDesc: maps[i]['categoryDesc'],
+      );
+    });
+  }
+
+  Future<Receipt> getReceiptfromID(int id) async {
+    final db = await instance.database;
+    List<Map<String, dynamic?>>? maps =
+        await db?.rawQuery('SELECT * FROM receipts WHERE id = "${id}"');
+
+    return Receipt(
+      id: maps![0]['id'],
+      userId: maps[0]['userId'],
+      transactionId: maps[0]['transactionId'],
+      recipient: maps[0]['recipient'],
+      date: DateTime.parse(maps[0]['date']),
+      total: maps[0]['total'],
+      items: parseReceiptItems(maps[0]['items']),
+      totalSumKr: maps[0]['totalSumKr'],
+      totalSumOre: maps[0]['totalSumOre'],
+      totalSumStr: maps[0]['totalSumStr'],
+      categoryDesc: maps[0]['categoryDesc'],
+    );
+  }
+
+  Future<void> updateReceipt(Receipt transaction) async {
+    // Get a reference to the database.
+    final db = await instance.database;
+
+    int? categoryID =
+        await getCategoryIDfromDescription(transaction.categoryDesc!);
+    transaction.categoryID = categoryID;
+
+    // Update the given receipt.
+    await db?.update(
+      'receipts',
+      transaction.toMap(),
+      // Ensure that the receipt has a matching id.
+      where: 'id = ?',
+      // Pass the receipt's id as a whereArg to prevent SQL injection.
+      whereArgs: [transaction.id],
+    );
+  }
+
+  Future<void> deleteReceipt(int id) async {
+    final db = await instance.database;
+
+    // Remove the receipt from the database.
+    await db?.delete(
+      'receipts',
+      // Use a `where` clause to delete a specific receipt.
+      where: 'id = ?',
+      // Pass the receipt's id as a whereArg to prevent SQL injection.
+      whereArgs: [id],
+    );
+  }
+
+  Map<String, dynamic> encodeReceipt(Receipt receipt) {
+    return receipt.toMap();
+  }
+
+  List<ReceiptItem> parseReceiptItems(String decodedString) {
+    List<dynamic> decoded = jsonDecode(decodedString);
+    List<ReceiptItem> decodedItems = <ReceiptItem>[];
+    for (var item in decoded) {
+      ReceiptItem receiptItem = ReceiptItem.fromJson(item);
+      decodedItems.add(receiptItem);
+    }
+
+    return decodedItems;
+  }
+
+  /*************************** CATEGORIES *******************************/
+
+  static Future<int?> getCategoryIDfromDescription(String description) async {
     final db = await instance.database;
     List<Map<String, Object?>>? obj = await db?.rawQuery(
         'SELECT id FROM categories WHERE description = "${description}" ');
     return obj![0]['id'] as int;
+  }
+
+  static Future<String?> getCategoryDescriptionfromID(int id) async {
+    final db = await instance.database;
+    List<Map<String, Object?>>? obj = await db
+        ?.rawQuery('SELECT description FROM categories WHERE id = "${id}"');
+    return obj![0]['description'] as String;
   }
 
   Future<void> insertDefaultCategories(Database db) async {
@@ -90,50 +320,35 @@ class SQFLite {
     // Get a reference to the database.
     final db = await instance.database;
 
-    // Update the given transaction.
+    // Update the given category.
     await db?.update(
       'categories',
       category.toJson(),
-      // Ensure that the transaction has a matching id.
+      // Ensure that the category has a matching id.
       where: 'id = ?',
-      // Pass the transaction's id as a whereArg to prevent SQL injection.
+      // Pass the category's id as a whereArg to prevent SQL injection.
       whereArgs: [category.id],
     );
   }
 
   Future<void> deleteCategory(int id) async {
     final db = await instance.database;
-    int? uncategorizedID = await getcategoryIDfromDescription("Uncategorized");
+    int? uncategorizedID = await getCategoryIDfromDescription("Uncategorized");
 
     await db?.rawQuery(
         'UPDATE transactions SET categoryID = ${uncategorizedID}, categoryDesc = "Uncategorized" WHERE categoryID = ${id} ');
 
-    // Remove the transaction from the database.
+    // Remove the category from the database.
     await db?.delete(
       'categories',
-      // Use a `where` clause to delete a specific transaction.
+      // Use a `where` clause to delete a specific category.
       where: 'id = ?',
-      // Pass the transaction's id as a whereArg to prevent SQL injection.
+      // Pass the category's id as a whereArg to prevent SQL injection.
       whereArgs: [id],
     );
   }
 
-  // Define a function that inserts transactions into the database
-  Future<void> inserttransaction(
-      Receipt transaction, String categoryDesc) async {
-    // Get a reference to the database.
-    int? categoryID = await getcategoryIDfromDescription(categoryDesc);
-    final db = await instance.database;
-    transaction.categoryDesc = categoryDesc;
-    transaction.categoryID = categoryID;
-    await db?.insert(
-      'transactions',
-      encodeTransaction(transaction),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-  }
-
-  Future<List<Category>> categories() async {
+  Future<List<Category>> getAllcategories() async {
     final db = await instance.database;
     final List<Map<String, dynamic?>>? maps = await db?.query('categories');
     return List.generate(maps!.length, (i) {
@@ -142,76 +357,5 @@ class SQFLite {
           color: Color(maps[i]['color']),
           id: maps[i]['id']);
     });
-  }
-
-  List<ReceiptItem> parseReceiptItems(String decodedString) {
-    List<dynamic> decoded = jsonDecode(decodedString);
-    List<ReceiptItem> decodedItems = <ReceiptItem>[];
-    for (var item in decoded) {
-      ReceiptItem receiptItem = ReceiptItem.fromJson(item);
-      decodedItems.add(receiptItem);
-    }
-
-    return decodedItems;
-  }
-
-  // A method that retrieves all the transactions from the transactions table.
-  Future<List<Receipt>> transactions() async {
-    final db = await instance.database;
-
-    final List<Map<String, dynamic?>>? maps = await db?.query('transactions');
-
-    // Convert the List<Map<String, dynamic> into a List<transaction>.
-    return List.generate(maps!.length, (i) {
-      return Receipt(
-        id: maps[i]['id'],
-        userId: maps[i]['userId'],
-        transactionId: maps[i]['transactionId'],
-        recipient: maps[i]['recipient'],
-        date: DateTime.parse(maps[i]['date']),
-        total: maps[i]['total'],
-        items: parseReceiptItems(maps[i]['items']),
-        totalSumKr: maps[i]['totalSumKr'],
-        totalSumOre: maps[i]['totalSumOre'],
-        totalSumStr: maps[i]['totalSumStr'],
-        categoryDesc: maps[i]['categoryDesc'],
-      );
-    });
-  }
-
-  Future<void> updatetransaction(Receipt transaction) async {
-    // Get a reference to the database.
-    final db = await instance.database;
-
-    int? categoryID =
-        await getcategoryIDfromDescription(transaction.categoryDesc!);
-    transaction.categoryID = categoryID;
-
-    // Update the given transaction.
-    await db?.update(
-      'transactions',
-      transaction.toMap(),
-      // Ensure that the transaction has a matching id.
-      where: 'id = ?',
-      // Pass the transaction's id as a whereArg to prevent SQL injection.
-      whereArgs: [transaction.id],
-    );
-  }
-
-  Future<void> deletetransaction(int id) async {
-    final db = await instance.database;
-
-    // Remove the transaction from the database.
-    await db?.delete(
-      'transactions',
-      // Use a `where` clause to delete a specific transaction.
-      where: 'id = ?',
-      // Pass the transaction's id as a whereArg to prevent SQL injection.
-      whereArgs: [id],
-    );
-  }
-
-  Future<void> wipeDB() async {
-    await deleteDatabase(join(await getDatabasesPath(), _databaseName));
   }
 }
