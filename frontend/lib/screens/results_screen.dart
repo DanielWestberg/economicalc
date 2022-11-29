@@ -4,7 +4,7 @@ import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:economicalc_client/models/category.dart';
-import 'package:economicalc_client/models/transaction_event.dart';
+import 'package:economicalc_client/models/receipt.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -124,7 +124,6 @@ class ResultsScreenState extends State<ResultsScreen> {
                       setState(() {
                         dropdownValue = value!;
                         transaction.categoryDesc = dropdownValue; 
-                        print(transaction.categoryID);
                       });
                     },
                     items: categories

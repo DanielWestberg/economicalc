@@ -1,5 +1,7 @@
 import 'package:economicalc_client/helpers/sqlite.dart';
+import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/screens/results_screen.dart';
+import 'package:economicalc_client/screens/settings_screen.dart';
 import 'dart:io';
 
 import 'package:economicalc_client/screens/statistics_screen.dart';
@@ -10,9 +12,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-
 import '../models/category.dart';
-import '../models/transaction_event.dart';
+import '../models/receipt.dart';
 
 late BuildContext _context;
 
@@ -31,15 +32,13 @@ class _HomeScreen extends State<HomeScreen> {
   static void goToResults(XFile? image) {
     //process stuff
 
-  Navigator.of(_context)
-  .push(MaterialPageRoute(
-     builder: (context) => ResultsScreen(image: image)
-  ))
-  .then((value) {
-    print("hoooo");
-    Phoenix.rebirth(_context);
-  });
-
+    Navigator.of(_context)
+        .push(MaterialPageRoute(
+            builder: (context) => ResultsScreen(image: image)))
+        .then((value) {
+      print("hoooo");
+      Phoenix.rebirth(_context);
+    });
 
     /*Navigator.push(_context,
         MaterialPageRoute(builder: (_context) => ResultsScreen(image: image))
@@ -49,7 +48,7 @@ class _HomeScreen extends State<HomeScreen> {
   }
 
   Widget iconSection = Container(
-    color: Color(0xFFB8D8D8),
+    color: Utils.backgroundColor,
     padding: EdgeInsets.only(top: 10),
     child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -102,28 +101,28 @@ class _HomeScreen extends State<HomeScreen> {
   );
 
   Widget drawer = Drawer(
-    backgroundColor: new Color(0xff69A3A7),
+    backgroundColor: Utils.drawerColor,
     child: ListView(
       padding: EdgeInsets.fromLTRB(0, 80, 0, 0),
       itemExtent: 70.0,
       children: [
         ListTile(
-          tileColor: new Color(0xffD4E6F3),
+          tileColor: Utils.tileColor,
           shape: RoundedRectangleBorder(
-            side: BorderSide(color: new Color(0xff69A3A7), width: 10),
+            side: BorderSide(color: Utils.drawerColor, width: 10),
           ),
           title: Text('History',
               style:
                   GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
           onTap: () {
-            // Update the state of the app.
-            // ...
+            Navigator.push(_context,
+                MaterialPageRoute(builder: (_context) => HomeScreen()));
           },
         ),
         ListTile(
-          tileColor: new Color(0xffD4E6F3),
+          tileColor: Utils.tileColor,
           shape: RoundedRectangleBorder(
-            side: BorderSide(color: new Color(0xff69A3A7), width: 10),
+            side: BorderSide(color: Utils.drawerColor, width: 10),
           ),
           title: Text('Scan',
               style:
@@ -133,16 +132,16 @@ class _HomeScreen extends State<HomeScreen> {
           },
         ),
         ListTile(
-          tileColor: new Color(0xffD4E6F3),
+          tileColor: Utils.tileColor,
           shape: RoundedRectangleBorder(
-            side: BorderSide(color: new Color(0xff69A3A7), width: 10),
+            side: BorderSide(color: Utils.drawerColor, width: 10),
           ),
           title: Text('Settings',
               style:
                   GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
           onTap: () {
-            // Update the state of the app.
-            // ...
+            Navigator.push(_context,
+                MaterialPageRoute(builder: (_context) => SettingsScreen()));
           },
         ),
       ],
@@ -157,7 +156,7 @@ class _HomeScreen extends State<HomeScreen> {
             appBar: AppBar(
               toolbarHeight: 80,
               toolbarOpacity: 1,
-              backgroundColor: Color(0xFFB8D8D8),
+              backgroundColor: Utils.backgroundColor,
               foregroundColor: Colors.black,
               title: Column(children: [
                 Text("EconomiCalc",
@@ -168,6 +167,16 @@ class _HomeScreen extends State<HomeScreen> {
               ]),
               centerTitle: true,
               elevation: 0,
+              actions: [
+                IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                          _context,
+                          MaterialPageRoute(
+                              builder: (_context) => SettingsScreen()));
+                    },
+                    icon: Icon(Icons.settings))
+              ],
             ),
             key: _globalKey,
             drawer: drawer,

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:economicalc_client/models/category.dart';
-import 'package:economicalc_client/models/transaction_event.dart';
 import 'package:flutter/material.dart';
+import 'package:economicalc_client/models/receipt.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart';
@@ -21,6 +21,7 @@ class SQFLite {
     }
 
     // lazily instantiate the db the first time it is accessed
+    // deleteDatabase(_databaseName);
     _database = await initDatabase();
     return _database;
   }
@@ -133,6 +134,7 @@ class SQFLite {
     // Convert the List<Map<String, dynamic> into a List<transaction>.
     return List.generate(maps!.length, (i) {
       return Receipt(
+        id: maps[i]['id'],
         userId: maps[i]['userId'],
         transactionId: maps[i]['transactionId'],
         recipient: maps[i]['recipient'],
@@ -151,6 +153,9 @@ class SQFLite {
     // Get a reference to the database.
     final db = await instance.database;
 
+    int? categoryID = await getcategoryIDfromDescription(transaction.categoryDesc!);
+    transaction.categoryID = categoryID;
+
     // Update the given transaction.
     await db?.update(
       'transactions',
@@ -158,7 +163,7 @@ class SQFLite {
       // Ensure that the transaction has a matching id.
       where: 'id = ?',
       // Pass the transaction's id as a whereArg to prevent SQL injection.
-      whereArgs: [transaction.userId],
+      whereArgs: [transaction.id],
     );
   }
 

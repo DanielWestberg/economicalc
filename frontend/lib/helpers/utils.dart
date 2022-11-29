@@ -19,12 +19,4 @@ class Utils {
     Category(
         description: "My proud collection of teddy bears", color: Colors.brown),
   ];
-
-  static String getCategoryDescription(Category category) {
-    return category.description;
-  }
-
-  static Category getCategory(String desc, categories) {
-    return categories.firstWhere((item) => item.description == desc);
-  }
 }

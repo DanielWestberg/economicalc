@@ -40,11 +40,14 @@ dependencies:
   intl: ^0.17.0
   syncfusion_flutter_charts: ^20.3.57
   image_picker: ^0.8.6
+
   easy_image_viewer: ^1.2.0
   webview_flutter: ^3.0.4
   loading_animation_widget: ^1.2.0+3
   sqflite: ^2.2.0+3
   flutter_phoenix: ^1.1.0
+  settings_ui: ^2.0.2
+  flutter_colorpicker: ^1.0.3
 
 dev_dependencies:
   flutter_test:

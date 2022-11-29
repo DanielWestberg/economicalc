@@ -21,4 +21,12 @@ class Category {
       id: json['id']
     );
   }
+
+  static String getCategoryDescription(Category category) {
+    return category.description;
+  }
+
+  static Category getCategory(String desc, categories) {
+    return categories.firstWhere((item) => item.description == desc);
+  }
 }
