@@ -1,6 +1,6 @@
 import 'package:economicalc_client/models/response.dart';
 import 'package:economicalc_client/models/transaction.dart';
-import 'package:economicalc_client/models/transaction_event.dart';
+import 'package:economicalc_client/models/receipt.dart';
 import 'package:flutter/material.dart';
 
 import 'package:path/path.dart';

@@ -3,11 +3,13 @@ import 'dart:developer';
 
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/models/transaction.dart';
-import 'package:economicalc_client/models/transaction_event.dart';
+import 'package:flutter/services.dart';
+import 'package:economicalc_client/helpers/utils.dart';
+import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/screens/transaction_details_screen.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
@@ -70,7 +72,7 @@ class HistoryListState extends State<HistoryList> {
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Container(
-        color: Color(0xFFB8D8D8),
+        color: Utils.backgroundColor,
         padding: const EdgeInsets.all(20),
         child: Text(
           "History",
@@ -89,7 +91,7 @@ class HistoryListState extends State<HistoryList> {
               sortByDate();
               return Expanded(
                   child: RefreshIndicator(
-                      onRefresh: () => fetchMockedTransactions(),
+                      onRefresh: () async => fetchTransactions(),
                       backgroundColor: Color(0xFFB8D8D8),
                       color: Colors.black,
                       child: ListView.builder(
@@ -142,7 +144,7 @@ class HistoryListState extends State<HistoryList> {
             } else {
               return Center(
                   child: LoadingAnimationWidget.threeArchedCircle(
-                      color: Colors.black, size: 20));
+                      color: Colors.black, size: 40));
             }
           })
     ]);

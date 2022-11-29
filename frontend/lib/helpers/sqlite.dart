@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
-import 'package:economicalc_client/models/transaction_event.dart';
 import 'package:economicalc_client/models/transaction.dart' as bank_transaction;
 import 'package:flutter/services.dart';
+import 'package:economicalc_client/models/category.dart';
+import 'package:flutter/material.dart';
+import 'package:economicalc_client/models/receipt.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart';
@@ -17,8 +19,12 @@ class SQFLite {
   SQFLite._privateConstructor();
   static final SQFLite instance = SQFLite._privateConstructor();
   Future<Database?> get database async {
-    if (_database != null) return _database;
+    if (_database != null) {
+      return _database;
+    }
+
     // lazily instantiate the db the first time it is accessed
+    // deleteDatabase(_databaseName);
     _database = await initDatabase();
     return _database;
   }
@@ -33,6 +39,12 @@ class SQFLite {
     await db.execute(
       'CREATE TABLE transactions(id INTEGER PRIMARY KEY AUTOINCREMENT, userId TEXT, transactionId TEXT, recipient TEXT, date TEXT, total REAL, totalSumKr INTEGER, totalSumOre INTEGER, totalSumStr TEXT, items TEXT)',
     );
+
+    await db.execute(
+      'CREATE TABLE categories(id INTEGER PRIMARY KEY AUTOINCREMENT, description TEXT, color INTEGER)',
+    );
+
+    await insertDefaultCategories(db);
 
     await db.execute('''CREATE TABLE banktransactions(
        id                       VARCHAR(32) NOT NULL UNIQUE PRIMARY KEY
@@ -90,16 +102,101 @@ class SQFLite {
     return transaction.toMap();
   }
 
-  // Define a function that inserts transactions into the database
-  Future<void> inserttransaction(Receipt transaction) async {
+  Future<int?> getcategoryIDfromDescription(String description) async {
+    final db = await instance.database;
+    List<Map<String, Object?>>? obj = await db?.rawQuery(
+        'SELECT id FROM categories WHERE description = "${description}" ');
+    return obj![0]['id'] as int;
+  }
+
+  Future<void> insertDefaultCategories(Database db) async {
+    List<Category> categories = [
+      Category(description: "Uncategorized", color: Colors.grey),
+      Category(description: "Groceries", color: Colors.blue),
+      Category(description: "Hardware", color: Colors.black),
+      Category(description: "Transportation", color: Colors.purple),
+      Category(description: "Stuff", color: Colors.green),
+      Category(
+          description: "My proud collection of teddy bears",
+          color: Colors.brown),
+    ];
+    ;
+    for (var category in categories) {
+      await db.insert(
+        'categories',
+        category.toJson(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+  }
+
+  Future<void> insertCategory(Category category) async {
     // Get a reference to the database.
 
     final db = await instance.database;
+    await db?.insert(
+      'categories',
+      category.toJson(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> updateCategory(Category category) async {
+    // Get a reference to the database.
+    final db = await instance.database;
+
+    // Update the given transaction.
+    await db?.update(
+      'categories',
+      category.toJson(),
+      // Ensure that the transaction has a matching id.
+      where: 'id = ?',
+      // Pass the transaction's id as a whereArg to prevent SQL injection.
+      whereArgs: [category.id],
+    );
+  }
+
+  Future<void> deleteCategory(int id) async {
+    final db = await instance.database;
+    int? uncategorizedID = await getcategoryIDfromDescription("Uncategorized");
+
+    await db?.rawQuery(
+        'UPDATE transactions SET categoryID = ${uncategorizedID}, categoryDesc = "Uncategorized" WHERE categoryID = ${id} ');
+
+    // Remove the transaction from the database.
+    await db?.delete(
+      'categories',
+      // Use a `where` clause to delete a specific transaction.
+      where: 'id = ?',
+      // Pass the transaction's id as a whereArg to prevent SQL injection.
+      whereArgs: [id],
+    );
+  }
+
+  // Define a function that inserts transactions into the database
+  Future<void> inserttransaction(
+      Receipt transaction, String categoryDesc) async {
+    // Get a reference to the database.
+    int? categoryID = await getcategoryIDfromDescription(categoryDesc);
+    final db = await instance.database;
+    transaction.categoryDesc = categoryDesc;
+    transaction.categoryID = categoryID;
     await db?.insert(
       'transactions',
       encodeTransaction(transaction),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+
+  Future<List<Category>> categories() async {
+    final db = await instance.database;
+    final List<Map<String, dynamic?>>? maps = await db?.query('categories');
+    return List.generate(maps!.length, (i) {
+      return Category(
+          description: maps[i]['description'],
+          color: Color(maps[i]['color']),
+          id: maps[i]['id']);
+    });
   }
 
   List<ReceiptItem> parseReceiptItems(String decodedString) {
@@ -122,6 +219,7 @@ class SQFLite {
     // Convert the List<Map<String, dynamic> into a List<transaction>.
     return List.generate(maps!.length, (i) {
       return Receipt(
+        id: maps[i]['id'],
         userId: maps[i]['userId'],
         transactionId: maps[i]['transactionId'],
         recipient: maps[i]['recipient'],
@@ -131,6 +229,7 @@ class SQFLite {
         totalSumKr: maps[i]['totalSumKr'],
         totalSumOre: maps[i]['totalSumOre'],
         totalSumStr: maps[i]['totalSumStr'],
+        categoryDesc: maps[i]['categoryDesc'],
       );
     });
   }
@@ -139,6 +238,10 @@ class SQFLite {
     // Get a reference to the database.
     final db = await instance.database;
 
+    int? categoryID =
+        await getcategoryIDfromDescription(transaction.categoryDesc!);
+    transaction.categoryID = categoryID;
+
     // Update the given transaction.
     await db?.update(
       'transactions',
@@ -146,7 +249,7 @@ class SQFLite {
       // Ensure that the transaction has a matching id.
       where: 'id = ?',
       // Pass the transaction's id as a whereArg to prevent SQL injection.
-      whereArgs: [transaction.userId],
+      whereArgs: [transaction.id],
     );
   }
 
@@ -166,6 +269,5 @@ class SQFLite {
   Future<void> wipeDB() async {
     await deleteDatabase(join(await getDatabasesPath(), _databaseName));
   }
-
   void main() {}
 }
