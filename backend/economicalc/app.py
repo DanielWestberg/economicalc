@@ -27,6 +27,8 @@ def create_app(config):
 
     @app.route("/users/<bankId>/transactions", methods=["POST"])
     def post_transactions(bankId):
+        if request.content_type != "application/json":
+            return make_response(f"Expected content type application/json, not {request.content_type}", unsupported_media_type)
         transaction_dict = request.json
         transaction_dict.pop("_id", None)
 
