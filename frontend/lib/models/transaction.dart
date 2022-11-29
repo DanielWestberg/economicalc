@@ -31,6 +31,23 @@ class Transaction {
     providerMutability = json['providerMutability'];
   }
 
+  Map<String, dynamic> toDbFormat() {
+    final Map<String, dynamic> data = Map<String, dynamic>();
+
+    data['id'] = id;
+    data['accountId'] = accountId;
+    data['amountvalueunscaledValue'] = amount.value.unscaledValue;
+    data['amountvaluescale'] = amount.value.scale;
+    data['amountcurrencyCode'] = amount.currencyCode;
+    data['descriptionsoriginal'] = descriptions.original;
+    data['descriptionsdisplay'] = descriptions.display;
+    data['datesbooked'] = dates.booked;
+    data['typestype'] = types.type;
+    data['status'] = status;
+    data['providerMutability'] = providerMutability;
+    return data;
+  }
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = Map<String, dynamic>();
     data['id'] = this.id;

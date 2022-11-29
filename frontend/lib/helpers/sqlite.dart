@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
-import 'dart:html';
 import 'package:economicalc_client/models/transaction_event.dart';
 import 'package:economicalc_client/models/transaction.dart' as bank_transaction;
 import 'package:flutter/services.dart';
@@ -36,7 +35,7 @@ class SQFLite {
     );
 
     await db.execute('''CREATE TABLE banktransactions(
-       id                       VARCHAR(32) NOT NULL PRIMARY KEY
+       id                       VARCHAR(32) NOT NULL UNIQUE PRIMARY KEY
       ,accountId                VARCHAR(32) NOT NULL
       ,amountvalueunscaledValue VARCHAR(32) NOT NULL
       ,amountvaluescale         VARCHAR(32) NOT NULL
@@ -48,18 +47,6 @@ class SQFLite {
       ,status                   VARCHAR(32) NOT NULL
       ,providerMutability       VARCHAR(32) NOT NULL
         ); ''');
-
-    Future<String> jsondata = rootBundle.loadString('test_data.json');
-    final List<dynamic> data = await json.decode(await jsondata);
-    final List<bank_transaction.Transaction> test_transactions = [];
-    print(data);
-    data.forEach((transaction) {
-      test_transactions.add(transaction);
-    });
-    print(test_transactions);
-    test_transactions.forEach((transaction) {
-      postBankTransactions(transaction);
-    });
   }
 
   Future<List<bank_transaction.Transaction>> getBankTransactions() async {
@@ -79,22 +66,22 @@ class SQFLite {
                   scale: maps[i]['amountvaluescale']),
               currencyCode: maps[i]['amountcurrencyCode']),
           descriptions: bank_transaction.Descriptions(
-              original: maps[i]['descriptionoriginal'],
+              original: maps[i]['descriptionsoriginal'],
               display: maps[i]['descriptionsdisplay']),
-          dates: bank_transaction.Dates(booked: maps[i]['datebooked']),
+          dates: bank_transaction.Dates(booked: maps[i]['datesbooked']),
           types: bank_transaction.Types(type: maps[i]['typestype']),
           status: maps[i]['status'],
           providerMutability: maps[i]['providerMutability']);
     });
   }
 
-  Future<void> postBankTransactions(
+  Future<void> postBankTransaction(
       bank_transaction.Transaction transaction) async {
     final db = await instance.database;
 
     await db?.insert(
       'banktransactions',
-      transaction.toJson(),
+      transaction.toDbFormat(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
