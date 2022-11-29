@@ -12,6 +12,8 @@ class Receipt {
   int? totalSumOre;
   String? totalSumStr;
   List<ReceiptItem> items;
+  String? categoryDesc;
+  int? categoryID;
 
   Receipt(
       {this.userId,
@@ -22,7 +24,9 @@ class Receipt {
       this.totalSumKr,
       this.totalSumOre,
       this.totalSumStr,
-      required this.items});
+      required this.items,
+      this.categoryDesc,
+      this.categoryID});
 
   Map<String, dynamic> toMap() {
     
@@ -36,6 +40,8 @@ class Receipt {
       'totalSumOre': totalSumOre,
       'totalSumStr': totalSumStr,
       'items': jsonEncode(items),
+      'categoryDesc': categoryDesc,
+      'categoryID': categoryID
     };
   }
 

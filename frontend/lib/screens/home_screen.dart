@@ -11,6 +11,7 @@ import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../models/category.dart';
 import '../models/transaction_event.dart';
 
 late BuildContext _context;
@@ -91,7 +92,7 @@ class _HomeScreen extends State<HomeScreen> {
                   MaterialPageRoute(builder: (_context) => TinkLogin()));
             }),
           ),
-          IconButton(
+          IconButton( 
             icon: Icon(Icons.filter_alt),
             onPressed: (() {
               print("filter");

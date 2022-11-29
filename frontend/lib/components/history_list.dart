@@ -16,7 +16,7 @@ class HistoryList extends StatefulWidget {
 
 class HistoryListState extends State<HistoryList> {
   late Future<List<Receipt>> dataFuture;
-  late List<TransactionEvent> transactions;
+  late List<Receipt>transactions;
   final SQFLite dbConnector = SQFLite.instance;
 
   @override
@@ -58,7 +58,7 @@ class HistoryListState extends State<HistoryList> {
               sortByDate();
               return Expanded(
                   child: RefreshIndicator(
-                      onRefresh: () => fetchMockedTransactions(),
+                      onRefresh: () async  => fetchTransactions(),
                       backgroundColor: Color(0xFFB8D8D8),
                       color: Colors.black,
                       child: ListView.builder(

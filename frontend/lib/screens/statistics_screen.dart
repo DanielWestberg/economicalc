@@ -189,10 +189,10 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   void onSort(int columnIndex, bool ascending) {
     if (columnIndex == 0) {
       rows.sort((row1, row2) =>
-          compareString(ascending, row1.itemName, row2.itemName));
+          Utils.compareString(ascending, row1.itemName, row2.itemName));
     } else if (columnIndex == 1) {
       rows.sort(
-          (row1, row2) => compareNumber(ascending, row1.amount, row2.amount));
+          (row1, row2) => Utils.compareNumber(ascending, row1.amount, row2.amount));
     }
 
     setState(() {
@@ -213,7 +213,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
 
   @override
   Widget itemsChart() {
-    rows.sort((a, b) => compareNumber(true, a.amount, b.amount));
+    rows.sort((a, b) => Utils.compareNumber(true, a.amount, b.amount));
     return Container(
         padding: EdgeInsets.all(5),
         child: SfCartesianChart(

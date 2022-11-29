@@ -60,7 +60,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                   Padding(
                       padding: EdgeInsets.only(left: 5),
                       child: Text(
-                        "Mat & Dryck",
+                        widget.transaction.categoryDesc as String,
                         style: TextStyle(
                             fontSize: fontSize, fontWeight: FontWeight.w600),
                       )),
@@ -139,10 +139,10 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   void onSort(int columnIndex, bool ascending) {
     if (columnIndex == 0) {
       widget.transaction.items.sort((row1, row2) =>
-          compareString(ascending, row1.itemName, row2.itemName));
+          Utils.compareString(ascending, row1.itemName, row2.itemName));
     } else if (columnIndex == 1) {
       widget.transaction.items.sort(
-          (row1, row2) => compareNumber(ascending, row1.amount, row2.amount));
+          (row1, row2) => Utils.compareNumber(ascending, row1.amount, row2.amount));
     }
 
     setState(() {
