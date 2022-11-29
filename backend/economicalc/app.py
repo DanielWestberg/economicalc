@@ -69,6 +69,31 @@ def create_app(config):
 
         return make_response(jsonify(data=transaction.to_dict(True)), created)
 
+    @app.route("/users/<bankId>/transactions/<ObjectId:transactionId>", methods=["PUT"])
+    def user_transaction_by_id(bankId, transactionId):
+        # When more methods are added for this URL, check request.method to determine the appropriate method to call
+        return put_transaction(bankId, transactionId, request)
+
+
+    def put_transaction(bankId, transactionId, request):
+        if request.content_type != "application/json":
+            return make_response(f"Expected content type application/json, not {request.content_type}", unsupported_media_type)
+
+        transaction_dict = request.json
+
+        new_transaction = parse_transaction_or_make_response(transaction_dict)
+        if type(new_transaction) != Transaction:
+            return new_transaction
+
+        user = db.users.find_one_or_404({"bankId": bankId, "transactions._id": transactionId}, {"_id": 0, "transactions.$": 1})
+        old_transaction = user["transactions"][0]
+        new_transaction.id = old_transaction["_id"]
+
+        new_transaction.image_id = old_transaction["image_id"] if "image_id" in old_transaction else None
+
+        db.users.find_one_and_update({"bankId": bankId, "transactions._id": transactionId}, {"$set": {"transactions.$": new_transaction.to_dict()}})
+        return jsonify(data=new_transaction.to_dict(True))
+
 
     @app.route("/users/<bankId>/transactions/<ObjectId:transactionId>/image", methods=["GET", "PUT"])
     def user_transaction_image(bankId, transactionId):
