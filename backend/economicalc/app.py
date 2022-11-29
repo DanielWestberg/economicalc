@@ -62,8 +62,15 @@ def create_app(config):
         return make_response(jsonify(data=transaction.to_dict(True)), created)
 
 
-    @app.route("/users/<bankId>/transactions/<ObjectId:transactionId>/image", methods=["GET"])
-    def get_image(bankId, transactionId):
+    @app.route("/users/<bankId>/transactions/<ObjectId:transactionId>/image", methods=["GET", "PUT"])
+    def user_transaction_image(bankId, transactionId):
+        if request.method == "GET":
+            return get_image(bankId, transactionId, request)
+
+        return put_image(bankId, transactionId, request)
+
+
+    def get_image(bankId, transactionId, request):
         user = db.users.find_one_or_404({"bankId": bankId, "transactions._id": transactionId}, {"_id": 0, "transactions.$": 1})
         transaction = user["transactions"][0]
         image_id = transaction["image_id"] if "image_id" in transaction else None
@@ -74,8 +81,7 @@ def create_app(config):
         return send_file(image, mimetype=image.content_type[0])
 
     
-    @app.route("/users/<bankId>/transactions/<ObjectId:transactionId>/image", methods=["PUT"])
-    def put_image(bankId, transactionId):
+    def put_image(bankId, transactionId, request):
         user = db.users.find_one_or_404({"bankId": bankId, "transactions._id": transactionId}, {"_id": 0, "transactions.$": 1})
         transaction = user["transactions"][0]
         image_id = transaction["image_id"] if "image_id" in transaction else None
