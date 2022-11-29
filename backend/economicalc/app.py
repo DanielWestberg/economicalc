@@ -17,16 +17,23 @@ def create_app(config):
     db = create_db(app)
     fs = GridFS(db)
 
-    @app.route("/users/<bankId>/transactions", methods=["GET"])
-    def get_transactions(bankId):
+
+    @app.route("/users/<bankId>/transactions", methods=["GET", "POST"])
+    def user_transactions(bankId):
+        if request.method == "GET":
+            return get_transactions(bankId, request)
+        
+        return post_transactions(bankId, request)
+
+
+    def get_transactions(bankId, request):
         user = db.users.find_one_or_404({"bankId": bankId})
         User.make_json_serializable(user)
 
         return jsonify(data=user["transactions"])
 
 
-    @app.route("/users/<bankId>/transactions", methods=["POST"])
-    def post_transactions(bankId):
+    def post_transactions(bankId, request):
         if request.content_type != "application/json":
             return make_response(f"Expected content type application/json, not {request.content_type}", unsupported_media_type)
         transaction_dict = request.json
