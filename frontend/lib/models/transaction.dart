@@ -7,7 +7,7 @@ class Transaction {
   DateTime date;
   double? totalAmount;
   String? store;
-  int? bankTransactionID;
+  String? bankTransactionID;
   int? receiptID;
   int? categoryID;
   String? categoryDesc;

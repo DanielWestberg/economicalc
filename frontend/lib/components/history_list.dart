@@ -1,12 +1,15 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
+import 'package:economicalc_client/models/bank_transaction.dart';
 import 'package:economicalc_client/screens/transaction_details_screen.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -21,15 +24,38 @@ class HistoryListState extends State<HistoryList> {
   late List<Transaction> transactions;
   final SQFLite dbConnector = SQFLite.instance;
 
+  late Future<List<BankTransaction>> bankTransactions;
+  late List<Transaction> transactions_bank;
+
   @override
   void initState() {
     super.initState();
+    load_test_data();
     fetchTransactions();
   }
 
   void fetchTransactions() {
     dbConnector.initDatabase();
     dataFuture = dbConnector.getAllTransactions();
+    bankTransactions = dbConnector.getBankTransactions();
+  }
+
+  void load_test_data() async {
+    final String jsondata =
+        await rootBundle.loadString('assets/test_data.json');
+
+    final data = await json.decode(jsondata);
+
+    final List<BankTransaction> testTransactions = [];
+    BankTransaction trans = BankTransaction.fromJson(data["transactions"][0]);
+    data["transactions"].forEach((transaction) {
+      testTransactions.add(BankTransaction.fromJson(transaction));
+    });
+
+    for (var transaction in testTransactions) {
+      dbConnector.postBankTransaction(transaction);
+    }
+    dbConnector.importMissingBankTransactions();
   }
 
   void sortByDate() {

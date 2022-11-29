@@ -28,7 +28,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   late Future<List<Category>> categoriesFutureBuilder;
   late List<Category> categories;
   late Receipt receipt;
-  late Future<Receipt> receiptFutureBuilder;
+  late Future<Receipt>? receiptFutureBuilder;
 
   @override
   void initState() {
@@ -36,8 +36,12 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     dbConnector.initDatabase();
     dropdownValue = widget.transaction.categoryDesc;
     categoriesFutureBuilder = getCategories(dbConnector);
-    receiptFutureBuilder =
-        getReceipt(dbConnector, widget.transaction.receiptID!);
+    if (widget.transaction.receiptID != null) {
+      receiptFutureBuilder =
+          getReceipt(dbConnector, widget.transaction.receiptID!);
+    } else {
+      receiptFutureBuilder = null;
+    }
   }
 
   @override
@@ -185,7 +189,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                 columns: getColumns(columns),
                 rows: getRows(receipt.items));
           } else {
-            return Text("Unexpected error");
+            return Center(heightFactor: 20, child: Text("No receipt data"));
           }
         });
   }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:economicalc_client/models/bank_transaction.dart';
+import 'package:economicalc_client/models/bank_transaction.dart'
+    as bank_transaction;
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:flutter/material.dart';
@@ -41,14 +42,14 @@ class SQFLite {
   Future _onCreate(Database db, int version) async {
     await db.execute(
       '''CREATE TABLE transactions(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        date TEXT,
-        totalAmount REAL,
-        store TEXT,
-        bankTransactionID INTEGER,
-        receiptID INTEGER,
-        categoryID INTEGER,
-        categoryDesc TEXT,
+        id                  INTEGER NOT NULL UNIQUE PRIMARY KEY AUTOINCREMENT,
+        date                TEXT,
+        totalAmount         REAL,
+        store               TEXT,
+        bankTransactionID   TEXT,
+        receiptID           INTEGER,
+        categoryID          INTEGER,
+        categoryDesc        TEXT,
         FOREIGN KEY (bankTransactionID) REFERENCES bankTransaction (id),
         FOREIGN KEY (receiptID) REFERENCES receipt (id),
         FOREIGN KEY (categoryID) REFERENCES category (id) )''',
@@ -56,24 +57,33 @@ class SQFLite {
 
     await db.execute(
       '''CREATE TABLE receipts(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        userId TEXT, transactionId TEXT,
-        recipient TEXT,
-        date TEXT,
-        total REAL,
-        totalSumKr INTEGER,
-        totalSumOre INTEGER,
-        totalSumStr TEXT,
-        items TEXT,
-        categoryDesc TEXT,
-        categoryID INTEGER,
+        id                  INTEGER NOT NULL UNIQUE PRIMARY KEY AUTOINCREMENT,
+        userId              TEXT, transactionId TEXT,
+        recipient           TEXT,
+        date                TEXT,
+        total               REAL,
+        totalSumKr          INTEGER,
+        totalSumOre         INTEGER,
+        totalSumStr         TEXT,
+        items               TEXT,
+        categoryDesc        TEXT,
+        categoryID          INTEGER,
         FOREIGN KEY (categoryID) REFERENCES category (id) )''',
     );
 
-    await db.execute(
-      '''CREATE TABLE bankTransactions(
-        id INTEGER PRIMARY KEY AUTOINCREMENT)''',
-    );
+    await db.execute('''CREATE TABLE bankTransactions(
+       id                       VARCHAR(32) NOT NULL UNIQUE PRIMARY KEY
+      ,accountId                VARCHAR(32) NOT NULL
+      ,amountvalueunscaledValue VARCHAR(32) NOT NULL
+      ,amountvaluescale         VARCHAR(32) NOT NULL
+      ,amountcurrencyCode       VARCHAR(32) NOT NULL
+      ,descriptionsoriginal     VARCHAR(32) NOT NULL
+      ,descriptionsdisplay      VARCHAR(32) NOT NULL
+      ,datesbooked              DATE  NOT NULL
+      ,typestype                VARCHAR(32) NOT NULL
+      ,status                   VARCHAR(32) NOT NULL
+      ,providerMutability       VARCHAR(32) NOT NULL
+        ); ''');
 
     await db.execute(
       '''CREATE TABLE categories(
@@ -155,11 +165,95 @@ class SQFLite {
     return transaction.toMap();
   }
 
+  Future<void> importMissingBankTransactions() async {
+    final db = await instance.database;
+
+    List<Map<String, dynamic?>>? bankTransactions =
+        await db?.rawQuery('SELECT * FROM bankTransactions');
+
+    for (var bankTransaction in bankTransactions!) {
+      var id = bankTransaction['id'];
+      List<Map<String, dynamic?>>? transaction = await db?.rawQuery(
+          'SELECT * FROM transactions WHERE bankTransactionID = "$id"');
+
+      if (transaction!.length == 0) {
+        Transaction newTransaction = Transaction(
+          store: bankTransaction['descriptionsoriginal'],
+          date: DateTime.parse(bankTransaction['datesbooked']),
+          totalAmount:
+              double.parse(bankTransaction['amountvalueunscaledValue']) / 10,
+          bankTransactionID: id,
+          categoryID: await getCategoryIDfromDescription("Uncategorized"),
+          categoryDesc: "Uncategorized",
+        );
+        insertTransaction(newTransaction);
+      }
+    }
+  }
+
   /*************************** BANKTRANSACTIONS *******************************/
 
-  // Future<BankTransaction> getBankTransactionfromID(int id) async {
-  //  similar to getReceiptFromID
-  // }
+  Future<List<bank_transaction.BankTransaction>> getBankTransactions() async {
+    final db = await instance.database;
+
+    final List<Map<String, dynamic>>? maps =
+        await db?.query('bankTransactions');
+
+    // Convert the List<Map<String, dynamic> into a List<transaction>.
+    return List.generate(maps!.length, (i) {
+      return bank_transaction.BankTransaction(
+          id: maps[i]['id'],
+          accountId: maps[i]['accountId'],
+          amount: bank_transaction.Amount(
+              value: bank_transaction.Value(
+                  unscaledValue: maps[i]['amountvalueunscaledValue'],
+                  scale: maps[i]['amountvaluescale']),
+              currencyCode: maps[i]['amountcurrencyCode']),
+          descriptions: bank_transaction.Descriptions(
+              original: maps[i]['descriptionsoriginal'],
+              display: maps[i]['descriptionsdisplay']),
+          dates: bank_transaction.Dates(booked: maps[i]['datesbooked']),
+          types: bank_transaction.Types(type: maps[i]['typestype']),
+          status: maps[i]['status'],
+          providerMutability: maps[i]['providerMutability']);
+    });
+  }
+
+  Future<void> postBankTransaction(
+      bank_transaction.BankTransaction bankTransaction) async {
+    final db = await instance.database;
+
+    await db?.insert(
+      'bankTransactions',
+      bankTransaction.toDbFormat(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<bank_transaction.BankTransaction> getBankTransactionfromID(
+      int id) async {
+    final db = await instance.database;
+
+    List<Map<String, dynamic?>>? maps =
+        await db?.rawQuery('SELECT * FROM bankTransactions WHERE id = "${id}"');
+
+    // Convert the List<Map<String, dynamic> into a BankTransaction.
+    return bank_transaction.BankTransaction(
+        id: maps![0]['id'],
+        accountId: maps[0]['accountId'],
+        amount: bank_transaction.Amount(
+            value: bank_transaction.Value(
+                unscaledValue: maps[0]['amountvalueunscaledValue'],
+                scale: maps[0]['amountvaluescale']),
+            currencyCode: maps[0]['amountcurrencyCode']),
+        descriptions: bank_transaction.Descriptions(
+            original: maps[0]['descriptionsoriginal'],
+            display: maps[0]['descriptionsdisplay']),
+        dates: bank_transaction.Dates(booked: maps[0]['datesbooked']),
+        types: bank_transaction.Types(type: maps[0]['typestype']),
+        status: maps[0]['status'],
+        providerMutability: maps[0]['providerMutability']);
+  }
 
   /*************************** RECEIPTS *******************************/
 
