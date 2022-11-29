@@ -13,6 +13,7 @@ import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/category.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 import '../models/receipt.dart';
 
 late BuildContext _context;
@@ -60,6 +61,7 @@ class _HomeScreen extends State<HomeScreen> {
                     await ImagePicker().pickImage(source: ImageSource.camera);
                 //process()
                 if (image == null) return;
+                ImageGallerySaver.saveFile(image.path);
                 goToResults(image);
               })),
           IconButton(
