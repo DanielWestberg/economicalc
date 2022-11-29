@@ -3,7 +3,8 @@ import 'package:camera/camera.dart';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
-import 'package:economicalc_client/models/transaction_event.dart';
+import 'package:economicalc_client/models/category.dart';
+import 'package:economicalc_client/models/receipt.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -27,6 +28,8 @@ class ResultsScreenState extends State<ResultsScreen> {
   late Future<Receipt> dataFuture;
   late Receipt transaction;
   final dbConnector = SQFLite.instance;
+  String dropdownValue = Utils
+      .categories.first.description; // TODO: replace with suggested category
 
   @override
   void initState() {
@@ -41,14 +44,14 @@ class ResultsScreenState extends State<ResultsScreen> {
     return SafeArea(
         child: isLoading
             ? Scaffold(
-                backgroundColor: Color(0xFFB8D8D8),
+                backgroundColor: Utils.backgroundColor,
                 body: Center(
                     child: LoadingAnimationWidget.threeArchedCircle(
-                        color: Colors.black, size: 20)))
+                        color: Colors.black, size: 40)))
             : Scaffold(
                 appBar: AppBar(
                   toolbarHeight: 180,
-                  backgroundColor: Color(0xFFB8D8D8),
+                  backgroundColor: Utils.backgroundColor,
                   foregroundColor: Colors.black,
                   title: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,6 +100,33 @@ class ResultsScreenState extends State<ResultsScreen> {
     );
   }
 
+  Widget dropDown() {
+    return SizedBox(
+        width: 110,
+        height: 30,
+        child: DropdownButton<String>(
+          isDense: true,
+          isExpanded: true,
+          value: dropdownValue,
+          onChanged: (String? value) {
+            setState(() {
+              dropdownValue = value!;
+              transaction.categoryDesc = dropdownValue;
+            });
+          },
+          items: Utils.categories
+              .map<DropdownMenuItem<String>>((Category category) {
+            return DropdownMenuItem<String>(
+              value: category.description,
+              child: Text(category.description,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: fontSize, fontWeight: FontWeight.w600)),
+            );
+          }).toList(),
+        ));
+  }
+
   Widget headerInfo() {
     return FutureBuilder(
         future: dataFuture,
@@ -117,13 +147,9 @@ class ResultsScreenState extends State<ResultsScreen> {
                         Row(children: [
                           Icon(Icons.category),
                           Padding(
-                              padding: EdgeInsets.only(left: 5),
-                              child: Text(
-                                "Mat & Dryck",
-                                style: TextStyle(
-                                    fontSize: fontSize,
-                                    fontWeight: FontWeight.w600),
-                              )),
+                            padding: EdgeInsets.only(left: 5),
+                            child: dropDown(),
+                          ),
                         ]),
                         Row(
                           children: [
@@ -217,10 +243,10 @@ class ResultsScreenState extends State<ResultsScreen> {
   void onSort(int columnIndex, bool ascending) {
     if (columnIndex == 0) {
       transaction.items.sort((row1, row2) =>
-          compareString(ascending, row1.itemName, row2.itemName));
+          Utils.compareString(ascending, row1.itemName, row2.itemName));
     } else if (columnIndex == 1) {
-      transaction.items.sort(
-          (row1, row2) => compareNumber(ascending, row1.amount, row2.amount));
+      transaction.items.sort((row1, row2) =>
+          Utils.compareNumber(ascending, row1.amount, row2.amount));
     }
 
     setState(() {

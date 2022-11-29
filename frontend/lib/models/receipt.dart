@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:economicalc_client/models/category.dart';
 import 'package:intl/intl.dart';
 
 class Receipt {
@@ -11,6 +12,7 @@ class Receipt {
   int? totalSumKr;
   int? totalSumOre;
   String? totalSumStr;
+  String? categoryDesc;
   List<ReceiptItem> items;
 
   Receipt(
@@ -22,10 +24,10 @@ class Receipt {
       this.totalSumKr,
       this.totalSumOre,
       this.totalSumStr,
+      this.categoryDesc,
       required this.items});
 
   Map<String, dynamic> toMap() {
-    
     return {
       'userId': userId,
       'transactionId': transactionId,
@@ -35,6 +37,7 @@ class Receipt {
       'totalSumKr': totalSumKr,
       'totalSumOre': totalSumOre,
       'totalSumStr': totalSumStr,
+      'categoryDesc': categoryDesc,
       'items': jsonEncode(items),
     };
   }
@@ -52,7 +55,6 @@ class Receipt {
         total: json['receipts'][0]['total'],
         items: items);
   }
-
 }
 
 class ReceiptItem {
@@ -85,10 +87,10 @@ class ReceiptItem {
       'amount': amount,
       'itemId': itemId,
       'quantity': quantity,
-      'priceKr':priceKr,
+      'priceKr': priceKr,
       'priceOre': priceOre,
       'sumKr': sumKr,
-      'sumOre':sumOre,
+      'sumOre': sumOre,
       'priceStr': priceStr,
       'sumStr': sumStr,
     };
