@@ -73,9 +73,13 @@ def create_app(config):
         transaction = user["transactions"][0]
         image_id = transaction["image_id"] if "image_id" in transaction else None
         image_id = ObjectId(image_id)
-        fs.delete(image_id)
+
+        if not "image_id" in transaction:
+            db.users.update_one({"bankId": bankId, "transactions._id": transactionId}, {"$set": {"transactions.$.image_id": image_id}})
+        else:
+            fs.delete(image_id)
+
         fs.put(request.stream, _id=image_id, content_type=request.mimetype)
-        db.users.update_one({"bankId": bankId, "transactions._id": transactionId}, {"$set": {"transactions.$.image_id": image_id}})
 
         return make_response("", no_content)
 
