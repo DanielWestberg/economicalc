@@ -146,7 +146,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                               actions: [
                                                 ElevatedButton(
                                                   child: const Text('Save'),
-                                                  onPressed: () {
+                                                  onPressed: () async {
+                                                    await dbConnector
+                                                        .updateCategory(
+                                                            categories[index]);
                                                     Navigator.of(context).pop();
                                                   },
                                                 ),
@@ -171,7 +174,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                     itemBuilder: (context) => [
                                           PopupMenuItem(
                                             child: Text("Remove"),
-                                            onTap: () {
+                                            onTap: () async {
+                                              await dbConnector.deleteCategory(
+                                                  categories[index].id!);
                                               categories.removeAt(index);
                                               setState(() {});
                                             },
