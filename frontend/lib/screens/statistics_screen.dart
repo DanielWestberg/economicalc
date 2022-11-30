@@ -28,7 +28,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   @override
   void initState() {
     super.initState();
-    dataFuture = dbConnector.getAllReceiptItems();
+    dataFuture = dbConnector.getFilteredReceiptItems(startDate, endDate);
   }
 
   @override

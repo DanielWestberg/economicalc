@@ -271,17 +271,29 @@ class SQFLite {
     );
   }
 
-  Future<List<ReceiptItem>> getAllReceiptItems() async {
+  Future<List<ReceiptItem>> getAllReceiptItems(startDate, endDate) async {
     final receipts = await getAllReceipts();
     List<ReceiptItem> items = [];
 
     receipts.forEach((receipt) {
-      receipt.items.forEach((item) {
-        items.add(item);
-      });
+      receipt.items.forEach((item) => items.add(item));
     });
 
     return items;
+  }
+
+  Future<List<ReceiptItem>> getFilteredReceiptItems(startDate, endDate) async {
+    final receipts = await getAllReceipts();
+    List<ReceiptItem> filteredItems = [];
+
+    receipts.forEach((receipt) {
+      if (receipt.date.compareTo(startDate) >= 0 &&
+          receipt.date.compareTo(endDate) <= 0) {
+        receipt.items.forEach((item) => filteredItems.add(item));
+      }
+    });
+
+    return filteredItems;
   }
 
   // A method that retrieves all the receipts from the receipts table.
