@@ -128,3 +128,33 @@ processImageWithAsprise(File imageFile) async {
   final respJson = await json.decode(respStr);
   return respJson;
 }
+
+fetchReceipts(String userId) async {
+  final String path = "/users/$userId/receipts";
+  final response = await http.get(Uri.http(apiServer, path));
+  if (response.statusCode != 200) {
+    throw Exception(
+        "Unexpected status code ${response.statusCode}\n{response.body}"
+    );
+  }
+  List<dynamic> receipts = convert.jsonDecode(response.body)["data"];
+  List<Receipt> resultReceipts = [];
+  for (dynamic receipt in receipts) {
+    resultReceipts.add(Receipt.fromBackendJson(receipt));
+  }
+
+  return resultReceipts;
+}
+
+postReceipt(String userId, Receipt receipt) async {
+  final String path = "/users/$userId/receipts";
+  final Uri uri = Uri.http(apiServer, path);
+  final headers = {"Content-type": "application/json"};
+  final body = convert.jsonEncode(receipt.toMap());
+  final response = await http.post(uri, headers: headers, body: body);
+  if (response.statusCode != 201) {
+    throw Exception(
+      "Unexpected status code ${response.statusCode}\n${response.body}"
+    );
+  }
+}
