@@ -18,6 +18,17 @@ class Item:
         self.sum_ore = sum_ore
         self.quantity = quantity
 
+    def __eq__(self, other: Any) -> bool:
+        return (
+            type(self) == type(other) and
+            self.name == other.name and
+            self.price_kr == other.price_kr and
+            self.price_ore == other.price_ore and
+            self.sum_kr == other.sum_kr and
+            self.sum_ore == other.sum_ore and
+            self.quantity == other.quantity
+        )
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "name": self.name,

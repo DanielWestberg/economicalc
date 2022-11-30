@@ -1,7 +1,8 @@
 import os
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, send_file
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
+from gridfs import GridFS
 import requests
 
 from .objects import Transaction, User
@@ -14,6 +15,7 @@ def create_app(config):
     app.config["MONGO_URI"] = config.MONGO_URI
 
     db = create_db(app)
+    fs = GridFS(db)
 
     @app.route('/')
     def index():
@@ -94,11 +96,19 @@ def create_app(config):
     @app.route("/users/<bankId>/transactions", methods=["GET"])
     def get_transactions(bankId):
         user = db.users.find_one_or_404({"bankId": bankId})
-        transactions = user["transactions"]
-        return jsonify(data=transactions)
+        User.make_json_serializable(user)
+
+        return jsonify(data=user["transactions"])
+
 
     @app.route("/users/<bankId>/transactions", methods=["POST"])
     def post_transactions(bankId):
+        if request.content_type != "application/json":
+            return make_response(f"Expected content type application/json, not {request.content_type}", unsupported_media_type)
+        transaction_dict = request.json
+        transaction_dict.pop("_id", None)
+        transaction_dict.pop("image_id", None)
+
         try:
             transaction = Transaction.from_dict(request.json)
         except KeyError as e:
@@ -118,7 +128,36 @@ def create_app(config):
             update_action = {"$push": {"transactions": transaction.to_dict()}}
             db.users.update_one({"_id": user["_id"]}, update_action)
 
-        return make_response(jsonify(data=transaction.to_dict()), created)
+        return make_response(jsonify(data=transaction.to_dict(True)), created)
+
+
+    @app.route("/users/<bankId>/transactions/<ObjectId:transactionId>/image", methods=["GET"])
+    def get_image(bankId, transactionId):
+        user = db.users.find_one_or_404({"bankId": bankId, "transactions._id": transactionId}, {"_id": 0, "transactions.$": 1})
+        transaction = user["transactions"][0]
+        image_id = transaction["image_id"] if "image_id" in transaction else None
+        image = fs.find_one(ObjectId(image_id)) if image_id is not None else None
+        if image is None:
+            return make_response("No image found", not_found)
+
+        return send_file(image, mimetype=image.content_type[0])
+
+    
+    @app.route("/users/<bankId>/transactions/<ObjectId:transactionId>/image", methods=["PUT"])
+    def put_image(bankId, transactionId):
+        user = db.users.find_one_or_404({"bankId": bankId, "transactions._id": transactionId}, {"_id": 0, "transactions.$": 1})
+        transaction = user["transactions"][0]
+        image_id = transaction["image_id"] if "image_id" in transaction else None
+        image_id = ObjectId(image_id)
+
+        if not "image_id" in transaction:
+            db.users.update_one({"bankId": bankId, "transactions._id": transactionId}, {"$set": {"transactions.$.image_id": image_id}})
+        else:
+            fs.delete(image_id)
+
+        fs.put(request.stream, _id=image_id, content_type=request.mimetype)
+
+        return make_response("", no_content)
 
     return app
 

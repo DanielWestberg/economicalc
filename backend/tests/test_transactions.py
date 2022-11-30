@@ -2,7 +2,8 @@ import pytest
 
 from datetime import datetime
 from dateutil.parser import *
-from typing import List, Tuple
+from typing import List, Optional, Tuple
+from mimetypes import guess_type
 
 from flask.json import load, dump
 from bson.objectid import ObjectId
@@ -15,10 +16,10 @@ from economicalc.app import create_db
 
 
 @pytest.fixture()
-def images() -> List[Image]:
+def images() -> List[Tuple[str, ObjectId]]:
     return [
-        Image("coop_receipt.JPG"),
-        Image("ica_receipt.JPG"),
+        ("coop_receipt.JPG", ObjectId()),
+        ("ica_receipt.JPG", ObjectId()),
     ]
 
 
@@ -38,25 +39,28 @@ def items() -> List[Item]:
 def transactions(items, images) -> List[Transaction]:
     return [
         Transaction(
+            None,
             "Ica",
             [items[0], items[1], items[3]],
             datetime(2022, 6, 30),
             163,
             0,
-            images[1]
+            images[1][1]
         ), Transaction(
+            None,
             "Coop",
             [items[2], items[3], items[4], items[5]],
             datetime(2022, 7, 1),
             141,
             30
         ), Transaction(
+            None,
             "Willy's",
             [items[1], items[5]],
             datetime(2021, 12, 13),
             101,
             50,
-            images[0]
+            images[0][1]
         )
     ]
 
@@ -83,44 +87,43 @@ def users_to_post() -> List[User]:
 
 
 @pytest.fixture()
-def images_to_post() -> List[Image]:
-    return [
-        Image("yeah.jpg"),
-    ]
+def image_to_put() -> str:
+    return "tsu.jpg"
 
 
 @pytest.fixture()
-def transactions_to_post(users, users_to_post, images_to_post) -> List[Tuple[User, Transaction]]:
+def transactions_to_post(users, users_to_post) -> List[Tuple[User, Transaction]]:
     return [
         (users[1], Transaction(
+            None,
             "Specsavers",
             [Item("Glasögon", 1337, 50, 1337, 50, 1)],
             datetime(2022, 2, 24),
             1337,
             50
         )), (users_to_post[0], Transaction(
+            None,
             "Yes",
             [Item("Dood", 1, 1, 1, 1, 1)],
             datetime(1970, 1, 1),
             1,
-            1,
-            images_to_post[0]
-        )),
+            1
+        ))
     ]
 
 
 def clean_users(database, gridfs, user_list):
     for user in user_list:
-        database.users.delete_many(user.to_dict())
+        database.users.delete_many({"bankId": user.bankId})
         assert database.users.find_one({"bankId": user.bankId}) is None
 
         for transaction in user.transactions:
-            image = transaction.image
-            if image is not None:
-                gridfs.delete(ObjectId(image.id))
+            image_id = transaction.image_id
+            if image_id is not None:
+                assert type(image_id) == ObjectId
 
-                assert not gridfs.exists({"_id": ObjectId(image.id)})
-                assert not gridfs.exists({"filename": image.name})
+                gridfs.delete(image_id)
+                assert not gridfs.exists(image_id)
     
 
 
@@ -129,16 +132,15 @@ def db(app, images, users, transactions_to_post, users_to_post):
     db = create_db(app)
     fs = GridFS(db)
 
+    for image in images:
+        with open(f"./tests/res/{image[0]}", "rb") as f:
+            assert fs.put(f, _id = image[1], content_type = guess_type(image[0])) == image[1]
+
     for user in users:
 
         for transaction in user.transactions:
-            image = transaction.image
-            if image is None:
-                continue
-
-            with open(f"./tests/res/{image.name}", "rb") as f:
-                id = fs.put(f, filename=image.name, content_type=image.content_type)
-                image.id = str(id)
+            if transaction.image_id is not None:
+                assert fs.exists(transaction.image_id)
 
         db.users.insert_one(user.to_dict())
 
@@ -147,113 +149,86 @@ def db(app, images, users, transactions_to_post, users_to_post):
     clean_users(db, fs, users)
     clean_users(db, fs, users_to_post)
 
+    for image in images:
+        assert not fs.exists(image[1])
+
+
+@pytest.fixture()
+def fs(db):
+    yield GridFS(db)
+
 
 class TestTransactions():
-
-    def compare_images_of(self, expected, actual):
-        if "image" not in expected:
-            assert "image" not in actual
-            return
-
-        expected_image = expected["image"]
-        actual_image = actual["image"]
-
-        assert expected_image["name"] == actual_image["name"]
-        assert expected_image["_id"] == actual_image["_id"]
-
-    def compare_items(self, expected, actual):
-        for key in ["name", "price_kr", "price_ore", "sum_kr", "sum_ore", "quantity"]:
-            assert expected[key] == actual[key]
-
-    def compare_transactions(self, expected, actual):
-        for key in ["recipient", "total_sum_kr", "total_sum_ore"]:
-            assert expected[key] == actual[key]
-
-        assert expected["date"] == parse(actual["date"])
-
-        self.compare_images_of(expected, actual)
-
-        for (expected_item, actual_item) in zip(expected["items"], actual["items"]):
-            self.compare_items(expected_item, actual_item)
 
     def test_get_user_transactions(self, images, client, users):
         for user in users:
             response = client.get(f"/users/{user.bankId}/transactions")
             assert response.status == constants.ok
 
-            response_transactions = response.json["data"]
+            response_transaction_dicts = response.json["data"]
+            response_transactions = [Transaction.from_dict(d) for d in response_transaction_dicts]
 
-            for (expected_transaction, actual_transaction) in zip(user.transactions, response_transactions):
-                expected_transaction = expected_transaction.to_dict()
-                self.compare_transactions(expected_transaction, actual_transaction)
+            for (expected, actual) in zip(user.transactions, response_transactions):
+                assert expected == actual
 
-    def items_equal(self, i1, i2):
-        for key in ["name", "price_kr", "price_ore", "sum_kr", "sum_ore", "quantity"]:
-            if (i1[key] != i2[key]):
-                return False
-
-        return True
-
-    def images_of_transactions_equal(self, t1, t2):
-        if "image" not in t1:
-            return "image" not in t2
-
-        i1 = t1["image"]
-        i2 = t2["image"]
-
-        return i1["name"] == i2["name"] and i1["_id"] == i2["_id"]
-
-
-    def transactions_equal(self, t1, t2):
-        for key in ["recipient", "total_sum_kr", "total_sum_ore"]:
-            if t1[key] != t2[key]:
-                return False
-
-        if t1["date"] != parse(t2["date"]):
-            return False
-
-        for (item1, item2) in zip(t1["items"], t2["items"]):
-            self.items_equal(item1, item2)
-
-        return self.images_of_transactions_equal(t1, t2)
 
     def test_post_user_transaction(self, db, transactions_to_post, client):
         for (user, transaction) in transactions_to_post:
-            transaction_dict = transaction.to_dict()
-            post_response = client.post(f"/users/{user.bankId}/transactions", json=transaction_dict)
-            assert post_response.status == constants.created
-            self.compare_transactions(transaction_dict, post_response.json["data"])
+            transaction_dict = transaction.to_dict(True)
+            transaction_dict.pop("_id", None)
+
+            response = client.post(f"/users/{user.bankId}/transactions", json=transaction_dict)
+            assert response.status == constants.created
+
+            response_dict = response.json["data"]
+            assert "_id" in response_dict
+
+            transaction.id = ObjectId(response_dict["_id"])
+            response_transaction = Transaction.from_dict(response_dict)
+            assert transaction == response_transaction
+
             user.transactions.append(transaction)
 
-            get_response = client.get(f"/users/{user.bankId}/transactions")
-            response_transactions = get_response.json["data"]
-            assert any([self.transactions_equal(transaction_dict, response_transaction) for response_transaction in response_transactions])
+            response = client.get(f"/users/{user.bankId}/transactions")
+            response_transaction_dicts = response.json["data"]
+            response_transactions = [Transaction.from_dict(d) for d in response_transaction_dicts]
+
+            db_transaction_dicts = db.users.find_one({"bankId": user.bankId})["transactions"]
+            db_transaction_ids = [d["_id"] for d in db_transaction_dicts]
+            assert all([type(id) == ObjectId for id in db_transaction_ids])
+            assert transaction.id in db_transaction_ids
+
+            assert transaction in response_transactions
+
 
     def post_errenous_transaction(self, transaction_dict, client):
         response = client.post("/users/not-a-user/transactions", json=transaction_dict)
         assert response.status == constants.unprocessable_entity
 
+
     def test_post_missing_field(self, db, transactions_to_post, client):
-        transaction = transactions_to_post[0][1].to_dict()
+        transaction = transactions_to_post[0][1].to_dict(True)
         transaction.pop("items", None)
         self.post_errenous_transaction(transaction, client)
 
         transaction["items"] = []
         self.post_errenous_transaction(transaction, client)
 
+
     def test_post_weird_field(self, db, transactions_to_post, client):
         transaction = transactions_to_post[0][1]
-        transaction_dict = transaction.to_dict()
+        transaction_dict = transaction.to_dict(True)
         transaction_dict["items"] = {"a": "a"}
         self.post_errenous_transaction(transaction_dict, client)
 
-        transaction_dict = transaction.to_dict()
+        transaction_dict = transaction.to_dict(True)
         transaction_dict["recipient"] = 0
         self.post_errenous_transaction(transaction_dict, client)
 
+
     def test_post_weird_items(self, db, transactions_to_post, client):
         transaction = transactions_to_post[0][1]
-        transaction_dict = transaction.to_dict()
+        transaction_dict = transaction.to_dict(True)
         item_dict = transaction_dict["items"][0]
         item_dict["name"] = 0
         self.post_errenous_transaction(transaction_dict, client)
@@ -261,3 +236,86 @@ class TestTransactions():
         item_dict["name"] = "lmao"
         item_dict["quantity"] = "lmao"
         self.post_errenous_transaction(transaction_dict, client)
+
+
+    def test_get_image(self, tmp_path, db, fs, users, client):
+        tmp_file = tmp_path / "response_image"
+        for user in users:
+            for transaction in user.transactions:
+                response = client.get(f"/users/{user.bankId}/transactions/{transaction.id}/image")
+                if transaction.image_id is None:
+                    assert response.status == constants.not_found
+                    continue
+
+                assert response.status == constants.ok
+                assert response.is_streamed
+
+                with tmp_file.open("wb") as f:
+                    for data in response.response:
+                        f.write(data)
+
+                with tmp_file.open("rb") as f:
+                    for (expected, actual) in zip(fs.find_one(transaction.image_id), f):
+                        assert expected == actual
+
+
+    def test_put_image(self, tmp_path, db, fs, users, image_to_put, client):
+        filename = f"./tests/res/{image_to_put}"
+        filetype = guess_type(filename)[0]
+        tmp_file = tmp_path / "response_image"
+
+        for user in users:
+            for transaction in user.transactions:
+                if transaction.image_id is not None:
+                    continue
+
+                with open(filename, "rb") as f:
+                    response = client.put(f"/users/{user.bankId}/transactions/{transaction.id}/image", data = f, content_type = filetype)
+                    assert response.status == constants.no_content
+
+                    response = client.get(f"/users/{user.bankId}/transactions/{transaction.id}/image")
+                    assert response.status == constants.ok
+
+                    with tmp_file.open("wb") as eff:
+                        for data in response.response:
+                            eff.write(data)
+
+                    f.seek(0)
+
+                    with tmp_file.open("rb") as eff:
+                        for (expected, actual) in zip(f, eff):
+                            assert expected == actual
+
+
+    def test_put_image_is_isolated(self, tmp_path, db, fs, users, image_to_put, client):
+        filename = f"./tests/res/{image_to_put}"
+        filetype = guess_type(filename)[0]
+        tmp_file = tmp_path / "response_image"
+
+
+        original_transaction = users[0].transactions[0]
+        with open(filename, "rb") as f:
+            client.put(f"/users/{users[0].bankId}/transactions/{original_transaction.id}/image", data = f, content_type = filetype)
+
+        for user in users:
+            for transaction in user.transactions:
+                if transaction.id == original_transaction.id:
+                    continue
+
+                response = client.get(f"/users/{user.bankId}/transactions/{transaction.id}/image")
+                if response.status == constants.not_found:
+                    continue
+
+                with tmp_file.open("wb") as f:
+                    for data in response.response:
+                        f.write(data)
+
+                with tmp_file.open("rb") as received_file:
+                    with open(filename, "rb") as original_file:
+                        failed = True
+                        for (expected, actual) in zip(received_file, original_file):
+                            failed = failed and expected == actual
+                            if failed:
+                                break
+
+                        assert not failed
