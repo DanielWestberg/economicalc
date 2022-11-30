@@ -230,11 +230,11 @@ class TestTransactions():
         transaction = transactions_to_post[0][1]
         transaction_dict = transaction.to_dict(True)
         item_dict = transaction_dict["items"][0]
-        item_dict["name"] = 0
+        item_dict["itemName"] = 0
         self.post_errenous_transaction(transaction_dict, client)
 
-        item_dict["name"] = "lmao"
-        item_dict["quantity"] = "lmao"
+        item_dict["itemName"] = "lmao"
+        item_dict["amount"] = "lmao"
         self.post_errenous_transaction(transaction_dict, client)
 
 
@@ -243,7 +243,7 @@ class TestTransactions():
             for transaction in user.transactions:
                 transaction_dict = transaction.to_dict(True)
                 for item in transaction_dict["items"]:
-                    item["name"] = f"XMAS {item['name']}"
+                    item["itemName"] = f"XMAS {item['itemName']}"
 
                 transaction = Transaction.from_dict(transaction_dict)
 

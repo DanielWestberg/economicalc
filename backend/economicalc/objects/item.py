@@ -3,51 +3,51 @@ from typing import Dict, Any
 from .type_check import check_type
 
 class Item:
-    def __init__(self, name: str, price_kr: int, price_ore: int, sum_kr: int, sum_ore: int, quantity: int) -> None:
-        check_type(name, str, "item.name")
-        check_type(price_kr, int, "item.price_kr")
-        check_type(price_ore, int, "item.price_ore")
-        check_type(sum_kr, int, "item.sum_kr")
-        check_type(sum_ore, int, "item.sum_ore")
-        check_type(quantity, int, "item.quantity")
+    def __init__(self, item_name: str, price_kr: int, price_ore: int, sum_kr: int, sum_ore: int, amount: int) -> None:
+        check_type(item_name, str, "item.itemName")
+        check_type(price_kr, int, "item.priceKr")
+        check_type(price_ore, int, "item.priceOre")
+        check_type(sum_kr, int, "item.sumKr")
+        check_type(sum_ore, int, "item.sumOre")
+        check_type(amount, int, "item.amount")
 
-        self.name = name
+        self.item_name = item_name
         self.price_kr = price_kr
         self.price_ore = price_ore
         self.sum_kr = sum_kr
         self.sum_ore = sum_ore
-        self.quantity = quantity
+        self.amount = amount
 
     def __eq__(self, other: Any) -> bool:
         return (
             type(self) == type(other) and
-            self.name == other.name and
+            self.item_name == other.item_name and
             self.price_kr == other.price_kr and
             self.price_ore == other.price_ore and
             self.sum_kr == other.sum_kr and
             self.sum_ore == other.sum_ore and
-            self.quantity == other.quantity
+            self.amount == other.amount
         )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "name": self.name,
-            "price_kr": self.price_kr,
-            "price_ore": self.price_ore,
-            "sum_kr": self.sum_kr,
-            "sum_ore": self.sum_ore,
-            "quantity": self.quantity,
+            "itemName": self.item_name,
+            "priceKr": self.price_kr,
+            "priceOre": self.price_ore,
+            "sumKr": self.sum_kr,
+            "sumOre": self.sum_ore,
+            "amount": self.amount,
         }
 
     @staticmethod
     def from_dict(d: Dict[str, Any]):
         check_type(d, dict, "item")
 
-        name = d["name"]
-        price_kr = d["price_kr"]
-        price_ore = d["price_ore"]
-        sum_kr = d["sum_kr"]
-        sum_ore = d["sum_ore"]
-        quantity = d["quantity"]
+        item_name = d["itemName"]
+        price_kr = d["priceKr"]
+        price_ore = d["priceOre"]
+        sum_kr = d["sumKr"]
+        sum_ore = d["sumOre"]
+        amount = d["amount"]
 
-        return Item(name, price_kr, price_ore, sum_kr, sum_ore, quantity)
+        return Item(item_name, price_kr, price_ore, sum_kr, sum_ore, amount)

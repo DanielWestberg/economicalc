@@ -14,9 +14,9 @@ class Transaction:
         check_type(recipient, str, "transaction.recipient")
         check_type(items, list, "transaction.items")
         check_type(date, datetime, "transaction.date")
-        check_type(total_sum_kr, int, "transaction.total_sum_kr")
-        check_type(total_sum_ore, int, "transaction.total_sum_ore")
-        check_type(image_id, [type(None), ObjectId], "transaction.image_id")
+        check_type(total_sum_kr, int, "transaction.totalSumKr")
+        check_type(total_sum_ore, int, "transaction.totalSumOre")
+        check_type(image_id, [type(None), ObjectId], "transaction.imageId")
 
         self.id = ObjectId(id)
         self.recipient = recipient
@@ -44,12 +44,12 @@ class Transaction:
             "recipient": self.recipient,
             "items": [item.to_dict() for item in self.items],
             "date": self.date,
-            "total_sum_kr": self.total_sum_kr,
-            "total_sum_ore": self.total_sum_ore
+            "totalSumKr": self.total_sum_kr,
+            "totalSumOre": self.total_sum_ore
         }
 
         if self.image_id is not None:
-            res["image_id"] = str(self.image_id) if json_serializable else self.image_id
+            res["imageId"] = str(self.image_id) if json_serializable else self.image_id
 
         res["_id"] = str(self.id) if json_serializable else self.id
 
@@ -63,9 +63,9 @@ class Transaction:
         recipient = d["recipient"]
         items = [Item.from_dict(d_item) for d_item in d["items"]]
         date = parse(d["date"]) if type(d["date"]) == str else d["date"]
-        total_sum_kr = d["total_sum_kr"]
-        total_sum_ore = d["total_sum_ore"]
-        image_id = ObjectId(d["image_id"]) if "image_id" in d else None
+        total_sum_kr = d["totalSumKr"]
+        total_sum_ore = d["totalSumOre"]
+        image_id = ObjectId(d["imageId"]) if "imageId" in d else None
         id = ObjectId(d["_id"]) if "_id" in d else None
 
         return Transaction(id, recipient, items, date, total_sum_kr, total_sum_ore, image_id)
@@ -73,5 +73,5 @@ class Transaction:
     @staticmethod
     def make_json_serializable(transaction_dict: Dict[str, Any]):
         transaction_dict["_id"] = str(transaction_dict["_id"])
-        if "image_id" in transaction_dict:
-            transaction_dict["image_id"] = str(transaction_dict["image_id"])
+        if "imageId" in transaction_dict:
+            transaction_dict["imageId"] = str(transaction_dict["imageId"])

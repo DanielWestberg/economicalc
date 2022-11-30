@@ -119,7 +119,7 @@ def create_app(config):
             return make_response(f"Expected content type application/json, not {request.content_type}", unsupported_media_type)
         transaction_dict = request.json
         transaction_dict.pop("_id", None)
-        transaction_dict.pop("image_id", None)
+        transaction_dict.pop("imageId", None)
 
         transaction = parse_transaction_or_make_response(transaction_dict)
         if type(transaction) != Transaction:
@@ -158,7 +158,7 @@ def create_app(config):
         old_transaction = user["transactions"][0]
         new_transaction.id = old_transaction["_id"]
 
-        new_transaction.image_id = old_transaction["image_id"] if "image_id" in old_transaction else None
+        new_transaction.image_id = old_transaction["imageId"] if "imageId" in old_transaction else None
 
         db.users.find_one_and_update({"bankId": bankId, "transactions._id": transactionId}, {"$set": {"transactions.$": new_transaction.to_dict()}})
         return jsonify(data=new_transaction.to_dict(True))
@@ -175,7 +175,7 @@ def create_app(config):
     def get_image(bankId, transactionId, request):
         user = db.users.find_one_or_404({"bankId": bankId, "transactions._id": transactionId}, {"_id": 0, "transactions.$": 1})
         transaction = user["transactions"][0]
-        image_id = transaction["image_id"] if "image_id" in transaction else None
+        image_id = transaction["imageId"] if "imageId" in transaction else None
         image = fs.find_one(ObjectId(image_id)) if image_id is not None else None
         if image is None:
             return make_response("No image found", not_found)
@@ -186,11 +186,11 @@ def create_app(config):
     def put_image(bankId, transactionId, request):
         user = db.users.find_one_or_404({"bankId": bankId, "transactions._id": transactionId}, {"_id": 0, "transactions.$": 1})
         transaction = user["transactions"][0]
-        image_id = transaction["image_id"] if "image_id" in transaction else None
+        image_id = transaction["imageId"] if "imageId" in transaction else None
         image_id = ObjectId(image_id)
 
-        if not "image_id" in transaction:
-            db.users.update_one({"bankId": bankId, "transactions._id": transactionId}, {"$set": {"transactions.$.image_id": image_id}})
+        if not "imageId" in transaction:
+            db.users.update_one({"bankId": bankId, "transactions._id": transactionId}, {"$set": {"transactions.$.imageId": image_id}})
         else:
             fs.delete(image_id)
 
