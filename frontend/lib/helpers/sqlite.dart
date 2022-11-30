@@ -282,6 +282,7 @@ class SQFLite {
         total: maps[i]['total'],
         items: parseReceiptItems(maps[i]['items']),
         categoryDesc: maps[i]['categoryDesc'],
+        categoryID: maps[i]['categoryID'],
       );
     });
   }
@@ -298,6 +299,7 @@ class SQFLite {
       total: maps[0]['total'],
       items: parseReceiptItems(maps[0]['items']),
       categoryDesc: maps[0]['categoryDesc'],
+      categoryID: maps[i]['categoryID'],
     );
   }
 
