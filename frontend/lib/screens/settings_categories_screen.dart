@@ -22,7 +22,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   @override
   void initState() {
     super.initState();
-    categoryFuture = dbConnector.categories();
+    categoryFuture = dbConnector.getAllcategories();
   }
 
   void getCategories() async {

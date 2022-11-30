@@ -11,22 +11,21 @@ class Category {
     return {
       'description': description,
       'color': color.value.toInt(),
-    }; 
+    };
   }
 
   factory Category.fromJson(Map<String, dynamic> json) {
     return Category(
-      description: json['description'],
-      color: Color(json['color']).withOpacity(1),
-      id: json['id']
-    );
+        description: json['description'],
+        color: Color(json['color']).withOpacity(1),
+        id: json['id']);
   }
 
   static String getCategoryDescription(Category category) {
     return category.description;
   }
 
-  static Category getCategory(String desc, categories) {
-    return categories.firstWhere((item) => item.description == desc);
+  static Category getCategory(String categoryID, categories) {
+    return categories.firstWhere((item) => item.id == categoryID);
   }
 }
