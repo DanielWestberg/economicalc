@@ -5,6 +5,7 @@ import 'package:economicalc_client/helpers/utils.dart';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
+import 'package:economicalc_client/models/transaction.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -26,7 +27,7 @@ class ResultsScreenState extends State<ResultsScreen> {
   final columns = ["Items", "Total"];
   bool isLoading = false;
   late Future<Receipt> dataFuture;
-  late Receipt transaction;
+  late Receipt receipt;
   late Future<List<Category>> categoriesFutureBuilder;
   late List<Category> categories;
   final dbConnector = SQFLite.instance;
@@ -97,7 +98,19 @@ class ResultsScreenState extends State<ResultsScreen> {
       padding: EdgeInsets.only(bottom: 30),
       child: GestureDetector(
           onTap: () async {
-            await dbConnector.inserttransaction(transaction, dropdownValue);
+            int receiptID =
+                await dbConnector.insertReceipt(receipt, dropdownValue);
+            Transaction transaction = new Transaction(
+              date: receipt.date,
+              totalAmount: receipt.total,
+              store: receipt.recipient,
+              bankTransactionID: null,
+              receiptID: receiptID,
+              categoryID:
+                  await SQFLite.getCategoryIDfromDescription(dropdownValue),
+              categoryDesc: dropdownValue,
+            );
+            await dbConnector.insertTransaction(transaction);
             Navigator.pop(context);
           },
           child: Icon(Icons.check)),
@@ -120,10 +133,12 @@ class ResultsScreenState extends State<ResultsScreen> {
                     isDense: true,
                     isExpanded: true,
                     value: dropdownValue,
-                    onChanged: (String? value,) {
+                    onChanged: (
+                      String? value,
+                    ) {
                       setState(() {
                         dropdownValue = value!;
-                        transaction.categoryDesc = dropdownValue; 
+                        receipt.categoryDesc = dropdownValue;
                       });
                     },
                     items: categories
@@ -135,8 +150,7 @@ class ResultsScreenState extends State<ResultsScreen> {
                             style: TextStyle(
                                 fontSize: fontSize,
                                 fontWeight: FontWeight.w600,
-                                color: category.color))
-                                ,
+                                color: category.color)),
                       );
                     }).toList()));
           } else {
@@ -152,7 +166,7 @@ class ResultsScreenState extends State<ResultsScreen> {
           if (snapshot.hasError) {
             return Text("${snapshot.error}");
           } else if (snapshot.hasData) {
-            transaction = snapshot.data!;
+            receipt = snapshot.data!;
             return Container(
                 padding: EdgeInsets.only(top: 10, left: 50, bottom: 20),
                 child: Row(
@@ -175,7 +189,7 @@ class ResultsScreenState extends State<ResultsScreen> {
                             Padding(
                                 padding: EdgeInsets.only(left: 5),
                                 child: Text(
-                                  transaction.recipient,
+                                  receipt.recipient,
                                   style: TextStyle(
                                       fontSize: fontSize,
                                       fontWeight: FontWeight.w600),
@@ -189,7 +203,7 @@ class ResultsScreenState extends State<ResultsScreen> {
                                 padding: EdgeInsets.only(left: 5),
                                 child: Text(
                                   DateFormat("yyyy-MM-dd")
-                                      .format(transaction.date)
+                                      .format(receipt.date)
                                       .toString(),
                                   style: TextStyle(
                                       fontSize: fontSize,
@@ -203,17 +217,11 @@ class ResultsScreenState extends State<ResultsScreen> {
                         padding: EdgeInsets.all(10),
                         child: Column(children: [
                           Icon(Icons.payment),
-                          Text("${transaction.total} kr",
+                          Text("${receipt.total} kr",
                               style: TextStyle(
                                   fontSize: fontSize,
                                   fontWeight: FontWeight.w600))
                         ])),
-                    IconButton(
-                        padding: EdgeInsets.all(10),
-                        onPressed: (() {
-                          print("receipt");
-                        }),
-                        icon: Icon(Icons.receipt_long))
                   ],
                 ));
           } else {
@@ -229,13 +237,13 @@ class ResultsScreenState extends State<ResultsScreen> {
           if (snapshot.hasError) {
             return Text("${snapshot.error}");
           } else if (snapshot.hasData) {
-            transaction = snapshot.data!;
+            receipt = snapshot.data!;
             return DataTable(
                 columnSpacing: 30,
                 sortAscending: isAscending,
                 sortColumnIndex: sortColumnIndex,
                 columns: getColumns(columns),
-                rows: getRows(transaction.items as List<ReceiptItem>));
+                rows: getRows(receipt.items as List<ReceiptItem>));
           } else {
             return Text("Unexpected error");
           }
@@ -260,10 +268,10 @@ class ResultsScreenState extends State<ResultsScreen> {
 
   void onSort(int columnIndex, bool ascending) {
     if (columnIndex == 0) {
-      transaction.items.sort((row1, row2) =>
+      receipt.items.sort((row1, row2) =>
           Utils.compareString(ascending, row1.itemName, row2.itemName));
     } else if (columnIndex == 1) {
-      transaction.items.sort((row1, row2) =>
+      receipt.items.sort((row1, row2) =>
           Utils.compareNumber(ascending, row1.amount, row2.amount));
     }
 
@@ -276,16 +284,16 @@ class ResultsScreenState extends State<ResultsScreen> {
   Future<Receipt> getTransactionFromImage(image) async {
     final imageFile = File(image.path);
     var response = await processImageWithAsprise(imageFile);
-    Receipt transaction = Receipt.fromJson(response);
+    Receipt receipt = Receipt.fromJson(response);
 
     setState(() {
       isLoading = false;
     });
 
-    return transaction;
+    return receipt;
   }
 
   Future<List<Category>> getCategories(SQFLite dbConnector) async {
-    return await dbConnector.categories();
+    return await dbConnector.getAllcategories();
   }
 }

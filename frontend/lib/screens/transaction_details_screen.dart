@@ -2,13 +2,14 @@ import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/helpers/sqlite.dart';
+import 'package:economicalc_client/models/transaction.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 var dropDownItems = Utils.categories;
 
 class TransactionDetailsScreen extends StatefulWidget {
-  final Receipt transaction;
+  final Transaction transaction;
 
   TransactionDetailsScreen(Key? key, this.transaction) : super(key: key);
 
@@ -26,6 +27,8 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   late String? dropdownValue;
   late Future<List<Category>> categoriesFutureBuilder;
   late List<Category> categories;
+  late Receipt receipt;
+  late Future<Receipt>? receiptFutureBuilder;
 
   @override
   void initState() {
@@ -33,6 +36,12 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     dbConnector.initDatabase();
     dropdownValue = widget.transaction.categoryDesc;
     categoriesFutureBuilder = getCategories(dbConnector);
+    if (widget.transaction.receiptID != null) {
+      receiptFutureBuilder =
+          getReceipt(dbConnector, widget.transaction.receiptID!);
+    } else {
+      receiptFutureBuilder = null;
+    }
   }
 
   @override
@@ -77,12 +86,15 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                     isDense: true,
                     isExpanded: true,
                     value: dropdownValue,
-                    onChanged: (value) {
+                    onChanged: (value) async {
                       setState(() {
                         dropdownValue = value;
-                        widget.transaction.categoryDesc = dropdownValue;
                       });
-                      dbConnector.updatetransaction(widget.transaction);
+                      widget.transaction.categoryDesc = dropdownValue;
+                      widget.transaction.categoryID =
+                          await SQFLite.getCategoryIDfromDescription(
+                              dropdownValue!);
+                      dbConnector.updateTransaction(widget.transaction!);
                     },
                     items: categories
                         .map<DropdownMenuItem<String>>((Category category) {
@@ -93,8 +105,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                             style: TextStyle(
                                 fontSize: fontSize,
                                 fontWeight: FontWeight.w600,
-                                color: category.color))
-                                ,
+                                color: category.color)),
                       );
                     }).toList()));
           } else {
@@ -123,7 +134,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                     Padding(
                         padding: EdgeInsets.only(left: 5),
                         child: Text(
-                          widget.transaction.recipient,
+                          widget.transaction.store!,
                           style: TextStyle(
                               fontSize: fontSize, fontWeight: FontWeight.w600),
                         )),
@@ -149,7 +160,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                 padding: EdgeInsets.all(10),
                 child: Column(children: [
                   Icon(Icons.payment),
-                  Text("${widget.transaction.total} kr",
+                  Text("${widget.transaction.totalAmount} kr",
                       style: TextStyle(
                           fontSize: fontSize, fontWeight: FontWeight.w600))
                 ])),
@@ -164,12 +175,23 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   }
 
   Widget buildDataTable() {
-    return DataTable(
-        columnSpacing: 30,
-        sortAscending: isAscending,
-        sortColumnIndex: sortColumnIndex,
-        columns: getColumns(columns),
-        rows: getRows(widget.transaction.items as List<ReceiptItem>));
+    return FutureBuilder(
+        future: receiptFutureBuilder,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Text("${snapshot.error}");
+          } else if (snapshot.hasData) {
+            receipt = snapshot.data!;
+            return DataTable(
+                columnSpacing: 30,
+                sortAscending: isAscending,
+                sortColumnIndex: sortColumnIndex,
+                columns: getColumns(columns),
+                rows: getRows(receipt.items));
+          } else {
+            return Center(heightFactor: 20, child: Text("No receipt data"));
+          }
+        });
   }
 
   List<DataColumn> getColumns(List<String> columns) => columns
@@ -190,10 +212,10 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
 
   void onSort(int columnIndex, bool ascending) {
     if (columnIndex == 0) {
-      widget.transaction.items.sort((row1, row2) =>
+      receipt.items.sort((row1, row2) =>
           Utils.compareString(ascending, row1.itemName, row2.itemName));
     } else if (columnIndex == 1) {
-      widget.transaction.items.sort((row1, row2) =>
+      receipt.items.sort((row1, row2) =>
           Utils.compareNumber(ascending, row1.amount, row2.amount));
     }
 
@@ -202,7 +224,12 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
       isAscending = ascending;
     });
   }
+
   Future<List<Category>> getCategories(SQFLite dbConnector) async {
-    return await dbConnector.categories();
+    return await dbConnector.getAllcategories();
+  }
+
+  Future<Receipt> getReceipt(SQFLite dbConnector, int id) async {
+    return await dbConnector.getReceiptfromID(id);
   }
 }

@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 class Response {
   late String tokenType;
   late int expiresIn;
