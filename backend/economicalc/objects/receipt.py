@@ -9,20 +9,20 @@ from .type_check import check_type
 
 
 class Receipt:
-    def __init__(self, id: Optional[Union[str, ObjectId]], recipient: str, items: List[Item], date: datetime, total_sum_kr: int, total_sum_ore: int, image_id: Optional[ObjectId] = None) -> None:
+    def __init__(self, id: Optional[Union[str, ObjectId]], recipient: str, items: List[Item], date: datetime, total: float, category_id: int, image_id: Optional[ObjectId] = None) -> None:
         check_type(id, [type(None), str, ObjectId], "receipt._id")
         check_type(recipient, str, "receipt.recipient")
         check_type(items, list, "receipt.items")
         check_type(date, datetime, "receipt.date")
-        check_type(total_sum_kr, int, "receipt.totalSumKr")
-        check_type(total_sum_ore, int, "receipt.totalSumOre")
+        check_type(total, float, "receipt.total")
+        check_type(category_id, int, "receipt.categoryID")
         check_type(image_id, [type(None), ObjectId], "receipt.imageId")
 
         self.id = ObjectId(id)
         self.recipient = recipient
         self.items = items
-        self.total_sum_kr = total_sum_kr
-        self.total_sum_ore = total_sum_ore
+        self.total = total
+        self.category_id = category_id
         self.image_id = image_id
 
         self.date = datetime(date.year, date.month, date.day, tzinfo=timezone.utc)
@@ -33,9 +33,9 @@ class Receipt:
             self.id == other.id and
             self.recipient == other.recipient and
             all([expected == actual for (expected, actual) in zip(self.items, other.items)]) and
-            self.total_sum_kr == other.total_sum_kr and
-            self.total_sum_ore == other.total_sum_ore and
+            self.total == other.total and
             self.image_id == other.image_id and
+            self.category_id == other.category_id and
             self.date == other.date
         )
 
@@ -44,8 +44,8 @@ class Receipt:
             "recipient": self.recipient,
             "items": [item.to_dict() for item in self.items],
             "date": self.date,
-            "totalSumKr": self.total_sum_kr,
-            "totalSumOre": self.total_sum_ore
+            "total": self.total,
+            "categoryID": self.category_id,
         }
 
         if self.image_id is not None:
@@ -63,12 +63,12 @@ class Receipt:
         recipient = d["recipient"]
         items = [Item.from_dict(d_item) for d_item in d["items"]]
         date = parse(d["date"]) if type(d["date"]) == str else d["date"]
-        total_sum_kr = d["totalSumKr"]
-        total_sum_ore = d["totalSumOre"]
+        total = d["total"]
+        category_id = d["categoryID"]
         image_id = ObjectId(d["imageId"]) if "imageId" in d else None
         id = ObjectId(d["_id"]) if "_id" in d else None
 
-        return Receipt(id, recipient, items, date, total_sum_kr, total_sum_ore, image_id)
+        return Receipt(id, recipient, items, date, total, category_id, image_id)
 
     @staticmethod
     def make_json_serializable(receipt_dict: Dict[str, Any]):

@@ -107,8 +107,10 @@ def create_app(config):
             receipt = Receipt.from_dict(receipt_dict)
         except KeyError as e:
             key = e.args[0]
+            print(key)
             return make_response(f"Missing required field \"{key}\"", unprocessable_entity)
         except TypeError as e:
+            print(e.args[0])
             return make_response(e.args[0], unprocessable_entity)
 
         return receipt

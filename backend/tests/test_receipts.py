@@ -43,23 +43,23 @@ def receipts(items, images) -> List[Receipt]:
             "Ica",
             [items[0], items[1], items[3]],
             datetime(2022, 6, 30),
-            163,
-            0,
+            163.,
+            1,
             images[1][1]
         ), Receipt(
             None,
             "Coop",
             [items[2], items[3], items[4], items[5]],
             datetime(2022, 7, 1),
-            141,
-            30
+            141.3,
+            2,
         ), Receipt(
             None,
             "Willy's",
             [items[1], items[5]],
             datetime(2021, 12, 13),
-            101,
-            50,
+            101.5,
+            3,
             images[0][1]
         )
     ]
@@ -99,15 +99,15 @@ def receipts_to_post(users, users_to_post) -> List[Tuple[User, Receipt]]:
             "Specsavers",
             [Item("Glasögon", 1.)],
             datetime(2022, 2, 24),
-            1337,
-            50
+            1337.5,
+            1,
         )), (users_to_post[0], Receipt(
             None,
             "Yes",
             [Item("Dood", 1.)],
             datetime(1970, 1, 1),
-            1,
-            1
+            1.1,
+            5,
         ))
     ]
 
