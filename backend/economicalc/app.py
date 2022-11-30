@@ -115,7 +115,8 @@ def create_app(config):
 
 
     def post_transactions(bankId, request):
-        if request.content_type != "application/json":
+        required_type = "application/json"
+        if request.content_type[:len(required_type)] != "application/json":
             return make_response(f"Expected content type application/json, not {request.content_type}", unsupported_media_type)
         transaction_dict = request.json
         transaction_dict.pop("_id", None)
@@ -145,7 +146,8 @@ def create_app(config):
 
 
     def put_transaction(bankId, transactionId, request):
-        if request.content_type != "application/json":
+        required_type = "application/json"
+        if request.content_type[:len(required_type)] != required_type:
             return make_response(f"Expected content type application/json, not {request.content_type}", unsupported_media_type)
 
         transaction_dict = request.json
