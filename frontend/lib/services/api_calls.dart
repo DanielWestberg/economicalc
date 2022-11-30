@@ -3,6 +3,7 @@ import 'package:economicalc_client/models/bank_transaction.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:flutter/material.dart';
 
+import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart';
 import 'dart:io';
 
@@ -155,6 +156,19 @@ postReceipt(String userId, Receipt receipt) async {
   if (response.statusCode != 201) {
     throw Exception(
       "Unexpected status code ${response.statusCode}\n${response.body}"
+    );
+  }
+}
+
+updateImage(String userId, String receiptId, XFile image) async {
+  final String path = "/users/$userId/receipts/$receiptId";
+  final request = http.StreamedRequest("PUT", Uri.http(apiServer, path));
+  request.headers["Content-type"] = image.mimeType ?? "application/octet-stream";
+  image.openRead().listen(request.sink.add, onDone: request.sink.close);
+  final response = await request.send();
+  if (response.statusCode != 204) {
+    throw Exception(
+      "Unexpected status code ${response.statusCode}\n${await response.stream.bytesToString()}"
     );
   }
 }
