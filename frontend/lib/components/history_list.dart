@@ -145,12 +145,14 @@ class HistoryListState extends State<HistoryList> {
                                     size: 50,
                                   ),
                                   onTap: () {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: ((context) =>
-                                                TransactionDetailsScreen(null,
-                                                    transactions[index]))));
+                                    Navigator.of(context)
+                                        .push(MaterialPageRoute(
+                                            builder: (context) =>
+                                                TransactionDetailsScreen(
+                                                    null, transactions[index])))
+                                        .then((value) {
+                                      Phoenix.rebirth(context);
+                                    });
                                   },
                                 ));
                           })));
