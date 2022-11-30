@@ -238,6 +238,49 @@ class TestTransactions():
         self.post_errenous_transaction(transaction_dict, client)
 
 
+    def test_put_all_transactions(self, db, users, client):
+        for user in users:
+            for transaction in user.transactions:
+                transaction_dict = transaction.to_dict(True)
+                for item in transaction_dict["items"]:
+                    item["name"] = f"XMAS {item['name']}"
+
+                transaction = Transaction.from_dict(transaction_dict)
+
+                response = client.put(f"/users/{user.bankId}/transactions/{transaction.id}", json=transaction_dict)
+                assert response.status == constants.ok
+                assert response.content_type == "application/json"
+
+                response_dict = response.json["data"]
+                response_transaction = Transaction.from_dict(response_dict)
+                assert transaction == response_transaction
+
+                response = client.get(f"/users/{user.bankId}/transactions")
+                response_dicts = response.json["data"]
+                response_transactions = [Transaction.from_dict(d) for d in response_dicts]
+
+                assert transaction in response_transactions
+
+
+    def test_put_transaction_is_isolated(self, db, users, client):
+        main_transaction = users[0].transactions[0]
+        main_transaction.date = datetime(1970, 1, 1)
+        response = client.put(f"/users/{users[0].bankId}/transactions/{main_transaction.id}", json=main_transaction.to_dict(True))
+        assert response.status == constants.ok
+
+        changed_count = 0
+        for user in users:
+            response = client.get(f"/users/{user.bankId}/transactions")
+            response_dicts = response.json["data"]
+            for response_dict in response_dicts:
+                transaction = Transaction.from_dict(response_dict)
+                transaction.date = datetime(transaction.date.year, transaction.date.month, transaction.date.day)
+                if transaction.date == main_transaction.date:
+                    changed_count += 1
+
+        assert changed_count == 1
+
+
     def test_get_image(self, tmp_path, db, fs, users, client):
         tmp_file = tmp_path / "response_image"
         for user in users:

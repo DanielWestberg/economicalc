@@ -17,12 +17,14 @@ def create_app(config):
     db = create_db(app)
     fs = GridFS(db)
 
-    @app.route('/')
-    def index():
-        return jsonify(
-            status=True,
-            message='Welcome to the Dockerized Flask MongoDB app!'
-        )
+    @app.route("/users/<bankId>/transactions", methods=["GET", "POST"])
+    def user_transactions(bankId):
+        if request.method == "GET":
+            return get_transactions(bankId, request)
+        
+        return post_transactions(bankId, request)
+
+
     @app.route('/initiate_bank_session/')
     def initiate_bank_session():
         appUri = ""
@@ -93,29 +95,35 @@ def create_app(config):
         return response.text
 
 
-    @app.route("/users/<bankId>/transactions", methods=["GET"])
-    def get_transactions(bankId):
+    def get_transactions(bankId, request):
         user = db.users.find_one_or_404({"bankId": bankId})
         User.make_json_serializable(user)
 
         return jsonify(data=user["transactions"])
 
 
-    @app.route("/users/<bankId>/transactions", methods=["POST"])
-    def post_transactions(bankId):
+    def parse_transaction_or_make_response(transaction_dict):
+        try:
+            transaction = Transaction.from_dict(transaction_dict)
+        except KeyError as e:
+            key = e.args[0]
+            return make_response(f"Missing required field \"{key}\"", unprocessable_entity)
+        except TypeError as e:
+            return make_response(e.args[0], unprocessable_entity)
+
+        return transaction
+
+
+    def post_transactions(bankId, request):
         if request.content_type != "application/json":
             return make_response(f"Expected content type application/json, not {request.content_type}", unsupported_media_type)
         transaction_dict = request.json
         transaction_dict.pop("_id", None)
         transaction_dict.pop("image_id", None)
 
-        try:
-            transaction = Transaction.from_dict(request.json)
-        except KeyError as e:
-            key = e.args[0]
-            return make_response(f"Missing required field \"{key}\"", unprocessable_entity)
-        except TypeError as e:
-            return make_response(e.args[0], unprocessable_entity)
+        transaction = parse_transaction_or_make_response(transaction_dict)
+        if type(transaction) != Transaction:
+            return transaction
 
         if len(transaction.items) == 0:
             return make_response("Field \"items\" may not be an empty list", unprocessable_entity)
@@ -130,9 +138,41 @@ def create_app(config):
 
         return make_response(jsonify(data=transaction.to_dict(True)), created)
 
+    @app.route("/users/<bankId>/transactions/<ObjectId:transactionId>", methods=["PUT"])
+    def user_transaction_by_id(bankId, transactionId):
+        # When more methods are added for this URL, check request.method to determine the appropriate method to call
+        return put_transaction(bankId, transactionId, request)
 
-    @app.route("/users/<bankId>/transactions/<ObjectId:transactionId>/image", methods=["GET"])
-    def get_image(bankId, transactionId):
+
+    def put_transaction(bankId, transactionId, request):
+        if request.content_type != "application/json":
+            return make_response(f"Expected content type application/json, not {request.content_type}", unsupported_media_type)
+
+        transaction_dict = request.json
+
+        new_transaction = parse_transaction_or_make_response(transaction_dict)
+        if type(new_transaction) != Transaction:
+            return new_transaction
+
+        user = db.users.find_one_or_404({"bankId": bankId, "transactions._id": transactionId}, {"_id": 0, "transactions.$": 1})
+        old_transaction = user["transactions"][0]
+        new_transaction.id = old_transaction["_id"]
+
+        new_transaction.image_id = old_transaction["image_id"] if "image_id" in old_transaction else None
+
+        db.users.find_one_and_update({"bankId": bankId, "transactions._id": transactionId}, {"$set": {"transactions.$": new_transaction.to_dict()}})
+        return jsonify(data=new_transaction.to_dict(True))
+
+
+    @app.route("/users/<bankId>/transactions/<ObjectId:transactionId>/image", methods=["GET", "PUT"])
+    def user_transaction_image(bankId, transactionId):
+        if request.method == "GET":
+            return get_image(bankId, transactionId, request)
+
+        return put_image(bankId, transactionId, request)
+
+
+    def get_image(bankId, transactionId, request):
         user = db.users.find_one_or_404({"bankId": bankId, "transactions._id": transactionId}, {"_id": 0, "transactions.$": 1})
         transaction = user["transactions"][0]
         image_id = transaction["image_id"] if "image_id" in transaction else None
@@ -143,8 +183,7 @@ def create_app(config):
         return send_file(image, mimetype=image.content_type[0])
 
     
-    @app.route("/users/<bankId>/transactions/<ObjectId:transactionId>/image", methods=["PUT"])
-    def put_image(bankId, transactionId):
+    def put_image(bankId, transactionId, request):
         user = db.users.find_one_or_404({"bankId": bankId, "transactions._id": transactionId}, {"_id": 0, "transactions.$": 1})
         transaction = user["transactions"][0]
         image_id = transaction["image_id"] if "image_id" in transaction else None
