@@ -1,8 +1,10 @@
 import 'dart:convert';
 
+import 'package:economicalc_client/models/category.dart';
 import 'package:intl/intl.dart';
 
 class Receipt {
+  int? id;
   String? userId;
   String transactionId;
   String recipient;
@@ -11,10 +13,14 @@ class Receipt {
   int? totalSumKr;
   int? totalSumOre;
   String? totalSumStr;
+  String? categoryDesc;
   List<ReceiptItem> items;
+  int? categoryID;
 
   Receipt(
-      {this.userId,
+      {
+      this.id,
+      this.userId,
       required this.transactionId,
       required this.recipient,
       required this.date,
@@ -22,10 +28,11 @@ class Receipt {
       this.totalSumKr,
       this.totalSumOre,
       this.totalSumStr,
-      required this.items});
+      required this.items,
+      this.categoryDesc,
+      this.categoryID});
 
   Map<String, dynamic> toMap() {
-    
     return {
       'userId': userId,
       'transactionId': transactionId,
@@ -35,7 +42,9 @@ class Receipt {
       'totalSumKr': totalSumKr,
       'totalSumOre': totalSumOre,
       'totalSumStr': totalSumStr,
+      'categoryDesc': categoryDesc,
       'items': jsonEncode(items),
+      'categoryID': categoryID
     };
   }
 
@@ -52,7 +61,6 @@ class Receipt {
         total: json['receipts'][0]['total'],
         items: items);
   }
-
 }
 
 class ReceiptItem {
@@ -85,10 +93,10 @@ class ReceiptItem {
       'amount': amount,
       'itemId': itemId,
       'quantity': quantity,
-      'priceKr':priceKr,
+      'priceKr': priceKr,
       'priceOre': priceOre,
       'sumKr': sumKr,
-      'sumOre':sumOre,
+      'sumOre': sumOre,
       'priceStr': priceStr,
       'sumStr': sumStr,
     };

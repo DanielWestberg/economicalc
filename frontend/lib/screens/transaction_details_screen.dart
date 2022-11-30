@@ -1,10 +1,15 @@
 import 'package:economicalc_client/helpers/utils.dart';
-import 'package:economicalc_client/models/transaction_event.dart';
+import 'package:economicalc_client/models/category.dart';
+import 'package:economicalc_client/models/receipt.dart';
+import 'package:economicalc_client/helpers/sqlite.dart';
+import 'package:economicalc_client/models/transaction.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+var dropDownItems = Utils.categories;
+
 class TransactionDetailsScreen extends StatefulWidget {
-  final Receipt transaction;
+  final Transaction transaction;
 
   TransactionDetailsScreen(Key? key, this.transaction) : super(key: key);
 
@@ -18,6 +23,26 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   bool isAscending = false;
   double fontSize = 14;
   final columns = ["Items", "Sum"];
+  final dbConnector = SQFLite.instance;
+  late String? dropdownValue;
+  late Future<List<Category>> categoriesFutureBuilder;
+  late List<Category> categories;
+  late Receipt receipt;
+  late Future<Receipt>? receiptFutureBuilder;
+
+  @override
+  void initState() {
+    super.initState();
+    dbConnector.initDatabase();
+    dropdownValue = widget.transaction.categoryDesc;
+    categoriesFutureBuilder = getCategories(dbConnector);
+    if (widget.transaction.receiptID != null) {
+      receiptFutureBuilder =
+          getReceipt(dbConnector, widget.transaction.receiptID!);
+    } else {
+      receiptFutureBuilder = null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +50,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
         child: Scaffold(
             appBar: AppBar(
               toolbarHeight: 180,
-              backgroundColor: Color(0xFFB8D8D8),
+              backgroundColor: Utils.backgroundColor,
               foregroundColor: Colors.black,
               title: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,6 +70,50 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
             body: ListView(children: [buildDataTable()])));
   }
 
+  Widget dropDown() {
+    return FutureBuilder(
+        future: categoriesFutureBuilder,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Text("${snapshot.error}");
+          } else if (snapshot.hasData) {
+            categories = snapshot.data!;
+
+            return SizedBox(
+                width: 110,
+                height: 30,
+                child: DropdownButton<String>(
+                    isDense: true,
+                    isExpanded: true,
+                    value: dropdownValue,
+                    onChanged: (value) async {
+                      setState(() {
+                        dropdownValue = value;
+                      });
+                      widget.transaction.categoryDesc = dropdownValue;
+                      widget.transaction.categoryID =
+                          await SQFLite.getCategoryIDfromDescription(
+                              dropdownValue!);
+                      dbConnector.updateTransaction(widget.transaction!);
+                    },
+                    items: categories
+                        .map<DropdownMenuItem<String>>((Category category) {
+                      return DropdownMenuItem<String>(
+                        value: category.description,
+                        child: Text(category.description,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontSize: fontSize,
+                                fontWeight: FontWeight.w600,
+                                color: category.color)),
+                      );
+                    }).toList()));
+          } else {
+            return Text("Unexpected error");
+          }
+        });
+  }
+
   Widget headerInfo() {
     return Container(
         padding: EdgeInsets.only(top: 10),
@@ -57,13 +126,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
               children: [
                 Row(children: [
                   Icon(Icons.category),
-                  Padding(
-                      padding: EdgeInsets.only(left: 5),
-                      child: Text(
-                        "Mat & Dryck",
-                        style: TextStyle(
-                            fontSize: fontSize, fontWeight: FontWeight.w600),
-                      )),
+                  Padding(padding: EdgeInsets.only(left: 5), child: dropDown()),
                 ]),
                 Row(
                   children: [
@@ -71,7 +134,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                     Padding(
                         padding: EdgeInsets.only(left: 5),
                         child: Text(
-                          widget.transaction.recipient,
+                          widget.transaction.store!,
                           style: TextStyle(
                               fontSize: fontSize, fontWeight: FontWeight.w600),
                         )),
@@ -97,7 +160,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                 padding: EdgeInsets.all(10),
                 child: Column(children: [
                   Icon(Icons.payment),
-                  Text("${widget.transaction.total} kr",
+                  Text("${widget.transaction.totalAmount} kr",
                       style: TextStyle(
                           fontSize: fontSize, fontWeight: FontWeight.w600))
                 ])),
@@ -112,12 +175,23 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   }
 
   Widget buildDataTable() {
-    return DataTable(
-        columnSpacing: 30,
-        sortAscending: isAscending,
-        sortColumnIndex: sortColumnIndex,
-        columns: getColumns(columns),
-        rows: getRows(widget.transaction.items as List<ReceiptItem>));
+    return FutureBuilder(
+        future: receiptFutureBuilder,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Text("${snapshot.error}");
+          } else if (snapshot.hasData) {
+            receipt = snapshot.data!;
+            return DataTable(
+                columnSpacing: 30,
+                sortAscending: isAscending,
+                sortColumnIndex: sortColumnIndex,
+                columns: getColumns(columns),
+                rows: getRows(receipt.items));
+          } else {
+            return Center(heightFactor: 20, child: Text("No receipt data"));
+          }
+        });
   }
 
   List<DataColumn> getColumns(List<String> columns) => columns
@@ -138,16 +212,24 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
 
   void onSort(int columnIndex, bool ascending) {
     if (columnIndex == 0) {
-      widget.transaction.items.sort((row1, row2) =>
-          compareString(ascending, row1.itemName, row2.itemName));
+      receipt.items.sort((row1, row2) =>
+          Utils.compareString(ascending, row1.itemName, row2.itemName));
     } else if (columnIndex == 1) {
-      widget.transaction.items.sort(
-          (row1, row2) => compareNumber(ascending, row1.amount, row2.amount));
+      receipt.items.sort((row1, row2) =>
+          Utils.compareNumber(ascending, row1.amount, row2.amount));
     }
 
     setState(() {
       sortColumnIndex = columnIndex;
       isAscending = ascending;
     });
+  }
+
+  Future<List<Category>> getCategories(SQFLite dbConnector) async {
+    return await dbConnector.getAllcategories();
+  }
+
+  Future<Receipt> getReceipt(SQFLite dbConnector, int id) async {
+    return await dbConnector.getReceiptfromID(id);
   }
 }

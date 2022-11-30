@@ -328,3 +328,37 @@ class TestTransactions():
                     with tmp_file.open("rb") as eff:
                         for (expected, actual) in zip(f, eff):
                             assert expected == actual
+
+
+    def test_put_image_is_isolated(self, tmp_path, db, fs, users, image_to_put, client):
+        filename = f"./tests/res/{image_to_put}"
+        filetype = guess_type(filename)[0]
+        tmp_file = tmp_path / "response_image"
+
+
+        original_transaction = users[0].transactions[0]
+        with open(filename, "rb") as f:
+            client.put(f"/users/{users[0].bankId}/transactions/{original_transaction.id}/image", data = f, content_type = filetype)
+
+        for user in users:
+            for transaction in user.transactions:
+                if transaction.id == original_transaction.id:
+                    continue
+
+                response = client.get(f"/users/{user.bankId}/transactions/{transaction.id}/image")
+                if response.status == constants.not_found:
+                    continue
+
+                with tmp_file.open("wb") as f:
+                    for data in response.response:
+                        f.write(data)
+
+                with tmp_file.open("rb") as received_file:
+                    with open(filename, "rb") as original_file:
+                        failed = True
+                        for (expected, actual) in zip(received_file, original_file):
+                            failed = failed and expected == actual
+                            if failed:
+                                break
+
+                        assert not failed
