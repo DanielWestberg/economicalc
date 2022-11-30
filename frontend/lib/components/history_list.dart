@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
+import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
@@ -24,23 +25,30 @@ class HistoryListState extends State<HistoryList> {
   late List<Transaction> transactions;
   final SQFLite dbConnector = SQFLite.instance;
 
-  late Future<List<BankTransaction>> bankTransactions;
-  late List<Transaction> transactions_bank;
+  late List<Category> categories = [];
 
   @override
   void initState() {
     super.initState();
-    load_test_data();
-    fetchTransactions();
-  }
-
-  void fetchTransactions() {
-    dbConnector.initDatabase();
+    initDB();
+    fetchBankTransactions();
     dataFuture = dbConnector.getAllTransactions();
-    bankTransactions = dbConnector.getBankTransactions();
   }
 
-  void load_test_data() async {
+  void initDB() async {
+    await dbConnector.initDatabase();
+  }
+
+  void fetchBankTransactions() async {
+    categories = await dbConnector.getAllcategories();
+    await load_test_data(); // TODO: Replace with fetching from bank
+    await dbConnector.importMissingBankTransactions();
+    setState(() {
+      dataFuture = dbConnector.getAllTransactions();
+    });
+  }
+
+  load_test_data() async {
     final String jsondata =
         await rootBundle.loadString('assets/test_data.json');
 
@@ -53,9 +61,8 @@ class HistoryListState extends State<HistoryList> {
     });
 
     for (var transaction in testTransactions) {
-      dbConnector.postBankTransaction(transaction);
+      await dbConnector.postBankTransaction(transaction);
     }
-    dbConnector.importMissingBankTransactions();
   }
 
   void sortByDate() {
@@ -85,7 +92,7 @@ class HistoryListState extends State<HistoryList> {
               sortByDate();
               return Expanded(
                   child: RefreshIndicator(
-                      onRefresh: () async => fetchTransactions(),
+                      onRefresh: () async => fetchBankTransactions(),
                       backgroundColor: Color(0xFFB8D8D8),
                       color: Colors.black,
                       child: ListView.builder(
@@ -113,13 +120,26 @@ class HistoryListState extends State<HistoryList> {
                                         fontWeight: FontWeight.w600,
                                         fontSize: 16),
                                   ),
-                                  leading: Text(
-                                    DateFormat('yyyy-MM-dd')
-                                        .format(transactions[index].date),
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16),
-                                  ),
+                                  leading: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        Text(
+                                          DateFormat('yyyy-MM-dd')
+                                              .format(transactions[index].date),
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 16),
+                                        ),
+                                        Icon(
+                                          Icons.category,
+                                          color: Category.getCategory(
+                                                  transactions[index]
+                                                      .categoryID!,
+                                                  categories)
+                                              .color,
+                                        )
+                                      ]),
                                   trailing: const Icon(
                                     Icons.arrow_right_alt_sharp,
                                     size: 50,
