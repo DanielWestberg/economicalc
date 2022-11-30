@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:core';
 
+import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/models/response.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
+import 'package:economicalc_client/screens/home_screen.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
@@ -36,7 +38,8 @@ class OpenLinkState extends State<OpenLink> {
       "https://link.tink.com/1.0/transactions/connect-accounts/?client_id=1a539460199a4e8bb374893752db14e6&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fcallback&market=SE&locale=sv_SE&test=true";
 
   late final Response response;
-  late final Future<List<BankTransaction>> transactions;
+  late final List<BankTransaction> transactions;
+  final SQFLite dbConnector = SQFLite.instance;
 
   @override
   void initState() {
@@ -52,7 +55,7 @@ class OpenLinkState extends State<OpenLink> {
         ),
         body: WebView(
           initialUrl: selectedUrl,
-          navigationDelegate: (action) {
+          navigationDelegate: (action) async {
             print(action.url);
             if (action.url.contains("http://localhost:3000/callback") &&
                 action.url.contains("code")) {
@@ -66,12 +69,15 @@ class OpenLinkState extends State<OpenLink> {
               code = code.split("=")[1];
               credential_id = credential_id.split("=")[1];
 
-              setState(() async {
-                // flutter klagar på detta, Varför??? Måste kanske fixas?
-                response = await CodeToAccessToken(code);
-                transactions = fetchTransactions(response.accessToken);
-              });
-
+              response = await CodeToAccessToken(code);
+              transactions = await fetchTransactions(response.accessToken);
+              print(transactions);
+              for (var transaction in transactions) {
+                print(transaction.descriptions.display);
+                dbConnector.postBankTransaction(transaction);
+              }
+              if (!mounted) return NavigationDecision.prevent;
+              Navigator.of(context).popUntil((route) => route.isFirst);
               return NavigationDecision.prevent;
             } else if (action.url
                     .contains("http%3A%2F%2Flocalhost%3A5000%2Fcallback") &&
