@@ -19,6 +19,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   DateTime startDate = DateTime(2022, 01, 01);
   DateTime endDate = DateTime(2022, 12, 31);
   String dropdownValue = dropdownList.first;
+  final SQFLite dbConnector = SQFLite.instance;
 
   final columns = ["Items", "Sum"];
   late Future<List<ReceiptItem>> dataFuture;

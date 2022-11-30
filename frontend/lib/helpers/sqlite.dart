@@ -58,13 +58,9 @@ class SQFLite {
     await db.execute(
       '''CREATE TABLE receipts(
         id                  INTEGER NOT NULL UNIQUE PRIMARY KEY AUTOINCREMENT,
-        userId              TEXT, transactionId TEXT,
         recipient           TEXT,
         date                TEXT,
         total               REAL,
-        totalSumKr          INTEGER,
-        totalSumOre         INTEGER,
-        totalSumStr         TEXT,
         items               TEXT,
         categoryDesc        TEXT,
         categoryID          INTEGER,
@@ -306,16 +302,12 @@ class SQFLite {
     return List.generate(maps!.length, (i) {
       return Receipt(
         id: maps[i]['id'],
-        userId: maps[i]['userId'],
-        transactionId: maps[i]['transactionId'],
         recipient: maps[i]['recipient'],
         date: DateTime.parse(maps[i]['date']),
         total: maps[i]['total'],
         items: parseReceiptItems(maps[i]['items']),
-        totalSumKr: maps[i]['totalSumKr'],
-        totalSumOre: maps[i]['totalSumOre'],
-        totalSumStr: maps[i]['totalSumStr'],
         categoryDesc: maps[i]['categoryDesc'],
+        categoryID: maps[i]['categoryID'],
       );
     });
   }
@@ -327,16 +319,12 @@ class SQFLite {
 
     return Receipt(
       id: maps![0]['id'],
-      userId: maps[0]['userId'],
-      transactionId: maps[0]['transactionId'],
       recipient: maps[0]['recipient'],
       date: DateTime.parse(maps[0]['date']),
       total: maps[0]['total'],
       items: parseReceiptItems(maps[0]['items']),
-      totalSumKr: maps[0]['totalSumKr'],
-      totalSumOre: maps[0]['totalSumOre'],
-      totalSumStr: maps[0]['totalSumStr'],
       categoryDesc: maps[0]['categoryDesc'],
+      categoryID: maps[i]['categoryID'],
     );
   }
 
