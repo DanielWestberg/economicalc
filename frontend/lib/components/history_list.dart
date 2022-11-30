@@ -88,7 +88,7 @@ class HistoryListState extends State<HistoryList> {
               sortByDate();
               return Expanded(
                   child: RefreshIndicator(
-                      onRefresh: () async => load_test_data(),
+                      onRefresh: () async => fetchBankTransactions(),
                       backgroundColor: Color(0xFFB8D8D8),
                       color: Colors.black,
                       child: ListView.builder(
