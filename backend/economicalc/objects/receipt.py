@@ -8,15 +8,15 @@ from .item import Item
 from .type_check import check_type
 
 
-class Transaction:
+class Receipt:
     def __init__(self, id: Optional[Union[str, ObjectId]], recipient: str, items: List[Item], date: datetime, total_sum_kr: int, total_sum_ore: int, image_id: Optional[ObjectId] = None) -> None:
-        check_type(id, [type(None), str, ObjectId], "transaction._id")
-        check_type(recipient, str, "transaction.recipient")
-        check_type(items, list, "transaction.items")
-        check_type(date, datetime, "transaction.date")
-        check_type(total_sum_kr, int, "transaction.totalSumKr")
-        check_type(total_sum_ore, int, "transaction.totalSumOre")
-        check_type(image_id, [type(None), ObjectId], "transaction.imageId")
+        check_type(id, [type(None), str, ObjectId], "receipt._id")
+        check_type(recipient, str, "receipt.recipient")
+        check_type(items, list, "receipt.items")
+        check_type(date, datetime, "receipt.date")
+        check_type(total_sum_kr, int, "receipt.totalSumKr")
+        check_type(total_sum_ore, int, "receipt.totalSumOre")
+        check_type(image_id, [type(None), ObjectId], "receipt.imageId")
 
         self.id = ObjectId(id)
         self.recipient = recipient
@@ -57,8 +57,8 @@ class Transaction:
 
     @staticmethod
     def from_dict(d: Dict[str, Any]):
-        check_type(d, dict, "transaction")
-        check_type(d["items"], list, "transaction.items")
+        check_type(d, dict, "receipt")
+        check_type(d["items"], list, "receipt.items")
 
         recipient = d["recipient"]
         items = [Item.from_dict(d_item) for d_item in d["items"]]
@@ -68,10 +68,10 @@ class Transaction:
         image_id = ObjectId(d["imageId"]) if "imageId" in d else None
         id = ObjectId(d["_id"]) if "_id" in d else None
 
-        return Transaction(id, recipient, items, date, total_sum_kr, total_sum_ore, image_id)
+        return Receipt(id, recipient, items, date, total_sum_kr, total_sum_ore, image_id)
 
     @staticmethod
-    def make_json_serializable(transaction_dict: Dict[str, Any]):
-        transaction_dict["_id"] = str(transaction_dict["_id"])
-        if "imageId" in transaction_dict:
-            transaction_dict["imageId"] = str(transaction_dict["imageId"])
+    def make_json_serializable(receipt_dict: Dict[str, Any]):
+        receipt_dict["_id"] = str(receipt_dict["_id"])
+        if "imageId" in receipt_dict:
+            receipt_dict["imageId"] = str(receipt_dict["imageId"])
