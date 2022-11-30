@@ -271,6 +271,19 @@ class SQFLite {
     );
   }
 
+  Future<List<ReceiptItem>> getAllReceiptItems() async {
+    final receipts = await getAllReceipts();
+    List<ReceiptItem> items = [];
+
+    receipts.forEach((receipt) {
+      receipt.items.forEach((item) {
+        items.add(item);
+      });
+    });
+
+    return items;
+  }
+
   // A method that retrieves all the receipts from the receipts table.
   Future<List<Receipt>> getAllReceipts() async {
     final db = await instance.database;
