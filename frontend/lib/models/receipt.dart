@@ -11,15 +11,17 @@ class Receipt {
   String? categoryDesc;
   List<ReceiptItem> items;
   int? categoryID;
+  String? backendId;
 
-  Receipt(
-      {this.id,
-      required this.recipient,
-      required this.date,
-      this.total,
-      required this.items,
-      this.categoryDesc,
-      this.categoryID});
+  Receipt({this.id,
+    required this.recipient,
+    required this.date,
+    this.total,
+    required this.items,
+    this.categoryDesc,
+    this.categoryID,
+    this.backendId,
+  });
 
   Map<String, dynamic> toMap() {
     List<Map<String, dynamic>> items = [];
@@ -27,7 +29,7 @@ class Receipt {
       items.add(item.toJson());
     }
 
-    return {
+    var result =  {
       'recipient': recipient,
       'date': date.toIso8601String(),
       'total': total,
@@ -35,11 +37,18 @@ class Receipt {
       'items': items,
       'categoryID': categoryID
     };
+
+    if (backendId != null) {
+      result["_id"] = backendId;
+    }
+
+    return result;
   }
 
   @override
   toString() {
-    return "{$recipient, $date, $total, $items, $categoryID}";
+    return "Receipt ${backendId ?? ""}: "
+    "{$recipient, $date, $total, $items, $categoryID}";
   }
 
   factory Receipt.fromBackendJson(Map<String, dynamic> json) {
@@ -54,6 +63,7 @@ class Receipt {
       total: json["total"],
       items: items,
       categoryID: json["categoryID"],
+      backendId: json["_id"],
     );
   }
 
