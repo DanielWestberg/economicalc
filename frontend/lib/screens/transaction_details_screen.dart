@@ -22,7 +22,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   int? sortColumnIndex;
   bool isAscending = false;
   double fontSize = 14;
-  double sizedBoxWidth = 145;
+  double sizedBoxWidth = 140;
   double sizedBoxHeight = 30;
   final columns = ["Items", "Sum"];
   final dbConnector = SQFLite.instance;
