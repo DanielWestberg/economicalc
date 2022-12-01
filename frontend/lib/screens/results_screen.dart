@@ -104,7 +104,7 @@ class ResultsScreenState extends State<ResultsScreen> {
                 await dbConnector.insertReceipt(receipt, dropdownValue);
             Transaction transaction = new Transaction(
               date: receipt.date,
-              totalAmount: receipt.total,
+              totalAmount: -receipt.total!,
               store: receipt.recipient,
               bankTransactionID: null,
               receiptID: receiptID,
