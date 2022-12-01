@@ -292,7 +292,6 @@ class TestReceipt():
                     continue
 
                 assert response.status == constants.ok
-                assert response.is_streamed
 
                 with tmp_file.open("wb") as f:
                     for data in response.response:
@@ -312,7 +311,7 @@ class TestReceipt():
                 if receipt.image_id is not None:
                     continue
 
-                response = client.put(f"/users/{user.bankId}/receipts/{receipt.id}/image", data = image_to_put.open("rb"), content_type = filetype)
+                response = client.put(f"/users/{user.bankId}/receipts/{receipt.id}/image", data = {"file": image_to_put.open("rb")})
                 assert response.status == constants.no_content
 
                 response = client.get(f"/users/{user.bankId}/receipts/{receipt.id}/image")
@@ -330,9 +329,8 @@ class TestReceipt():
         filetype = guess_type(str(image_to_put))[0]
         tmp_file = tmp_path / "response_image"
 
-
         original_receipt = users[0].receipts[0]
-        client.put(f"/users/{users[0].bankId}/receipts/{original_receipt.id}/image", data = image_to_put.open("rb"), content_type = filetype)
+        client.put(f"/users/{users[0].bankId}/receipts/{original_receipt.id}/image", data = {"file": image_to_put.open("rb")})
 
         for user in users:
             for receipt in user.receipts:
