@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
+import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
@@ -24,6 +25,8 @@ class HistoryListState extends State<HistoryList> {
   late List<Transaction> transactions;
   final SQFLite dbConnector = SQFLite.instance;
 
+  late List<Category> categories = [];
+
   @override
   void initState() {
     super.initState();
@@ -37,6 +40,7 @@ class HistoryListState extends State<HistoryList> {
   }
 
   void fetchBankTransactions() async {
+    categories = await dbConnector.getAllcategories();
     await load_test_data(); // TODO: Replace with fetching from bank
     await dbConnector.importMissingBankTransactions();
     setState(() {
@@ -116,24 +120,39 @@ class HistoryListState extends State<HistoryList> {
                                         fontWeight: FontWeight.w600,
                                         fontSize: 16),
                                   ),
-                                  leading: Text(
-                                    DateFormat('yyyy-MM-dd')
-                                        .format(transactions[index].date),
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16),
-                                  ),
+                                  leading: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        Text(
+                                          DateFormat('yyyy-MM-dd')
+                                              .format(transactions[index].date),
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 16),
+                                        ),
+                                        Icon(
+                                          Icons.category,
+                                          color: Category.getCategory(
+                                                  transactions[index]
+                                                      .categoryID!,
+                                                  categories)
+                                              .color,
+                                        )
+                                      ]),
                                   trailing: const Icon(
                                     Icons.arrow_right_alt_sharp,
                                     size: 50,
                                   ),
                                   onTap: () {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: ((context) =>
-                                                TransactionDetailsScreen(null,
-                                                    transactions[index]))));
+                                    Navigator.of(context)
+                                        .push(MaterialPageRoute(
+                                            builder: (context) =>
+                                                TransactionDetailsScreen(
+                                                    null, transactions[index])))
+                                        .then((value) {
+                                      Phoenix.rebirth(context);
+                                    });
                                   },
                                 ));
                           })));

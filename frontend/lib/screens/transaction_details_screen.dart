@@ -52,6 +52,11 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
               toolbarHeight: 180,
               backgroundColor: Utils.backgroundColor,
               foregroundColor: Colors.black,
+              leading: new IconButton(
+                  onPressed: (() {
+                    Navigator.pop(context);
+                  }),
+                  icon: Icon(Icons.arrow_back)),
               title: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
