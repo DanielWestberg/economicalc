@@ -24,11 +24,12 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   final columns = ["Items", "Sum"];
   late Future<List<ReceiptItem>> dataFuture;
   List<ReceiptItem> rows = [];
+  final SQFLite dbConnector = SQFLite.instance;
 
   @override
   void initState() {
     super.initState();
-    dataFuture = fetchMockedReceiptItems();
+    dataFuture = dbConnector.getFilteredReceiptItems(startDate, endDate);
   }
 
   @override
