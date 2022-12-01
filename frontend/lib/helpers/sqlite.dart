@@ -113,6 +113,16 @@ class SQFLite {
         tran.categoryID = transaction.categoryID;
         tran.categoryDesc = transaction.categoryDesc;
         updateTransaction(tran);
+        if (tran.bankTransactionID != null &&
+            transaction.bankTransactionID != null) {
+          bank_transaction.BankTransaction bank_trans =
+              await getBankTransactionfromID(tran.bankTransactionID!);
+
+          bank_transaction.BankTransaction bank_transactions =
+              await getBankTransactionfromID(transaction.bankTransactionID!);
+          print("first Transaction: " + bank_trans.accountId);
+          print("Second Transaction: " + bank_transactions.accountId);
+        }
       }
     }
   }
@@ -240,7 +250,7 @@ class SQFLite {
   }
 
   Future<bank_transaction.BankTransaction> getBankTransactionfromID(
-      int id) async {
+      String id) async {
     final db = await instance.database;
 
     List<Map<String, dynamic?>>? maps =

@@ -30,12 +30,13 @@ class OpenLink extends StatefulWidget {
 class OpenLinkState extends State<OpenLink> {
   final Completer<WebViewController> _controller =
       Completer<WebViewController>();
+  late WebViewController controller;
 
   late final String title = "Login";
   late final String clientId;
   late final String redirectUri;
   late final String selectedUrl =
-      "https://link.tink.com/1.0/transactions/connect-accounts/?client_id=1a539460199a4e8bb374893752db14e6&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fcallback&market=SE&locale=sv_SE&test=true";
+      "https://link.tink.com/1.0/transactions/connect-accounts/?client_id=1e48aa066d3f46bcb31bf2acb949a6ca&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fcallback&market=SE&locale=en_US";
 
   late final Response response;
   late final List<BankTransaction> transactions;
@@ -84,8 +85,17 @@ class OpenLinkState extends State<OpenLink> {
                 !action.url.contains("code")) {
               //NO CODE REETURNED == SOMETHING WENT WRONG
               return NavigationDecision.navigate;
-            } else {
+            } else if (action.url.contains("bankid")) {
+              var uri = Uri.dataFromString(action.url);
+              Map<String, String> params = uri.queryParameters;
+
+              String autostart_token = params["autostarttoken"]!;
+              print(autostart_token);
+              controller.loadUrl(
+                  "https://app.bankid.com/?autostarttoken=${autostart_token}&redirect=[RETURNURL]");
               //NORMAL CASE - just redirecting to next link.
+              return NavigationDecision.navigate;
+            } else {
               return NavigationDecision.navigate;
             }
           },
