@@ -104,6 +104,19 @@ class SQFLite {
     );
   }
 
+  //Maybe a more suitable name can be found?
+  void assignCategories(Transaction transaction) async {
+    List<Transaction> transactionsInLocalDb = await getAllTransactions();
+    for (Transaction tran in transactionsInLocalDb) {
+      if (tran.store?.toLowerCase().trim() ==
+          transaction.store?.toLowerCase().trim()) {
+        tran.categoryID = transaction.categoryID;
+        tran.categoryDesc = transaction.categoryDesc;
+        updateTransaction(tran);
+      }
+    }
+  }
+
   // A method that retrieves all the transactions from the transactions table.
   Future<List<Transaction>> getAllTransactions() async {
     final db = await instance.database;
@@ -324,7 +337,7 @@ class SQFLite {
       total: maps[0]['total'],
       items: parseReceiptItems(maps[0]['items']),
       categoryDesc: maps[0]['categoryDesc'],
-      categoryID: maps[i]['categoryID'],
+      categoryID: maps[0]['categoryID'],
     );
   }
 

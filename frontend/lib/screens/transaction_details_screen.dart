@@ -100,6 +100,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                           await SQFLite.getCategoryIDfromDescription(
                               dropdownValue!);
                       dbConnector.updateTransaction(widget.transaction!);
+                      dbConnector.assignCategories(widget.transaction);
                     },
                     items: categories
                         .map<DropdownMenuItem<String>>((Category category) {
