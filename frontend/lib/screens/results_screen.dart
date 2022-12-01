@@ -34,8 +34,8 @@ class ResultsScreenState extends State<ResultsScreen> {
   late List<Category> categories;
   final dbConnector = SQFLite.instance;
   int? categoryID;
-  String dropdownValue = Utils
-      .categories.first.description; // TODO: replace with suggested category
+  String dropdownValue =
+      "Uncategorized"; // TODO: replace with suggested category
 
   @override
   void initState() {
