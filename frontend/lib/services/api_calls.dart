@@ -12,7 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
 
-const String apiServer = "192.168.1.6:5000";
+const String apiServer = "192.168.80.99:5000";
 
 Future<List<Receipt>> fetchMockedTransactions() async {
   final String response =
