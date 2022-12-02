@@ -168,20 +168,25 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                           });
                                     }),
                                 title: Text(categories[index].description),
-                                trailing: PopupMenuButton(
-                                    icon: Icon(Icons.remove_circle,
-                                        color: Colors.red),
-                                    itemBuilder: (context) => [
-                                          PopupMenuItem(
-                                            child: Text("Remove"),
-                                            onTap: () async {
-                                              await dbConnector.deleteCategory(
-                                                  categories[index].id!);
-                                              categories.removeAt(index);
-                                              setState(() {});
-                                            },
-                                          )
-                                        ]),
+                                trailing: categories[index].description !=
+                                        "Uncategorized"
+                                    ? PopupMenuButton(
+                                        icon: Icon(Icons.remove_circle,
+                                            color: Colors.red),
+                                        itemBuilder: (context) => [
+                                              PopupMenuItem(
+                                                child: Text("Remove"),
+                                                onTap: () async {
+                                                  await dbConnector
+                                                      .deleteCategory(
+                                                          categories[index]
+                                                              .id!);
+                                                  categories.removeAt(index);
+                                                  setState(() {});
+                                                },
+                                              )
+                                            ])
+                                    : Text(""),
                               ));
                             }),
                           )))

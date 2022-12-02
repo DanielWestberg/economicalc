@@ -1,3 +1,4 @@
+import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/services/api_calls.dart';
@@ -18,6 +19,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   DateTime startDate = DateTime(2022, 01, 01);
   DateTime endDate = DateTime(2022, 12, 31);
   String dropdownValue = dropdownList.first;
+  final SQFLite dbConnector = SQFLite.instance;
 
   final columns = ["Items", "Sum"];
   late Future<List<ReceiptItem>> dataFuture;
@@ -26,7 +28,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   @override
   void initState() {
     super.initState();
-    dataFuture = fetchMockedReceiptItemsBetweenDates(startDate, endDate);
+    dataFuture = dbConnector.getFilteredReceiptItems(startDate, endDate);
   }
 
   @override

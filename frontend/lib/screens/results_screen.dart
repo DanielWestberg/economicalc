@@ -24,6 +24,8 @@ class ResultsScreenState extends State<ResultsScreen> {
   int? sortColumnIndex;
   bool isAscending = false;
   double fontSize = 14;
+  double sizedBoxWidth = 150;
+  double sizedBoxHeight = 30;
   final columns = ["Items", "Total"];
   bool isLoading = false;
   late Future<Receipt> dataFuture;
@@ -32,8 +34,8 @@ class ResultsScreenState extends State<ResultsScreen> {
   late List<Category> categories;
   final dbConnector = SQFLite.instance;
   int? categoryID;
-  String dropdownValue = Utils
-      .categories.first.description; // TODO: replace with suggested category
+  String dropdownValue =
+      "Uncategorized"; // TODO: replace with suggested category
 
   @override
   void initState() {
@@ -102,7 +104,7 @@ class ResultsScreenState extends State<ResultsScreen> {
                 await dbConnector.insertReceipt(receipt, dropdownValue);
             Transaction transaction = new Transaction(
               date: receipt.date,
-              totalAmount: receipt.total,
+              totalAmount: -receipt.total!,
               store: receipt.recipient,
               bankTransactionID: null,
               receiptID: receiptID,
@@ -127,8 +129,8 @@ class ResultsScreenState extends State<ResultsScreen> {
             categories = snapshot.data!;
 
             return SizedBox(
-                width: 110,
-                height: 30,
+                width: sizedBoxWidth,
+                height: sizedBoxHeight,
                 child: DropdownButton<String>(
                     isDense: true,
                     isExpanded: true,
@@ -188,12 +190,15 @@ class ResultsScreenState extends State<ResultsScreen> {
                             Icon(Icons.store),
                             Padding(
                                 padding: EdgeInsets.only(left: 5),
-                                child: Text(
-                                  receipt.recipient,
-                                  style: TextStyle(
-                                      fontSize: fontSize,
-                                      fontWeight: FontWeight.w600),
-                                )),
+                                child: SizedBox(
+                                    width: sizedBoxWidth,
+                                    height: sizedBoxHeight,
+                                    child: Text(
+                                      receipt.recipient,
+                                      style: TextStyle(
+                                          fontSize: fontSize,
+                                          fontWeight: FontWeight.w600),
+                                    ))),
                           ],
                         ),
                         Row(
@@ -214,7 +219,7 @@ class ResultsScreenState extends State<ResultsScreen> {
                       ],
                     ),
                     Padding(
-                        padding: EdgeInsets.all(10),
+                        padding: EdgeInsets.only(left: 10),
                         child: Column(children: [
                           Icon(Icons.payment),
                           Text("${receipt.total} kr",
