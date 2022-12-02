@@ -202,7 +202,6 @@ def create_app(config):
             fs.delete(image_id)
 
         file = request.files["file"]
-        print(type(file))
         fs.put(file, _id=image_id, content_type=request.mimetype)
 
         return make_response("", no_content)
