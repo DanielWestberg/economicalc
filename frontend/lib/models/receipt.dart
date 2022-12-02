@@ -22,14 +22,39 @@ class Receipt {
       this.categoryID});
 
   Map<String, dynamic> toMap() {
+    List<Map<String, dynamic>> items = [];
+    for (ReceiptItem item in this.items) {
+      items.add(item.toJson());
+    }
+
     return {
       'recipient': recipient,
       'date': date.toIso8601String(),
       'total': total,
       'categoryDesc': categoryDesc,
-      'items': jsonEncode(items),
+      'items': items,
       'categoryID': categoryID
     };
+  }
+
+  @override
+  toString() {
+    return "{$recipient, $date, $total, $items, $categoryID}";
+  }
+
+  factory Receipt.fromBackendJson(Map<String, dynamic> json) {
+    List<ReceiptItem> items = json["items"]
+        .map((i) => ReceiptItem.fromJson(i))
+        .toList()
+        .cast<ReceiptItem>();
+
+    return Receipt(
+      recipient: json["recipient"],
+      date: DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'").parseUtc(json["date"]),
+      total: json["total"],
+      items: items,
+      categoryID: json["categoryID"],
+    );
   }
 
   factory Receipt.fromJson(Map<String, dynamic> json) {
@@ -52,6 +77,11 @@ class ReceiptItem {
   double amount;
 
   ReceiptItem({required this.itemName, required this.amount, this.itemId});
+
+  @override
+  toString() {
+    return "{$itemName, $amount}";
+  }
 
   Map<String, dynamic> toJson() {
     return {'itemName': itemName, 'amount': amount, 'itemId': itemId};

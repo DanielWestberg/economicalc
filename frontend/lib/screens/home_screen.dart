@@ -148,6 +148,35 @@ class _HomeScreen extends State<HomeScreen> {
           shape: RoundedRectangleBorder(
             side: BorderSide(color: Utils.drawerColor, width: 10),
           ),
+          title: Text('Run tests',
+            style:
+              GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
+          onTap: () async {
+            String userId = "bruh";
+            List<ReceiptItem> items = [
+              ReceiptItem(
+                itemName: "Snusk",
+                amount: 9001,
+              ),
+            ];
+            Receipt receipt = Receipt(
+              recipient: "ica",
+              date: DateTime.now(),
+              items: items,
+              total: 100.0,
+              categoryID: 1,
+            );
+            await postReceipt(userId, receipt);
+
+            List<Receipt> responseReceipts = await fetchReceipts(userId);
+            print(responseReceipts);
+           },
+        ),
+        ListTile(
+          tileColor: Utils.tileColor,
+          shape: RoundedRectangleBorder(
+            side: BorderSide(color: Utils.drawerColor, width: 10),
+          ),
           title: Text('Login',
               style:
                   GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
