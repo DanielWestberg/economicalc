@@ -11,6 +11,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart' as http_parser;
 import 'dart:convert' as convert;
 
 const String apiServer = "192.168.1.6:5000";
@@ -161,10 +162,13 @@ postReceipt(String userId, Receipt receipt) async {
 }
 
 updateImage(String userId, String receiptId, XFile image) async {
-  final String path = "/users/$userId/receipts/$receiptId";
-  final request = http.StreamedRequest("PUT", Uri.http(apiServer, path));
-  request.headers["Content-type"] = image.mimeType ?? "application/octet-stream";
-  image.openRead().listen(request.sink.add, onDone: request.sink.close);
+  final uri = Uri.http(apiServer, "/users/$userId/receipts/$receiptId");
+  final mimeType = image.mimeType ?? "application/octet-stream";
+  final request = http.MultipartRequest("PUT", uri)
+    ..files.add(http.MultipartFile(
+      "file", image.openRead(), await image.length(),
+      contentType: http_parser.MediaType.parse(mimeType)
+    ));
   final response = await request.send();
   if (response.statusCode != 204) {
     throw Exception(
