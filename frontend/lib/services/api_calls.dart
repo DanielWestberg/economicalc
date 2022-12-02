@@ -162,12 +162,11 @@ postReceipt(String userId, Receipt receipt) async {
 }
 
 updateImage(String userId, String receiptId, XFile image) async {
-  final uri = Uri.http(apiServer, "/users/$userId/receipts/$receiptId");
+  final uri = Uri.http(apiServer, "/users/$userId/receipts/$receiptId/image");
   final mimeType = image.mimeType ?? "application/octet-stream";
   final request = http.MultipartRequest("PUT", uri)
-    ..files.add(http.MultipartFile(
-      "file", image.openRead(), await image.length(),
-      contentType: http_parser.MediaType.parse(mimeType)
+    ..files.add(await http.MultipartFile.fromPath(
+      "file", image.path, contentType: http_parser.MediaType.parse(mimeType)
     ));
   final response = await request.send();
   if (response.statusCode != 204) {
