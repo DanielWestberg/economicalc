@@ -11,6 +11,10 @@ import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import 'package:device_apps/device_apps.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:android_intent/android_intent.dart';
+
 class OpenLink extends StatefulWidget {
   const OpenLink({super.key});
 
@@ -35,7 +39,7 @@ class OpenLinkState extends State<OpenLink> {
   late final String clientId;
   late final String redirectUri;
   late final String selectedUrl =
-      "https://link.tink.com/1.0/transactions/connect-accounts/?client_id=1a539460199a4e8bb374893752db14e6&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fcallback&market=SE&locale=sv_SE&test=true";
+      "https://link.tink.com/1.0/transactions/connect-accounts/?client_id=1e48aa066d3f46bcb31bf2acb949a6ca&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fcallback&market=SE&locale=en_US";
 
   late final Response response;
   late final List<BankTransaction> transactions;
@@ -84,6 +88,27 @@ class OpenLinkState extends State<OpenLink> {
                 !action.url.contains("code")) {
               //NO CODE REETURNED == SOMETHING WENT WRONG
               return NavigationDecision.navigate;
+            } else if (action.url.contains("bankid")) {
+              print(action.url);
+              Map<String, String> params = Uri.splitQueryString(action.url);
+              print(params);
+              print(params["bankid:///?autostarttoken"]);
+              String autostarttoken = params["bankid:///?autostarttoken"]!;
+
+              String redirect = "null";
+
+              print(autostarttoken);
+              print(redirect);
+
+              String bankIdUrl =
+                  "https://app.bankid.com/?autostarttoken=$autostarttoken&redirect=$redirect";
+              print(bankIdUrl);
+
+              AndroidIntent intent =
+                  AndroidIntent(data: bankIdUrl, action: "action_view");
+              await intent.launch();
+
+              return NavigationDecision.prevent;
             } else {
               //NORMAL CASE - just redirecting to next link.
               return NavigationDecision.navigate;
