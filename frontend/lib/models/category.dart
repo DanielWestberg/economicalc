@@ -25,7 +25,7 @@ class Category {
     return category.description;
   }
 
-  static Category getCategory(String categoryID, categories) {
+  static Category getCategory(int categoryID, categories) {
     return categories.firstWhere((item) => item.id == categoryID);
   }
 }

@@ -104,6 +104,19 @@ class SQFLite {
     );
   }
 
+  //Maybe a more suitable name can be found?
+  void assignCategories(Transaction transaction) async {
+    List<Transaction> transactionsInLocalDb = await getAllTransactions();
+    for (Transaction tran in transactionsInLocalDb) {
+      if (tran.store?.toLowerCase().trim() ==
+          transaction.store?.toLowerCase().trim()) {
+        tran.categoryID = transaction.categoryID;
+        tran.categoryDesc = transaction.categoryDesc;
+        updateTransaction(tran);
+      }
+    }
+  }
+
   // A method that retrieves all the transactions from the transactions table.
   Future<List<Transaction>> getAllTransactions() async {
     final db = await instance.database;
@@ -265,6 +278,31 @@ class SQFLite {
       encodeReceipt(receipt),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+
+  Future<List<ReceiptItem>> getAllReceiptItems(startDate, endDate) async {
+    final receipts = await getAllReceipts();
+    List<ReceiptItem> items = [];
+
+    receipts.forEach((receipt) {
+      receipt.items.forEach((item) => items.add(item));
+    });
+
+    return items;
+  }
+
+  Future<List<ReceiptItem>> getFilteredReceiptItems(startDate, endDate) async {
+    final receipts = await getAllReceipts();
+    List<ReceiptItem> filteredItems = [];
+
+    receipts.forEach((receipt) {
+      if (receipt.date.compareTo(startDate) >= 0 &&
+          receipt.date.compareTo(endDate) <= 0) {
+        receipt.items.forEach((item) => filteredItems.add(item));
+      }
+    });
+
+    return filteredItems;
   }
 
   // A method that retrieves all the receipts from the receipts table.

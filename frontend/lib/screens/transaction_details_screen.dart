@@ -22,6 +22,8 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   int? sortColumnIndex;
   bool isAscending = false;
   double fontSize = 14;
+  double sizedBoxWidth = 140;
+  double sizedBoxHeight = 30;
   final columns = ["Items", "Sum"];
   final dbConnector = SQFLite.instance;
   late String? dropdownValue;
@@ -49,9 +51,23 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     return SafeArea(
         child: Scaffold(
             appBar: AppBar(
+              actions: [
+                IconButton(
+                    alignment: Alignment.topCenter,
+                    padding: EdgeInsets.only(right: 20, top: 30),
+                    onPressed: (() {
+                      print("receipt");
+                    }),
+                    icon: Icon(Icons.receipt_long))
+              ],
               toolbarHeight: 180,
               backgroundColor: Utils.backgroundColor,
               foregroundColor: Colors.black,
+              leading: new IconButton(
+                  onPressed: (() {
+                    Navigator.pop(context);
+                  }),
+                  icon: Icon(Icons.arrow_back)),
               title: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -80,8 +96,8 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
             categories = snapshot.data!;
 
             return SizedBox(
-                width: 110,
-                height: 30,
+                width: sizedBoxWidth,
+                height: sizedBoxHeight,
                 child: DropdownButton<String>(
                     isDense: true,
                     isExpanded: true,
@@ -95,6 +111,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                           await SQFLite.getCategoryIDfromDescription(
                               dropdownValue!);
                       dbConnector.updateTransaction(widget.transaction!);
+                      dbConnector.assignCategories(widget.transaction);
                     },
                     items: categories
                         .map<DropdownMenuItem<String>>((Category category) {
@@ -133,11 +150,15 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                     Icon(Icons.store),
                     Padding(
                         padding: EdgeInsets.only(left: 5),
-                        child: Text(
-                          widget.transaction.store!,
-                          style: TextStyle(
-                              fontSize: fontSize, fontWeight: FontWeight.w600),
-                        )),
+                        child: SizedBox(
+                            width: sizedBoxWidth,
+                            height: sizedBoxHeight,
+                            child: Text(
+                              widget.transaction.store!,
+                              style: TextStyle(
+                                  fontSize: fontSize,
+                                  fontWeight: FontWeight.w600),
+                            ))),
                   ],
                 ),
                 Row(
@@ -157,19 +178,13 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
               ],
             ),
             Padding(
-                padding: EdgeInsets.all(10),
+                padding: EdgeInsets.only(left: 10),
                 child: Column(children: [
                   Icon(Icons.payment),
                   Text("${widget.transaction.totalAmount} kr",
                       style: TextStyle(
                           fontSize: fontSize, fontWeight: FontWeight.w600))
                 ])),
-            IconButton(
-                padding: EdgeInsets.all(10),
-                onPressed: (() {
-                  print("receipt");
-                }),
-                icon: Icon(Icons.receipt_long))
           ],
         ));
   }
