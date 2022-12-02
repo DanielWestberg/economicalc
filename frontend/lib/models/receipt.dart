@@ -67,26 +67,6 @@ class Receipt {
     );
   }
 
-  @override
-  toString() {
-    return "{$recipient, $date, $total, $items, $categoryID}";
-  }
-
-  factory Receipt.fromBackendJson(Map<String, dynamic> json) {
-    List<ReceiptItem> items = json["items"]
-        .map((i) => ReceiptItem.fromJson(i))
-        .toList()
-        .cast<ReceiptItem>();
-
-    return Receipt(
-      recipient: json["recipient"],
-      date: DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'").parseUtc(json["date"]),
-      total: json["total"],
-      items: items,
-      categoryID: json["categoryID"],
-    );
-  }
-
   factory Receipt.fromJson(Map<String, dynamic> json) {
     List<ReceiptItem> items = json['receipts'][0]["items"]
         .map((e) => ReceiptItem.fromJsonScanned(e))
