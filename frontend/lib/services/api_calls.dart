@@ -175,3 +175,14 @@ updateImage(String userId, String receiptId, XFile image) async {
     );
   }
 }
+
+fetchImage(String userId, String receiptId) async {
+  final uri = Uri.http(apiServer, "/users/$userId/receipts/$receiptId/image");
+  final response = await http.get(uri);
+  if (response.statusCode != 200) {
+    throw Exception(
+        "Unexpected status code ${response.statusCode}\n${response.body}"
+    );
+  }
+  return XFile.fromData(response.bodyBytes);
+}

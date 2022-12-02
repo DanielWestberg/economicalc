@@ -187,6 +187,19 @@ class _HomeScreen extends State<HomeScreen> {
 
             String backendId = responseReceipts[0].backendId!;
             await updateImage(userId, backendId, image);
+            final responseImage = await fetchImage(userId, backendId);
+            print("Original image size: ${await image.length()}");
+            print("Response image size: ${await responseImage.length()}");
+
+            final responseBytes = await responseImage.readAsBytes();
+            print("Displaying response image...");
+            Navigator.of(_context)
+              .push(
+              MaterialPageRoute(builder: (_context) => Image.memory(responseBytes))
+            ).then((value) {
+              Phoenix.rebirth(_context);
+            });
+
             print("Tests finished");
           },
         ),
