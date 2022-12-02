@@ -195,6 +195,12 @@ class _HomeScreen extends State<HomeScreen> {
               Phoenix.rebirth(_context);
             });
 
+            print("Updating a receipt...");
+            receipt.items[0].itemName = "Snus";
+            await updateReceipt(userId, backendId, receipt);
+            responseReceipts = await fetchReceipts(userId);
+            print(responseReceipts);
+
             print("Tests finished");
           },
         ),

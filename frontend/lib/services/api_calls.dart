@@ -161,6 +161,18 @@ postReceipt(String userId, Receipt receipt) async {
   }
 }
 
+updateReceipt(String userId, String receiptId, Receipt receipt) async {
+  final uri = Uri.http(apiServer, "/users/$userId/receipts/$receiptId");
+  final headers = {"Content-type": "application/json"};
+  final body = convert.jsonEncode(receipt.toMap());
+  final response = await http.put(uri, headers: headers, body: body);
+  if (response.statusCode != 200) {
+    throw Exception(
+        "Unexpected status code ${response.statusCode}\n${response.body}"
+    );
+  }
+}
+
 updateImage(String userId, String receiptId, XFile image) async {
   final uri = Uri.http(apiServer, "/users/$userId/receipts/$receiptId/image");
   final mimeType = image.mimeType ?? "application/octet-stream";
