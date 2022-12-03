@@ -213,6 +213,7 @@ def create_db(app):
 
 
 
+#HEJHEJHEJ
 if __name__ == "__main__":
     ENVIRONMENT_DEBUG = os.environ.get("APP_DEBUG", True)
     ENVIRONMENT_PORT = os.environ.get("APP_PORT", 443)
