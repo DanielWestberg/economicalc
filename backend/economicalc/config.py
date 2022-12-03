@@ -11,4 +11,4 @@ class FlaskConfig:
         self.MONGO_URI = self.getMongoURI()
 
     def getMongoURI(self):
-        return f"mongodb://{self.MONGO_USERNAME}:{self.MONGO_PASSWORD}@{self.MONGO_HOSTNAME}:27017/{self.MONGO_DATABASE}"
+        return f"mongodb://{self.MONGO_USERNAME}:{self.MONGO_PASSWORD}@{self.MONGO_HOSTNAME}:443/{self.MONGO_DATABASE}"

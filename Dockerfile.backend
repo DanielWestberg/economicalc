@@ -7,7 +7,12 @@ ENV GROUP_ID=1000 \
 
 WORKDIR /var/www/
 
+RUN apk add gcc musl-dev libffi-dev curl libressl-dev
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="${PATH}:/root/.cargo/bin"
+
 ADD . /var/www/
+RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 RUN pip install pytest
 RUN pip install gunicorn
@@ -15,8 +20,19 @@ RUN pip install gunicorn
 RUN addgroup -g $GROUP_ID www
 RUN adduser -D -u $USER_ID -G www www -s /bin/sh
 
+#GENERATE ENCEYPTION KEY AND CSR
+
+RUN apk add openssl
+
+RUN openssl genrsa -out server.key 1024
+RUN openssl req -new -key server.key -out server.csr -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=example.com"
+RUN cp server.key server.key.org
+RUN openssl rsa -in server.key.org -out server.key 
+RUN openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
+
+
 USER www
 
-EXPOSE 5000
+EXPOSE 443
 
-CMD [ "gunicorn", "-w", "4", "--bind", "0.0.0.0:5000", "wsgi"]
+CMD [ "gunicorn", "--certfile=server.crt", "--keyfile=server.key", "-w", "4", "--bind", "0.0.0.0:443", "wsgi"]

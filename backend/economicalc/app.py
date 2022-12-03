@@ -9,6 +9,11 @@ from .objects import Transaction, User
 from .config import FlaskConfig
 from .constants import *
 
+#from OpenSSL import SSL
+#context = SSL.Context(SSL.PROTOCOL_TLSv1_2)
+#context.use_privatekey_file('server.key')
+#context.use_certificate_file('server.crt')
+
 
 def create_app(config):
     app = Flask(__name__)
@@ -210,6 +215,6 @@ def create_db(app):
 
 if __name__ == "__main__":
     ENVIRONMENT_DEBUG = os.environ.get("APP_DEBUG", True)
-    ENVIRONMENT_PORT = os.environ.get("APP_PORT", 5000)
+    ENVIRONMENT_PORT = os.environ.get("APP_PORT", 443)
     app = create_app(FlaskConfig())
-    app.run(host='0.0.0.0', port=ENVIRONMENT_PORT, debug=ENVIRONMENT_DEBUG)
+    app.run(host='0.0.0.0', port=ENVIRONMENT_PORT, debug=ENVIRONMENT_DEBUG, ssl_context='adhoc')
