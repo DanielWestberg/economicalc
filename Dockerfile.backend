@@ -21,7 +21,6 @@ RUN addgroup -g $GROUP_ID www
 RUN adduser -D -u $USER_ID -G www www -s /bin/sh
 
 #GENERATE ENCEYPTION KEY AND CSR
-
 RUN apk add openssl
 
 RUN openssl genrsa -out server.key 1024
@@ -31,8 +30,12 @@ RUN openssl rsa -in server.key.org -out server.key
 RUN openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
 
 
+
+
 USER www
 
 EXPOSE 443
+
+RUN ls
 
 CMD [ "gunicorn", "--certfile=server.crt", "--keyfile=server.key", "-w", "4", "--bind", "0.0.0.0:443", "wsgi"]
