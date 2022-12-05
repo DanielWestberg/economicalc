@@ -188,6 +188,9 @@ def create_app(config):
 
     
     def put_image(bankId, receiptId, request):
+        if len(request.files) == 0:
+            return make_response("No file found in request", bad_request)
+
         user = db.users.find_one_or_404({"bankId": bankId, "receipts._id": receiptId}, {"_id": 0, "receipts.$": 1})
         receipt = user["receipts"][0]
         image_id = receipt["imageId"] if "imageId" in receipt else None
@@ -198,7 +201,8 @@ def create_app(config):
         else:
             fs.delete(image_id)
 
-        fs.put(request.stream, _id=image_id, content_type=request.mimetype)
+        file = request.files["file"]
+        fs.put(file, _id=image_id, content_type=request.mimetype)
 
         return make_response("", no_content)
 

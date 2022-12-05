@@ -2,8 +2,9 @@ import pytest
 
 from datetime import datetime
 from dateutil.parser import *
-from typing import List, Optional, Tuple
 from mimetypes import guess_type
+from pathlib import Path
+from typing import List, Optional, Tuple
 
 from flask.json import load, dump
 from bson.objectid import ObjectId
@@ -87,8 +88,8 @@ def users_to_post() -> List[User]:
 
 
 @pytest.fixture()
-def image_to_put() -> str:
-    return "tsu.jpg"
+def image_to_put() -> Path:
+    return Path(__file__).parent / "res" / "tsu.jpg"
 
 
 @pytest.fixture()
@@ -291,7 +292,6 @@ class TestReceipt():
                     continue
 
                 assert response.status == constants.ok
-                assert response.is_streamed
 
                 with tmp_file.open("wb") as f:
                     for data in response.response:
@@ -303,8 +303,7 @@ class TestReceipt():
 
 
     def test_put_image(self, tmp_path, db, fs, users, image_to_put, client):
-        filename = f"./tests/res/{image_to_put}"
-        filetype = guess_type(filename)[0]
+        filetype = guess_type(str(image_to_put))[0]
         tmp_file = tmp_path / "response_image"
 
         for user in users:
@@ -312,33 +311,26 @@ class TestReceipt():
                 if receipt.image_id is not None:
                     continue
 
-                with open(filename, "rb") as f:
-                    response = client.put(f"/users/{user.bankId}/receipts/{receipt.id}/image", data = f, content_type = filetype)
-                    assert response.status == constants.no_content
+                response = client.put(f"/users/{user.bankId}/receipts/{receipt.id}/image", data = {"file": image_to_put.open("rb")})
+                assert response.status == constants.no_content
 
-                    response = client.get(f"/users/{user.bankId}/receipts/{receipt.id}/image")
-                    assert response.status == constants.ok
+                response = client.get(f"/users/{user.bankId}/receipts/{receipt.id}/image")
+                assert response.status == constants.ok
 
-                    with tmp_file.open("wb") as eff:
-                        for data in response.response:
-                            eff.write(data)
+                with tmp_file.open("wb") as f:
+                    for data in response.response:
+                        f.write(data)
 
-                    f.seek(0)
-
-                    with tmp_file.open("rb") as eff:
-                        for (expected, actual) in zip(f, eff):
-                            assert expected == actual
+                for (expected, actual) in zip(image_to_put.open("rb"), tmp_file.open("rb")):
+                    assert expected == actual
 
 
     def test_put_image_is_isolated(self, tmp_path, db, fs, users, image_to_put, client):
-        filename = f"./tests/res/{image_to_put}"
-        filetype = guess_type(filename)[0]
+        filetype = guess_type(str(image_to_put))[0]
         tmp_file = tmp_path / "response_image"
 
-
         original_receipt = users[0].receipts[0]
-        with open(filename, "rb") as f:
-            client.put(f"/users/{users[0].bankId}/receipts/{original_receipt.id}/image", data = f, content_type = filetype)
+        client.put(f"/users/{users[0].bankId}/receipts/{original_receipt.id}/image", data = {"file": image_to_put.open("rb")})
 
         for user in users:
             for receipt in user.receipts:
@@ -353,12 +345,10 @@ class TestReceipt():
                     for data in response.response:
                         f.write(data)
 
-                with tmp_file.open("rb") as received_file:
-                    with open(filename, "rb") as original_file:
-                        failed = True
-                        for (expected, actual) in zip(received_file, original_file):
-                            failed = failed and expected == actual
-                            if failed:
-                                break
+                failed = True
+                for (expected, actual) in zip(tmp_file.open("rb"), image_to_put.open("rb")):
+                    failed = failed and expected == actual
+                    if failed:
+                        break
 
-                        assert not failed
+                assert not failed

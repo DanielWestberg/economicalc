@@ -3,6 +3,7 @@ import 'package:economicalc_client/models/bank_transaction.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:flutter/material.dart';
 
+import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart';
 import 'dart:io';
 
@@ -10,6 +11,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart' as http_parser;
 import 'dart:convert' as convert;
 
 const String apiServer = "192.168.1.6:5000";
@@ -157,4 +159,42 @@ postReceipt(String userId, Receipt receipt) async {
       "Unexpected status code ${response.statusCode}\n${response.body}"
     );
   }
+}
+
+updateReceipt(String userId, String receiptId, Receipt receipt) async {
+  final uri = Uri.http(apiServer, "/users/$userId/receipts/$receiptId");
+  final headers = {"Content-type": "application/json"};
+  final body = convert.jsonEncode(receipt.toMap());
+  final response = await http.put(uri, headers: headers, body: body);
+  if (response.statusCode != 200) {
+    throw Exception(
+        "Unexpected status code ${response.statusCode}\n${response.body}"
+    );
+  }
+}
+
+updateImage(String userId, String receiptId, XFile image) async {
+  final uri = Uri.http(apiServer, "/users/$userId/receipts/$receiptId/image");
+  final mimeType = image.mimeType ?? "application/octet-stream";
+  final request = http.MultipartRequest("PUT", uri)
+    ..files.add(await http.MultipartFile.fromPath(
+      "file", image.path, contentType: http_parser.MediaType.parse(mimeType)
+    ));
+  final response = await request.send();
+  if (response.statusCode != 204) {
+    throw Exception(
+      "Unexpected status code ${response.statusCode}\n${await response.stream.bytesToString()}"
+    );
+  }
+}
+
+fetchImage(String userId, String receiptId) async {
+  final uri = Uri.http(apiServer, "/users/$userId/receipts/$receiptId/image");
+  final response = await http.get(uri);
+  if (response.statusCode != 200) {
+    throw Exception(
+        "Unexpected status code ${response.statusCode}\n${response.body}"
+    );
+  }
+  return XFile.fromData(response.bodyBytes);
 }
