@@ -22,7 +22,7 @@ class User:
         return {
             "bankId": self.bankId,
             "receipts": [receipt.to_dict(json_serializable) for receipt in self.receipts],
-            "categories": [category.to_dict(json_serialiazble) for category in self.categories],
+            "categories": [category.to_dict(json_serializable) for category in self.categories],
         }
 
     @staticmethod

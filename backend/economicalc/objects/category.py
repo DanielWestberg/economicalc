@@ -24,7 +24,7 @@ class Category:
 
     def to_dict(self, json_serializable: bool = False) -> None:
         res = {
-            "id": self.id
+            "id": self.id,
             "description": self.description,
             "color": self.color,
         }

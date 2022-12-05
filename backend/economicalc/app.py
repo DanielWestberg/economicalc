@@ -133,7 +133,7 @@ def create_app(config):
 
         user = db.users.find_one({"bankId": bankId})
         if user is None:
-            user = User(bankId, [receipt])
+            user = User(bankId, [receipt], [])
             db.users.insert_one(user.to_dict())
         else:
             update_action = {"$push": {"receipts": receipt.to_dict()}}
