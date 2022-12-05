@@ -377,3 +377,15 @@ class TestReceipt():
                         break
 
                 assert not failed
+
+
+    def test_get_categories(self, db, users, client):
+        for user in users:
+            response = client.get(f"/users/{user.bankId}/categories")
+            assert response.status == constants.ok
+
+            response_dicts = response.json["data"]
+            response_categories = [Category.from_dict(d) for d in response_dicts]
+
+            for (expected, actual) in zip(user.categories, response_categories):
+                assert expected == actual

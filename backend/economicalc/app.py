@@ -206,6 +206,24 @@ def create_app(config):
 
         return make_response("", no_content)
 
+
+    @app.route("/users/<bankId>/categories", methods=["GET", "POST"])
+    def user_categories(bankId):
+        if request.method == "GET":
+            return get_categories(bankId, request)
+
+        return post_category(bankId, request)
+
+
+    def get_categories(bankId, request):
+        user = db.users.find_one_or_404({"bankId": bankId})
+        categories = user["categories"]
+        return jsonify(data=categories)
+
+
+    def post_category(bankId, request):
+        return ""
+
     return app
 
     
