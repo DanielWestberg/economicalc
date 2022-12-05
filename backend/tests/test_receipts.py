@@ -432,3 +432,23 @@ class TestReceipt():
         response = client.get(f"/users/{user.bankId}/categories")
         response_dicts = response.json["data"]
         assert len(response_dicts) == len(user.categories)
+
+
+    def test_put_category(self, db, users, client):
+        for user in users:
+            for category in user.categories:
+                category.color = 0
+                category_dict = category.to_dict(True)
+
+                response = client.put(f"/users/{user.bankId}/categories/{category.id}", json=category_dict)
+                assert response.status == constants.ok
+                
+                response_dict = response.json["data"]
+                response_category = Category.from_dict(response_dict)
+                assert category == response_category
+                
+                response = client.get(f"/users/{user.bankId}/categories")
+                response_dicts = response.json["data"]
+                response_categories = [Category.from_dict(d) for d in response_dicts]
+
+                assert category in response_categories
