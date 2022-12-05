@@ -247,6 +247,32 @@ def create_app(config):
         db.users.update_one({"_id": user["_id"]}, update_action)
 
         return make_response(jsonify(data=category.to_dict(True)), created)
+
+
+    @app.route("/users/<bankId>/categories/<int:categoryId>", methods=["PUT"])
+    def user_category_by_id(bankId, categoryId):
+        if request.method == "PUT":
+            return put_category(bankId, categoryId, request)
+
+
+    def put_category(bankId, categoryId, request):
+        db.users.find_one_or_404({"bankId": bankId})
+
+        category_dict = request.json
+        category_dict["id"] = categoryId
+        category = parse_category_or_make_response(category_dict)
+        if type(category) != Category:
+            return category
+
+        user = db.users.find_one({"bankId": bankId, "categories.id": categoryId}, {"_id": 0, "categories.$": 1})
+        if user is None:
+            update_action = {"$push": {"categories": category.to_dict()}}
+            db.users.update_one({"_id": user["_id"]}, update_action)
+
+            return make_response(jsonify(data=category.to_dict(True)), created)
+
+        db.users.find_one_and_update({"bankId": bankId, "categories.id": categoryId}, {"$set": {"categories.$": category.to_dict()}})
+        return jsonify(data=category.to_dict(True))
         
 
     return app
