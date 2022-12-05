@@ -420,3 +420,15 @@ class TestReceipt():
             response_dicts = response.json["data"]
             response_categories = [Category.from_dict(d) for d in response_dicts]
             assert category in response_categories
+
+
+    def test_post_existing_category_fails(self, db, users, client):
+        user = users[0]
+        category = user.categories[0]
+
+        response = client.post(f"/users/{user.bankId}/categories", json=category.to_dict(True))
+        assert response.status == constants.conflict
+
+        response = client.get(f"/users/{user.bankId}/categories")
+        response_dicts = response.json["data"]
+        assert len(response_dicts) == len(user.categories)

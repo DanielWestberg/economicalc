@@ -239,6 +239,10 @@ def create_app(config):
         if type(category) != Category:
             return category
 
+        filtered_user = db.users.find_one({"bankId": bankId, "categories.id": category.id}, {"_id": 0, "categories.$": 1})
+        if filtered_user is not None:
+            return make_response(f"Category with ID {category.id} already exists", conflict)
+
         update_action = {"$push": {"categories": category.to_dict()}}
         db.users.update_one({"_id": user["_id"]}, update_action)
 
