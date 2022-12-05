@@ -468,3 +468,19 @@ class TestReceipt():
             response_dicts = response.json["data"]
             response_categories = [Category.from_dict(d) for d in response_dicts]
             assert category in response_categories
+
+
+    def test_delete_category(self, db, users, client):
+        for user in users:
+            while len(user.categories) > 0:
+                category = user.categories.pop()
+                response = client.delete(f"/users/{user.bankId}/categories/{category.id}")
+                assert response.status == constants.no_content
+
+                response = client.get(f"/users/{user.bankId}/categories")
+                response_dicts = response.json["data"]
+                response_categories = [Category.from_dict(d) for d in response_dicts]
+                assert category not in response_categories
+
+                for category in user.categories:
+                    assert category in response_categories

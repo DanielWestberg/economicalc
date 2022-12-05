@@ -249,10 +249,12 @@ def create_app(config):
         return make_response(jsonify(data=category.to_dict(True)), created)
 
 
-    @app.route("/users/<bankId>/categories/<int:categoryId>", methods=["PUT"])
+    @app.route("/users/<bankId>/categories/<int:categoryId>", methods=["PUT", "DELETE"])
     def user_category_by_id(bankId, categoryId):
         if request.method == "PUT":
             return put_category(bankId, categoryId, request)
+
+        return delete_category(bankId, categoryId, request)
 
 
     def put_category(bankId, categoryId, request):
@@ -273,6 +275,11 @@ def create_app(config):
 
         db.users.find_one_and_update({"bankId": bankId, "categories.id": categoryId}, {"$set": {"categories.$": category.to_dict()}})
         return jsonify(data=category.to_dict(True))
+
+
+    def delete_category(bankId, categoryId, request):
+        db.users.find_one_and_update({"bankId": bankId, "categories.id": categoryId}, {"$pull": {"categories": {"id": categoryId}}})
+        return make_response("", no_content)
         
 
     return app
