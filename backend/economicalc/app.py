@@ -256,7 +256,6 @@ def create_app(config):
 
 
     def put_category(bankId, categoryId, request):
-        db.users.find_one_or_404({"bankId": bankId})
 
         category_dict = request.json
         category_dict["id"] = categoryId
@@ -266,6 +265,7 @@ def create_app(config):
 
         user = db.users.find_one({"bankId": bankId, "categories.id": categoryId}, {"_id": 0, "categories.$": 1})
         if user is None:
+            user = db.users.find_one_or_404({"bankId": bankId})
             update_action = {"$push": {"categories": category.to_dict()}}
             db.users.update_one({"_id": user["_id"]}, update_action)
 
