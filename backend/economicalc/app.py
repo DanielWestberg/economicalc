@@ -10,9 +10,9 @@ from .config import FlaskConfig
 from .constants import *
 
 #from OpenSSL import SSL
-#context = SSL.Context(SSL.PROTOCOL_TLSv1_2)
-#context.use_privatekey_file('server.key')
-#context.use_certificate_file('server.crt')
+#context = SSL.Context(SSL.TLSv1_2_METHOD)
+#context.use_privatekey_file('../../ssl/server.key')
+#context.use_certificate_file('../../ssl/server.crt')
 
 
 def create_app(config):
@@ -218,4 +218,4 @@ if __name__ == "__main__":
     ENVIRONMENT_DEBUG = os.environ.get("APP_DEBUG", True)
     ENVIRONMENT_PORT = os.environ.get("APP_PORT", 443)
     app = create_app(FlaskConfig())
-    app.run(host='0.0.0.0', port=ENVIRONMENT_PORT, debug=ENVIRONMENT_DEBUG, ssl_context='adhoc')
+    app.run(host='0.0.0.0', port=ENVIRONMENT_PORT, debug=ENVIRONMENT_DEBUG, ssl_context=('../../servercrt.pem', '../../serverkey.pem'))
