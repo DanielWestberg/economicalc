@@ -484,3 +484,16 @@ class TestReceipt():
 
                 for category in user.categories:
                     assert category in response_categories
+
+
+    def test_delete_inexistent_category(self, db, users, categories_to_post, client):
+        user = users[0]
+        category = categories_to_post[0]
+        response = client.delete(f"/users/{user.bankId}/categories/{category.id}")
+        assert response.status == constants.no_content
+
+        response = client.get(f"/users/{user.bankId}/categories")
+        response_dicts = response.json["data"]
+        response_categories = [Category.from_dict(d) for d in response_dicts]
+        for category in user.categories:
+            assert category in response_categories
