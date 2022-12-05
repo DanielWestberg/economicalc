@@ -452,3 +452,19 @@ class TestReceipt():
                 response_categories = [Category.from_dict(d) for d in response_dicts]
 
                 assert category in response_categories
+
+
+    def test_put_new_category(self, db, users, categories_to_post, client):
+        user = users[0]
+        for category in categories_to_post:
+            response = client.put(f"/users/{user.bankId}/categories/{category.id}", json=category.to_dict(True))
+            assert response.status == constants.created
+
+            response_dict = response.json["data"]
+            response_category = Category.from_dict(response_dict)
+            assert category == response_category
+
+            response = client.get(f"/users/{user.bankId}/categories")
+            response_dicts = response.json["data"]
+            response_categories = [Category.from_dict(d) for d in response_dicts]
+            assert category in response_categories
