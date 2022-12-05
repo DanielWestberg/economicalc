@@ -138,6 +138,21 @@ def receipts_to_post(users, users_to_post) -> List[Tuple[User, Receipt]]:
     ]
 
 
+@pytest.fixture()
+def categories_to_post() -> List[Category]:
+    return [
+        Category(
+            7,
+            "Entertainment",
+            0xBB77BB,
+        ), Category(
+            8,
+            "Investment",
+            0xFF0000,
+        )
+    ]
+
+
 def clean_users(database, gridfs, user_list):
     for user in user_list:
         database.users.delete_many({"bankId": user.bankId})
@@ -389,3 +404,19 @@ class TestReceipt():
 
             for (expected, actual) in zip(user.categories, response_categories):
                 assert expected == actual
+
+
+    def test_post_category(self, db, users, categories_to_post, client):
+        user = users[0]
+        for category in categories_to_post:
+            response = client.post(f"/users/{user.bankId}/categories", json=category.to_dict(True))
+            assert response.status == constants.created
+
+            response_dict = response.json["data"]
+            response_category = Category.from_dict(response_dict)
+            assert category == response_category
+
+            response = client.get(f"/users/{user.bankId}/categories")
+            response_dicts = response.json["data"]
+            response_categories = [Category.from_dict(d) for d in response_dicts]
+            assert category in response_categories

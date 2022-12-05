@@ -5,7 +5,7 @@ from bson.objectid import ObjectId
 from gridfs import GridFS
 import requests
 
-from .objects import Receipt, User
+from .objects import Category, Receipt, User
 from .config import FlaskConfig
 from .constants import *
 
@@ -221,8 +221,29 @@ def create_app(config):
         return jsonify(data=categories)
 
 
+    def parse_category_or_make_response(category_dict):
+        try:
+            category = Category.from_dict(category_dict)
+        except KeyError as e:
+            key = e.args[0]
+            return make_response(f"Missing required field \"{key}\"", unprocessable_entity)
+        except TypeError as e:
+            return make_response(e.args[0], unprocessable_entity)
+
+        return category
+
+
     def post_category(bankId, request):
-        return ""
+        user = db.users.find_one_or_404({"bankId": bankId})
+        category = parse_category_or_make_response(request.json)
+        if type(category) != Category:
+            return category
+
+        update_action = {"$push": {"categories": category.to_dict()}}
+        db.users.update_one({"_id": user["_id"]}, update_action)
+
+        return make_response(jsonify(data=category.to_dict(True)), created)
+        
 
     return app
 
