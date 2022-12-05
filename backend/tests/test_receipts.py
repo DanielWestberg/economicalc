@@ -67,15 +67,40 @@ def receipts(items, images) -> List[Receipt]:
 
 
 @pytest.fixture()
-def users(receipts) -> List[User]:
+def categories() -> List[Category]:
+    return [
+        Category(
+            1,
+            "Groceries",
+            0xEE6622,
+        ), Category(
+            2,
+            "Clothes",
+            0xBBCC33,
+        ), Category(
+            3,
+            "Explosives",
+            0x77FF33,
+        ), Category(
+            4,
+            "Furniture",
+            0x2288DD,
+        ),
+    ]
+
+
+@pytest.fixture()
+def users(receipts, categories) -> List[User]:
     return [
         User(
             "test1",
-            [receipts[0], receipts[2]]
+            [receipts[0], receipts[2]],
+            [categories[0], categories[1]],
         ),
         User(
             "test2",
-            [receipts[1]]
+            [receipts[1]],
+            [categories[2]],
         )
     ]
 
@@ -83,7 +108,7 @@ def users(receipts) -> List[User]:
 @pytest.fixture()
 def users_to_post() -> List[User]:
     return [
-        User("test3", []),
+        User("test3", [], []),
     ]
 
 
