@@ -13,7 +13,7 @@ main() {
     await registerUser(userId);
   });
 
-  test("Post receipts", () async {
+  test("Post receipt", () async {
     List<ReceiptItem> items = [
       ReceiptItem(
         itemName: "Snusk",
