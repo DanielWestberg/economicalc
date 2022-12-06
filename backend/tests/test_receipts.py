@@ -498,3 +498,9 @@ class TestReceipt():
         response_categories = [Category.from_dict(d) for d in response_dicts]
         for category in user.categories:
             assert category in response_categories
+
+
+    def test_put_category_on_inexistent_user(self, db, categories_to_post, client):
+        category = categories_to_post[0]
+        response = client.put(f"/users/not-a-user/categories/{category.id}", json=category.to_dict(True))
+        assert response.status == constants.not_found
