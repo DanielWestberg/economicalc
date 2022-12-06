@@ -148,67 +148,6 @@ class _HomeScreen extends State<HomeScreen> {
           shape: RoundedRectangleBorder(
             side: BorderSide(color: Utils.drawerColor, width: 10),
           ),
-          title: Text('Run tests',
-            style:
-              GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
-          onTap: () async {
-            print("Running tests");
-            String userId = "bruh";
-            List<ReceiptItem> items = [
-              ReceiptItem(
-                itemName: "Snusk",
-                amount: 9001,
-              ),
-            ];
-            Receipt receipt = Receipt(
-              recipient: "ica",
-              date: DateTime.now(),
-              items: items,
-              total: 100.0,
-              categoryID: 1,
-            );
-            await postReceipt(userId, receipt);
-
-            List<Receipt> responseReceipts = await fetchReceipts(userId);
-            print(responseReceipts);
-
-            print("Take a picture to proceed");
-            final XFile? image =
-            await ImagePicker().pickImage(source: ImageSource.camera);
-            if (image == null) {
-              return;
-            }
-
-            String backendId = responseReceipts[0].backendId!;
-            await updateImage(userId, backendId, image);
-            final responseImage = await fetchImage(userId, backendId);
-            print("Original image size: ${await image.length()}");
-            print("Response image size: ${await responseImage.length()}");
-
-            final responseBytes = await responseImage.readAsBytes();
-            print("Displaying response image...");
-            Navigator.of(_context)
-                .push(
-                MaterialPageRoute(
-                    builder: (_context) => Image.memory(responseBytes))
-            ).then((value) {
-              Phoenix.rebirth(_context);
-            });
-
-            print("Updating a receipt...");
-            receipt.items[0].itemName = "Snus";
-            await updateReceipt(userId, backendId, receipt);
-            responseReceipts = await fetchReceipts(userId);
-            print(responseReceipts);
-
-            print("Tests finished");
-          },
-        ),
-        ListTile(
-          tileColor: Utils.tileColor,
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: Utils.drawerColor, width: 10),
-          ),
           title: Text('Login',
               style:
                   GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
