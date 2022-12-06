@@ -215,7 +215,7 @@ fetchCategories(String userId) async {
   }
 }
 
-postCategories(String userId, Category category) async {
+postCategory(String userId, Category category) async {
   final uri = Uri.http(apiServer, "/users/$userId/categories");
   final headers = {"Content-type": "application/json"};
   final body = convert.jsonEncode(category.toJson());
