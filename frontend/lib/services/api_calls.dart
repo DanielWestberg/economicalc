@@ -230,5 +230,17 @@ postCategory(String userId, Category category) async {
   }
 }
 
+updateCategory(String userId, Category category) async {
+  final uri = Uri.http(apiServer, "/users/$userId/categories/${category.id!}");
+  final headers = {"Content-type": "application/json"};
+  final body = convert.jsonEncode(category.toJson(true));
+  final response = await http.put(uri, headers: headers, body: body);
+  if (response.statusCode != 200 && response.statusCode != 201) {
+    throw Exception(
+      "Unexpected status code ${response.statusCode}\n${response.body}"
+    );
+  }
+}
+
 deleteCategory(String userId, int categoryId) async => await
   http.delete(Uri.http(apiServer, "/users/$userId/categories/$categoryId"));
