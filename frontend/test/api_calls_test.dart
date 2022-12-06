@@ -11,9 +11,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 main() {
   String userId = "testUser";
+  int categoryId = 1234;
 
   setUpAll(() async {
     await registerUser(userId);
+  });
+
+  tearDownAll(() async {
+    await deleteCategory(userId, categoryId);
   });
 
   test("Post receipt", () async {
@@ -64,7 +69,7 @@ main() {
     final category = Category(
         description:"Groceries",
         color: const Color(0xFFFF7733),
-        id: 1234,
+        id: categoryId,
     );
 
     await postCategory(userId, category);
