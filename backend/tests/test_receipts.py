@@ -218,6 +218,7 @@ class TestReceipt():
             receipt_dict = receipt.to_dict(True)
             receipt_dict.pop("_id", None)
 
+            client.put(f"/users/{user.bankId}")
             response = client.post(f"/users/{user.bankId}/receipts", json=receipt_dict)
             assert response.status == constants.created
 

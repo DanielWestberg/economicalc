@@ -131,13 +131,9 @@ def create_app(config):
         if len(receipt.items) == 0:
             return make_response("Field \"items\" may not be an empty list", unprocessable_entity)
 
-        user = db.users.find_one({"bankId": bankId})
-        if user is None:
-            user = User(bankId, [receipt], [])
-            db.users.insert_one(user.to_dict())
-        else:
-            update_action = {"$push": {"receipts": receipt.to_dict()}}
-            db.users.update_one({"_id": user["_id"]}, update_action)
+        user = db.users.find_one_or_404({"bankId": bankId})
+        update_action = {"$push": {"receipts": receipt.to_dict()}}
+        db.users.update_one({"_id": user["_id"]}, update_action)
 
         return make_response(jsonify(data=receipt.to_dict(True)), created)
 
@@ -279,6 +275,13 @@ def create_app(config):
 
     def delete_category(bankId, categoryId, request):
         db.users.find_one_and_update({"bankId": bankId, "categories.id": categoryId}, {"$pull": {"categories": {"id": categoryId}}})
+        return make_response("", no_content)
+
+
+    # TODO: Add authentication with BankID
+    @app.route("/users/<bankId>", methods=["PUT"])
+    def create_user(bankId):
+        db.users.update_one({"bankId": bankId}, {"$set": {"bankId": bankId}}, upsert=True)
         return make_response("", no_content)
         
 
