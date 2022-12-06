@@ -67,7 +67,7 @@ main() {
 
   test ("Post category", () async {
     final category = Category(
-        description:"Groceries",
+        description: "Groceries",
         color: const Color(0xFFFF7733),
         id: categoryId,
     );
@@ -76,5 +76,33 @@ main() {
 
     List<Category> fetchedCategories = await fetchCategories(userId);
     expect(fetchedCategories, contains(category));
+
+    await deleteCategory(userId, categoryId);
+  });
+
+  test ("Update category", () async {
+    final originalDescription = "Explosives";
+
+    final category = Category(
+      description: originalDescription,
+      color: const Color(0xFFFF0000),
+      id: categoryId,
+    );
+
+    await updateCategory(userId, category);
+
+    var fetchedCategories = await fetchCategories(userId);
+    expect(fetchedCategories, contains(category));
+
+    category.description = "Nothing illegal";
+    await updateCategory(userId, category);
+
+    fetchedCategories = await fetchCategories(userId);
+    expect(fetchedCategories, contains(category));
+
+    category.description = originalDescription;
+    expect(fetchedCategories, isNot(contains(category)));
+
+    deleteCategory(userId, category.id!);
   });
 }
