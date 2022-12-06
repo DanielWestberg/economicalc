@@ -7,11 +7,33 @@ class Category {
 
   Category({required this.description, required this.color, this.id});
 
-  Map<String, dynamic> toJson() {
-    return {
+  @override
+  operator ==(Object? other) => (
+        other is Category &&
+        description == other.description &&
+        color == other.color &&
+        id == other.id
+    );
+
+
+  @override
+  get hashCode => (
+      description.hashCode |
+      color.hashCode |
+      id.hashCode
+  );
+
+  Map<String, dynamic> toJson([bool includeId = false]) {
+    final res = {
       'description': description,
       'color': color.value.toInt(),
     };
+
+    if (includeId && id != null) {
+      res["id"] = id!;
+    }
+
+    return res;
   }
 
   factory Category.fromJson(Map<String, dynamic> json) {
