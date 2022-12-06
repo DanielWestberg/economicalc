@@ -15,7 +15,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   late Future<List<Category>> categoryFuture;
   late List<Category> categories;
   Color pickerColor = Utils.backgroundColor;
-  Color previousColor = Utils.backgroundColor;
   String description = "";
   final SQFLite dbConnector = SQFLite.instance;
 
@@ -25,12 +24,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     categoryFuture = dbConnector.getAllcategories();
   }
 
-  void getCategories() async {
-    categories = await categoryFuture;
-  }
-
-  void changeColor(Color color, index) {
-    setState(() => categories[index].color = color);
+  updateCategories() async {
+    var updatedCategories = await dbConnector.getAllcategories();
+    var updatedCategoryFuture = dbConnector.getAllcategories();
+    setState(() {
+      categories = updatedCategories;
+      categoryFuture = updatedCategoryFuture;
+    });
   }
 
   @override
@@ -62,57 +62,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                   showDialog(
                                       context: context,
                                       builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: Text("Add new category"),
-                                          icon: Icon(Icons.category),
-                                          content: SingleChildScrollView(
-                                              child: Column(children: [
-                                            Text("Enter description:"),
-                                            TextField(
-                                                onChanged: (value) => setState(
-                                                    () => description = value)),
-                                            Padding(
-                                                padding: EdgeInsets.symmetric(
-                                                    vertical: 10),
-                                                child: Text("Pick a color:")),
-                                            ColorPicker(
-                                                pickerColor: pickerColor,
-                                                onColorChanged:
-                                                    ((pickedColor) =>
-                                                        setState(() {
-                                                          pickerColor =
-                                                              pickedColor;
-                                                        })))
-                                          ])),
-                                          actions: [
-                                            ElevatedButton(
-                                              child: const Text('Save'),
-                                              onPressed: () async {
-                                                if (description.length > 0) {
-                                                  Category newCategory =
-                                                      new Category(
-                                                          description:
-                                                              description,
-                                                          color: pickerColor);
-                                                  await dbConnector
-                                                      .insertCategory(
-                                                          newCategory);
-                                                  categories.add(newCategory);
-                                                  Navigator.of(context).pop();
-                                                  setState(() {});
-                                                } else {
-                                                  print("Description is empty");
-                                                }
-                                              },
-                                            ),
-                                            ElevatedButton(
-                                              child: const Text('Cancel'),
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                            ),
-                                          ],
-                                        );
+                                        List<Category> categoriesPopUpCategory =
+                                            categories;
+                                        return popUpAddCategory(
+                                            context, categoriesPopUpCategory);
                                       });
                                 })),
                       )),
@@ -129,47 +82,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                         color: categories[index].color),
                                     onPressed: () {
                                       pickerColor = categories[index].color;
-                                      previousColor = categories[index].color;
                                       showDialog(
                                           context: context,
                                           builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              title: Text("Pick a color"),
-                                              content: ColorPicker(
-                                                  pickerColor: pickerColor,
-                                                  onColorChanged:
-                                                      ((pickerColor) =>
-                                                          setState(() =>
-                                                              categories[index]
-                                                                      .color =
-                                                                  pickerColor))),
-                                              actions: [
-                                                ElevatedButton(
-                                                  child: const Text('Save'),
-                                                  onPressed: () async {
-                                                    await dbConnector
-                                                        .updateCategory(
-                                                            categories[index]);
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                ),
-                                                ElevatedButton(
-                                                  child: const Text('Cancel'),
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      categories[index].color =
-                                                          previousColor;
-                                                    });
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                ),
-                                              ],
-                                            );
+                                            return popUpEditCategoryColor(
+                                                context, index);
                                           });
                                     }),
                                 title: Text(categories[index].description),
                                 trailing: categories[index].description !=
-                                        "Uncategorized"
+                                        'Uncategorized'
                                     ? PopupMenuButton(
                                         icon: Icon(Icons.remove_circle,
                                             color: Colors.red),
@@ -178,11 +100,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                                 child: Text("Remove"),
                                                 onTap: () async {
                                                   await dbConnector
-                                                      .deleteCategory(
+                                                      .deleteCategoryByID(
                                                           categories[index]
                                                               .id!);
-                                                  categories.removeAt(index);
-                                                  setState(() {});
+                                                  await updateCategories();
                                                 },
                                               )
                                             ])
@@ -195,5 +116,75 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             return Text("Unexpected error");
           }
         });
+  }
+
+  Widget popUpAddCategory(context, categoriesPopUpCategory) {
+    return AlertDialog(
+      title: Text("Add new category"),
+      icon: Icon(Icons.category),
+      content: SingleChildScrollView(
+          child: Column(children: [
+        Text("Enter description:"),
+        TextField(onChanged: (value) => setState(() => description = value)),
+        Padding(
+            padding: EdgeInsets.symmetric(vertical: 10),
+            child: Text("Pick a color:")),
+        ColorPicker(
+            pickerColor: pickerColor,
+            onColorChanged: ((pickedColor) => setState(() {
+                  pickerColor = pickedColor;
+                })))
+      ])),
+      actions: [
+        ElevatedButton(
+          child: const Text('Save'),
+          onPressed: () async {
+            if (description.length > 0) {
+              Category newCategory =
+                  new Category(description: description, color: pickerColor);
+              await dbConnector.insertCategory(newCategory);
+              await updateCategories();
+              Navigator.of(context).pop();
+              setState(() {});
+            } else {
+              print("Description is empty");
+            }
+          },
+        ),
+        ElevatedButton(
+          child: const Text('Cancel'),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget popUpEditCategoryColor(context, index) {
+    return AlertDialog(
+      title: Text("Pick a color"),
+      content: ColorPicker(
+          pickerColor: pickerColor,
+          onColorChanged: ((pickerColor) =>
+              setState(() => categories[index].color = pickerColor))),
+      actions: [
+        ElevatedButton(
+          child: const Text('Save'),
+          onPressed: () async {
+            await dbConnector.updateCategory(categories[index]);
+            await updateCategories();
+            Navigator.of(context).pop();
+          },
+        ),
+        ElevatedButton(
+          child: const Text('Cancel'),
+          onPressed: () async {
+            await updateCategories();
+            Navigator.of(context).pop();
+          },
+        ),
+      ],
+    );
   }
 }
