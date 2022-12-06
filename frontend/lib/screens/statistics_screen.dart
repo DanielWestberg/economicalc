@@ -58,12 +58,12 @@ class StatisticsScreenState extends State<StatisticsScreen> {
     categoriesFutureBuilder = dbConnector.getAllcategories();
 
     dataFuture = dbConnector.getFilteredReceiptItems(
-        startDate['selected'], endDate['selected'], category['selected'].id);
+        startDate['selected'], endDate['selected'], category['selected']);
   }
 
   updateData() async {
     var updatedDataFuture = dbConnector.getFilteredReceiptItems(
-        startDate['selected'], endDate['selected'], category['selected'].id);
+        startDate['selected'], endDate['selected'], category['selected']);
 
     // Category? cat = noneCategory;
     // if (categoryID['selected'] != 0) {
