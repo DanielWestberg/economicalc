@@ -23,6 +23,32 @@ class Receipt {
     this.backendId,
   });
 
+  @override
+  operator ==(Object? other) => (
+      other is Receipt &&
+      id == other.id &&
+      recipient == other.recipient &&
+      date == other.date &&
+      total == other.total &&
+      categoryDesc == other.categoryDesc &&
+      items.every((item) => other.items.contains(item)) &&
+      categoryID == other.categoryID &&
+      backendId == other.backendId
+  );
+
+  @override
+  get hashCode => (
+      id.hashCode |
+      recipient.hashCode |
+      date.hashCode |
+      total.hashCode |
+      categoryDesc.hashCode |
+      items.fold(0, (previousValue, element) => previousValue | element.hashCode) |
+      categoryID.hashCode |
+      backendId.hashCode
+  );
+
+
   Map<String, dynamic> toMap() {
     List<Map<String, dynamic>> items = [];
     for (ReceiptItem item in this.items) {
@@ -92,6 +118,21 @@ class ReceiptItem {
   toString() {
     return "{$itemName, $amount}";
   }
+
+  @override
+  operator ==(Object? other) => (
+      other is ReceiptItem &&
+      itemId == other.itemId &&
+      itemName == other.itemName &&
+      amount == other.amount
+  );
+
+  @override
+  get hashCode => (
+      itemId.hashCode |
+      itemName.hashCode |
+      amount.hashCode
+  );
 
   Map<String, dynamic> toJson() {
     return {'itemName': itemName, 'amount': amount, 'itemId': itemId};
