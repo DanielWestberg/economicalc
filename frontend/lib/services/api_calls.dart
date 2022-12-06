@@ -213,12 +213,15 @@ fetchCategories(String userId) async {
         "Unexpected status code ${response.statusCode}\n${response.body}"
     );
   }
+
+  List<dynamic> categories = convert.jsonDecode(response.body)["data"];
+  return categories.map((e) => Category.fromJson(e)).toList();
 }
 
 postCategory(String userId, Category category) async {
   final uri = Uri.http(apiServer, "/users/$userId/categories");
   final headers = {"Content-type": "application/json"};
-  final body = convert.jsonEncode(category.toJson());
+  final body = convert.jsonEncode(category.toJson(true));
   final response = await http.post(uri, headers: headers, body: body);
   if (response.statusCode != 201) {
     throw Exception(

@@ -1,7 +1,10 @@
+import 'dart:ui';
+
 import 'package:collection/collection.dart';
 import 'package:cross_file/cross_file.dart';
 
 import 'package:economicalc_client/services/api_calls.dart';
+import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -55,5 +58,18 @@ main() {
     await updateReceipt(userId, receipt.backendId, receipt);
     final responseReceipts = await fetchReceipts(userId);
     expect(responseReceipts, contains(receipt));
+  });
+
+  test ("Post category", () async {
+    final category = Category(
+        description:"Groceries",
+        color: const Color(0xFFFF7733),
+        id: 1234,
+    );
+
+    await postCategory(userId, category);
+
+    List<Category> fetchedCategories = await fetchCategories(userId);
+    expect(fetchedCategories, contains(category));
   });
 }
