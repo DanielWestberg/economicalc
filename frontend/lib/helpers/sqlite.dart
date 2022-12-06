@@ -292,11 +292,11 @@ class SQFLite {
   }
 
   Future<List<ReceiptItem>> getFilteredReceiptItems(
-      startDate, endDate, categoryID) async {
+      startDate, endDate, category) async {
     final receipts = await getAllReceipts();
     List<ReceiptItem> filteredItems = [];
 
-    if (categoryID == 0) {
+    if (category.description == 'None') {
       for (var receipt in receipts) {
         if (receipt.date.compareTo(startDate) >= 0 &&
             receipt.date.compareTo(endDate) <= 0) {
@@ -307,7 +307,7 @@ class SQFLite {
       for (var receipt in receipts) {
         if (receipt.date.compareTo(startDate) >= 0 &&
             receipt.date.compareTo(endDate) <= 0 &&
-            receipt.categoryID == categoryID) {
+            receipt.categoryID == category.id) {
           receipt.items.forEach((item) => filteredItems.add(item));
         }
       }
