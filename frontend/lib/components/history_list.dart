@@ -45,11 +45,10 @@ class HistoryListState extends State<HistoryList> {
   void search(String query) async {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       List<Transaction> dummySearchList = <Transaction>[];
-      dummySearchList.addAll(transactions);
+      dummySearchList.addAll(transactions_copy);
       if (query.isNotEmpty) {
         List<Transaction> dummyListData = <Transaction>[];
         dummySearchList.forEach((item) {
-          print(item.store);
           if (item.store!.toLowerCase().contains(query.toLowerCase())) {
             dummyListData.add(item);
           }

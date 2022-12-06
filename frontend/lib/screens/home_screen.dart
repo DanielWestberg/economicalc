@@ -54,6 +54,7 @@ class _HomeScreen extends State<HomeScreen> {
 
   Widget renderSearchField() {
     return Container(
+        padding: EdgeInsets.all(25),
         child: TextField(
       onChanged: (value) {
         historyListStateKey.currentState!.search(value);
