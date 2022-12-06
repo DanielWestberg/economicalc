@@ -28,4 +28,8 @@ class Category {
   static Category getCategory(int categoryID, categories) {
     return categories.firstWhere((item) => item.id == categoryID);
   }
+
+  static Category getCategoryByDesc(String categoryDesc, categories) {
+    return categories.firstWhere((item) => item.description == categoryDesc);
+  }
 }

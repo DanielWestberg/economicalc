@@ -82,7 +82,7 @@ class _HomeScreen extends State<HomeScreen> {
           IconButton(
             icon: Icon(Icons.auto_graph),
             onPressed: (() {
-              Navigator.push(_context,
+              Navigator.of(_context).push(
                   MaterialPageRoute(builder: (_context) => StatisticsScreen()));
             }),
           ),
