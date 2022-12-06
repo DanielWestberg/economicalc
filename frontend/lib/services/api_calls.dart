@@ -229,3 +229,6 @@ postCategory(String userId, Category category) async {
     );
   }
 }
+
+deleteCategory(String userId, int categoryId) async => await
+  http.delete(Uri.http(apiServer, "/users/$userId/categories/$categoryId"));
