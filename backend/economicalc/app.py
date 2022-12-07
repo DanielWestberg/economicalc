@@ -172,7 +172,7 @@ def create_app(config):
         return make_response("", no_content)
 
 
-    @app.route("/users/<bankId>/receipts/<ObjectId:receiptId>/image", methods=["GET", "PUT"])
+    @app.route("/users/<bankId>/receipts/<ObjectId:receiptId>/image", methods=["GET", "PUT", "DELETE"])
     def user_receipt_image(bankId, receiptId):
         if request.method == "GET":
             return get_image(bankId, receiptId, request)
@@ -207,6 +207,16 @@ def create_app(config):
 
         file = request.files["file"]
         fs.put(file, _id=image_id, content_type=request.mimetype)
+
+        return make_response("", no_content)
+
+
+    def delete_image(bankId, receiptId, request):
+        user = db.users.find_one({"bankId": bankId, "receipts._id": receiptId}, {"_id": 0, "receipts.$": 1})
+        receipt = user["receipts"][0] if user is not None else None
+        image_id = ObjectId(receipt["imageId"]) if receipt is not None and "imageId" in receipt else None
+        if image_id is not None:
+            fs.delete(image_id)
 
         return make_response("", no_content)
 
