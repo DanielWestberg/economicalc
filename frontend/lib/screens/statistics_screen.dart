@@ -176,6 +176,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
     return AlertDialog(
       title: Text("Filter"),
       content: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
             Text("Start date:"),
