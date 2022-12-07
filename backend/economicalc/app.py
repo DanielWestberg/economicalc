@@ -177,8 +177,10 @@ def create_app(config):
     def user_receipt_image(bankId, receiptId):
         if request.method == "GET":
             return get_image(bankId, receiptId, request)
+        elif request.method == "PUT":
+            return put_image(bankId, receiptId, request)
 
-        return put_image(bankId, receiptId, request)
+        return delete_image(bankId, receiptId, request)
 
 
     def get_image(bankId, receiptId, request):
