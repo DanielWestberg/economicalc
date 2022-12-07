@@ -504,3 +504,19 @@ class TestReceipt():
         category = categories_to_post[0]
         response = client.put(f"/users/not-a-user/categories/{category.id}", json=category.to_dict(True))
         assert response.status == constants.not_found
+
+
+    def test_delete_receipt(self, db, users, client):
+        for user in users:
+            while len(user.receipts) > 0:
+                receipt = user.receipts.pop()
+                response = client.delete(f"/users/{user.bankId}/receipts/{receipt.id}")
+                assert response.status == constants.no_content
+
+                response = client.get(f"/users/{user.bankId}/receipts")
+                response_dicts = response.json["data"]
+                response_receipts = [Receipt.from_dict(d) for d in response_dicts]
+                assert receipt not in response_receipts
+
+                for receipt in user.receipts:
+                    assert receipt in response_receipts
