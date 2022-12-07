@@ -54,27 +54,28 @@ class _HomeScreen extends State<HomeScreen> {
 
   Widget renderSearchField() {
     return Container(
+        color: Utils.backgroundColor,
         padding: EdgeInsets.all(25),
         child: TextField(
-      onChanged: (value) {
-        historyListStateKey.currentState!.search(value);
-      },
-      controller: editingController,
-      decoration: InputDecoration(
-          labelText: "Search",
-          hintText: "Search",
-          prefixIcon: Icon(Icons.search),
-          suffixIcon: IconButton(
-            icon: Icon(Icons.clear),
-            onPressed: (() {
-              setState(() {
-                showSearchBar = false;
-              });
-            }),
-          ),
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(25.0)))),
-    ));
+          onChanged: (value) {
+            historyListStateKey.currentState!.search(value);
+          },
+          controller: editingController,
+          decoration: InputDecoration(
+              labelText: "Search",
+              hintText: "Search",
+              prefixIcon: Icon(Icons.search),
+              suffixIcon: IconButton(
+                icon: Icon(Icons.clear),
+                onPressed: (() {
+                  setState(() {
+                    showSearchBar = false;
+                  });
+                }),
+              ),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(25.0)))),
+        ));
   }
 
   Widget iconSection() {
