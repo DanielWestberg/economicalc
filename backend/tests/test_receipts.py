@@ -520,3 +520,13 @@ class TestReceipt():
 
                 for receipt in user.receipts:
                     assert receipt in response_receipts
+
+
+    def test_delete_image(self, db, fs, users, client):
+        for user in users:
+            for receipt in user.receipts:
+                if receipt.image_id is not None:
+                    response = client.delete(f"/users/{user.bankId}/receipts/{receipt.id}/image")
+                    assert response.status == constants.no_content
+
+                    assert not fs.exists(receipt.image_id)
