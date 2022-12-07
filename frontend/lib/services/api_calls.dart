@@ -201,6 +201,16 @@ fetchImage(String userId, String receiptId) async {
   return XFile.fromData(response.bodyBytes);
 }
 
+deleteImage(String userId, String receiptId) async {
+  final uri = Uri.http(apiServer, "/users/$userId/receipts/$receiptId/image");
+  final response = await http.delete(uri);
+  if (response.statusCode != 204) {
+    throw Exception(
+      "Unexpected status code ${response.statusCode}\n${response.body}"
+    );
+  }
+}
+
 registerUser(String userId) async {
   await http.put(Uri.http(apiServer, "/users/$userId"));
 }
