@@ -281,7 +281,9 @@ def create_app(config):
     # TODO: Add authentication with BankID
     @app.route("/users/<bankId>", methods=["PUT"])
     def create_user(bankId):
-        db.users.update_one({"bankId": bankId}, {"$set": {"bankId": bankId}}, upsert=True)
+        if db.users.find_one({"bankId": bankId}) is None:
+            db.users.insert_one({"bankId": bankId, "receipts": [], "categories": []})
+
         return make_response("", no_content)
         
 
