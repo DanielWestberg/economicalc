@@ -1,10 +1,8 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
-import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
 import 'package:economicalc_client/screens/transaction_details_screen.dart';
@@ -16,6 +14,13 @@ import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class HistoryList extends StatefulWidget {
+  final DateTime startDate;
+  final DateTime endDate;
+  final Category category;
+
+  HistoryList(Key? key, this.startDate, this.endDate, this.category)
+      : super(key: key);
+
   @override
   HistoryListState createState() => HistoryListState();
 }
@@ -28,11 +33,19 @@ class HistoryListState extends State<HistoryList> {
   late List<Category> categories = [];
 
   @override
+  void didUpdateWidget(covariant HistoryList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    dataFuture = dbConnector.getFilteredTransactions(
+        widget.startDate, widget.endDate, widget.category);
+  }
+
+  @override
   void initState() {
     super.initState();
     initDB();
     fetchBankTransactions();
-    dataFuture = dbConnector.getAllTransactions();
+    dataFuture = dbConnector.getFilteredTransactions(
+        widget.startDate, widget.endDate, widget.category);
   }
 
   void initDB() async {
@@ -43,8 +56,10 @@ class HistoryListState extends State<HistoryList> {
     categories = await dbConnector.getAllcategories();
     await load_test_data(); // TODO: Replace with fetching from bank
     await dbConnector.importMissingBankTransactions();
+    var updatedDataFuture = dbConnector.getFilteredTransactions(
+        widget.startDate, widget.endDate, widget.category);
     setState(() {
-      dataFuture = dbConnector.getAllTransactions();
+      dataFuture = updatedDataFuture;
     });
   }
 
@@ -75,7 +90,7 @@ class HistoryListState extends State<HistoryList> {
       Container(
         color: Utils.backgroundColor,
         padding: const EdgeInsets.all(20),
-        child: Text(
+        child: const Text(
           "History",
           textAlign: TextAlign.left,
           style: TextStyle(
@@ -103,20 +118,20 @@ class HistoryListState extends State<HistoryList> {
                                 padding: EdgeInsets.only(top: 5.0),
                                 child: ListTile(
                                   tileColor: Color(0xffD4E6F3),
-                                  shape: ContinuousRectangleBorder(
+                                  shape: const ContinuousRectangleBorder(
                                       side: BorderSide(
                                     width: 1.0,
                                     color: Colors.transparent,
                                   )),
                                   title: Text(
                                     transactions[index].store!,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 18),
                                   ),
                                   subtitle: Text(
                                     "${transactions[index].totalAmount} kr",
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 16),
                                   ),
@@ -127,7 +142,7 @@ class HistoryListState extends State<HistoryList> {
                                         Text(
                                           DateFormat('yyyy-MM-dd')
                                               .format(transactions[index].date),
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                               fontWeight: FontWeight.w600,
                                               fontSize: 16),
                                         ),
