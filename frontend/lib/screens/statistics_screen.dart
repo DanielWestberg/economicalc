@@ -65,14 +65,8 @@ class StatisticsScreenState extends State<StatisticsScreen> {
     var updatedDataFuture = dbConnector.getFilteredReceiptItems(
         startDate['selected'], endDate['selected'], category['selected']);
 
-    // Category? cat = noneCategory;
-    // if (categoryID['selected'] != 0) {
-    //   cat = await dbConnector.getCategoryFromID(categoryID['selected']);
-    // }
-
     setState(() {
       dataFuture = updatedDataFuture;
-      // selectedCategory = cat!;
     });
   }
 
