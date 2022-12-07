@@ -5,7 +5,7 @@ from bson.objectid import ObjectId
 from gridfs import GridFS
 import requests
 
-from .objects import Receipt, User
+from .objects import Category, Receipt, User
 from .config import FlaskConfig
 from .constants import *
 
@@ -131,13 +131,9 @@ def create_app(config):
         if len(receipt.items) == 0:
             return make_response("Field \"items\" may not be an empty list", unprocessable_entity)
 
-        user = db.users.find_one({"bankId": bankId})
-        if user is None:
-            user = User(bankId, [receipt])
-            db.users.insert_one(user.to_dict())
-        else:
-            update_action = {"$push": {"receipts": receipt.to_dict()}}
-            db.users.update_one({"_id": user["_id"]}, update_action)
+        user = db.users.find_one_or_404({"bankId": bankId})
+        update_action = {"$push": {"receipts": receipt.to_dict()}}
+        db.users.update_one({"_id": user["_id"]}, update_action)
 
         return make_response(jsonify(data=receipt.to_dict(True)), created)
 
@@ -205,6 +201,91 @@ def create_app(config):
         fs.put(file, _id=image_id, content_type=request.mimetype)
 
         return make_response("", no_content)
+
+
+    @app.route("/users/<bankId>/categories", methods=["GET", "POST"])
+    def user_categories(bankId):
+        if request.method == "GET":
+            return get_categories(bankId, request)
+
+        return post_category(bankId, request)
+
+
+    def get_categories(bankId, request):
+        user = db.users.find_one_or_404({"bankId": bankId})
+        categories = user["categories"]
+        return jsonify(data=categories)
+
+
+    def parse_category_or_make_response(category_dict):
+        try:
+            category = Category.from_dict(category_dict)
+        except KeyError as e:
+            key = e.args[0]
+            return make_response(f"Missing required field \"{key}\"", unprocessable_entity)
+        except TypeError as e:
+            return make_response(e.args[0], unprocessable_entity)
+
+        return category
+
+
+    def post_category(bankId, request):
+        user = db.users.find_one_or_404({"bankId": bankId})
+        category = parse_category_or_make_response(request.json)
+        if type(category) != Category:
+            return category
+
+        filtered_user = db.users.find_one({"bankId": bankId, "categories.id": category.id}, {"_id": 0, "categories.$": 1})
+        if filtered_user is not None:
+            return make_response(f"Category with ID {category.id} already exists", conflict)
+
+        update_action = {"$push": {"categories": category.to_dict()}}
+        db.users.update_one({"_id": user["_id"]}, update_action)
+
+        return make_response(jsonify(data=category.to_dict(True)), created)
+
+
+    @app.route("/users/<bankId>/categories/<int:categoryId>", methods=["PUT", "DELETE"])
+    def user_category_by_id(bankId, categoryId):
+        if request.method == "PUT":
+            return put_category(bankId, categoryId, request)
+
+        return delete_category(bankId, categoryId, request)
+
+
+    def put_category(bankId, categoryId, request):
+
+        category_dict = request.json
+        category_dict["id"] = categoryId
+        category = parse_category_or_make_response(category_dict)
+        if type(category) != Category:
+            return category
+
+        user = db.users.find_one({"bankId": bankId, "categories.id": categoryId}, {"_id": 0, "categories.$": 1})
+        if user is None:
+            user = db.users.find_one_or_404({"bankId": bankId})
+            update_action = {"$push": {"categories": category.to_dict()}}
+            db.users.update_one({"_id": user["_id"]}, update_action)
+
+            return make_response(jsonify(data=category.to_dict(True)), created)
+
+        db.users.find_one_and_update({"bankId": bankId, "categories.id": categoryId}, {"$set": {"categories.$": category.to_dict()}})
+        return jsonify(data=category.to_dict(True))
+
+
+    def delete_category(bankId, categoryId, request):
+        db.users.find_one_and_update({"bankId": bankId, "categories.id": categoryId}, {"$pull": {"categories": {"id": categoryId}}})
+        return make_response("", no_content)
+
+
+    # TODO: Add authentication with BankID
+    @app.route("/users/<bankId>", methods=["PUT"])
+    def create_user(bankId):
+        if db.users.find_one({"bankId": bankId}) is None:
+            db.users.insert_one({"bankId": bankId, "receipts": [], "categories": []})
+
+        return make_response("", no_content)
+        
 
     return app
 

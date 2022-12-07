@@ -1,5 +1,6 @@
 import 'package:economicalc_client/models/response.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
+import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:flutter/material.dart';
 
@@ -14,7 +15,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as http_parser;
 import 'dart:convert' as convert;
 
-const String apiServer = "192.168.1.6:5000";
+const String apiServer = "192.168.0.165:5000";
 
 Future<List<Receipt>> fetchMockedTransactions() async {
   final String response =
@@ -159,6 +160,7 @@ postReceipt(String userId, Receipt receipt) async {
       "Unexpected status code ${response.statusCode}\n${response.body}"
     );
   }
+  return Receipt.fromBackendJson(convert.jsonDecode(response.body)["data"]);
 }
 
 updateReceipt(String userId, String receiptId, Receipt receipt) async {
@@ -198,3 +200,47 @@ fetchImage(String userId, String receiptId) async {
   }
   return XFile.fromData(response.bodyBytes);
 }
+
+registerUser(String userId) async {
+  await http.put(Uri.http(apiServer, "/users/$userId"));
+}
+
+fetchCategories(String userId) async {
+  final uri = Uri.http(apiServer, "/users/$userId/categories");
+  final response = await http.get(uri);
+  if (response.statusCode != 200) {
+    throw Exception(
+        "Unexpected status code ${response.statusCode}\n${response.body}"
+    );
+  }
+
+  List<dynamic> categories = convert.jsonDecode(response.body)["data"];
+  return categories.map((e) => Category.fromJson(e)).toList();
+}
+
+postCategory(String userId, Category category) async {
+  final uri = Uri.http(apiServer, "/users/$userId/categories");
+  final headers = {"Content-type": "application/json"};
+  final body = convert.jsonEncode(category.toJson(true));
+  final response = await http.post(uri, headers: headers, body: body);
+  if (response.statusCode != 201) {
+    throw Exception(
+      "Unexpected status code ${response.statusCode}\n${response.body}"
+    );
+  }
+}
+
+updateCategory(String userId, Category category) async {
+  final uri = Uri.http(apiServer, "/users/$userId/categories/${category.id!}");
+  final headers = {"Content-type": "application/json"};
+  final body = convert.jsonEncode(category.toJson(true));
+  final response = await http.put(uri, headers: headers, body: body);
+  if (response.statusCode != 200 && response.statusCode != 201) {
+    throw Exception(
+      "Unexpected status code ${response.statusCode}\n${response.body}"
+    );
+  }
+}
+
+deleteCategory(String userId, int categoryId) async => await
+  http.delete(Uri.http(apiServer, "/users/$userId/categories/$categoryId"));

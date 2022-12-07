@@ -67,15 +67,40 @@ def receipts(items, images) -> List[Receipt]:
 
 
 @pytest.fixture()
-def users(receipts) -> List[User]:
+def categories() -> List[Category]:
+    return [
+        Category(
+            1,
+            "Groceries",
+            0xEE6622,
+        ), Category(
+            2,
+            "Clothes",
+            0xBBCC33,
+        ), Category(
+            3,
+            "Explosives",
+            0x77FF33,
+        ), Category(
+            4,
+            "Furniture",
+            0x2288DD,
+        ),
+    ]
+
+
+@pytest.fixture()
+def users(receipts, categories) -> List[User]:
     return [
         User(
             "test1",
-            [receipts[0], receipts[2]]
+            [receipts[0], receipts[2]],
+            [categories[0], categories[1]],
         ),
         User(
             "test2",
-            [receipts[1]]
+            [receipts[1]],
+            [categories[2]],
         )
     ]
 
@@ -83,7 +108,7 @@ def users(receipts) -> List[User]:
 @pytest.fixture()
 def users_to_post() -> List[User]:
     return [
-        User("test3", []),
+        User("test3", [], []),
     ]
 
 
@@ -110,6 +135,21 @@ def receipts_to_post(users, users_to_post) -> List[Tuple[User, Receipt]]:
             1.1,
             5,
         ))
+    ]
+
+
+@pytest.fixture()
+def categories_to_post() -> List[Category]:
+    return [
+        Category(
+            7,
+            "Entertainment",
+            0xBB77BB,
+        ), Category(
+            8,
+            "Investment",
+            0xFF0000,
+        )
     ]
 
 
@@ -178,6 +218,7 @@ class TestReceipt():
             receipt_dict = receipt.to_dict(True)
             receipt_dict.pop("_id", None)
 
+            client.put(f"/users/{user.bankId}")
             response = client.post(f"/users/{user.bankId}/receipts", json=receipt_dict)
             assert response.status == constants.created
 
@@ -352,3 +393,114 @@ class TestReceipt():
                         break
 
                 assert not failed
+
+
+    def test_get_categories(self, db, users, client):
+        for user in users:
+            response = client.get(f"/users/{user.bankId}/categories")
+            assert response.status == constants.ok
+
+            response_dicts = response.json["data"]
+            response_categories = [Category.from_dict(d) for d in response_dicts]
+
+            for (expected, actual) in zip(user.categories, response_categories):
+                assert expected == actual
+
+
+    def test_post_category(self, db, users, categories_to_post, client):
+        user = users[0]
+        for category in categories_to_post:
+            response = client.post(f"/users/{user.bankId}/categories", json=category.to_dict(True))
+            assert response.status == constants.created
+
+            response_dict = response.json["data"]
+            response_category = Category.from_dict(response_dict)
+            assert category == response_category
+
+            response = client.get(f"/users/{user.bankId}/categories")
+            response_dicts = response.json["data"]
+            response_categories = [Category.from_dict(d) for d in response_dicts]
+            assert category in response_categories
+
+
+    def test_post_existing_category_fails(self, db, users, client):
+        user = users[0]
+        category = user.categories[0]
+
+        response = client.post(f"/users/{user.bankId}/categories", json=category.to_dict(True))
+        assert response.status == constants.conflict
+
+        response = client.get(f"/users/{user.bankId}/categories")
+        response_dicts = response.json["data"]
+        assert len(response_dicts) == len(user.categories)
+
+
+    def test_put_category(self, db, users, client):
+        for user in users:
+            for category in user.categories:
+                category.color = 0
+                category_dict = category.to_dict(True)
+
+                response = client.put(f"/users/{user.bankId}/categories/{category.id}", json=category_dict)
+                assert response.status == constants.ok
+                
+                response_dict = response.json["data"]
+                response_category = Category.from_dict(response_dict)
+                assert category == response_category
+                
+                response = client.get(f"/users/{user.bankId}/categories")
+                response_dicts = response.json["data"]
+                response_categories = [Category.from_dict(d) for d in response_dicts]
+
+                assert category in response_categories
+
+
+    def test_put_new_category(self, db, users, categories_to_post, client):
+        user = users[0]
+        for category in categories_to_post:
+            response = client.put(f"/users/{user.bankId}/categories/{category.id}", json=category.to_dict(True))
+            assert response.status == constants.created
+
+            response_dict = response.json["data"]
+            response_category = Category.from_dict(response_dict)
+            assert category == response_category
+
+            response = client.get(f"/users/{user.bankId}/categories")
+            response_dicts = response.json["data"]
+            response_categories = [Category.from_dict(d) for d in response_dicts]
+            assert category in response_categories
+
+
+    def test_delete_category(self, db, users, client):
+        for user in users:
+            while len(user.categories) > 0:
+                category = user.categories.pop()
+                response = client.delete(f"/users/{user.bankId}/categories/{category.id}")
+                assert response.status == constants.no_content
+
+                response = client.get(f"/users/{user.bankId}/categories")
+                response_dicts = response.json["data"]
+                response_categories = [Category.from_dict(d) for d in response_dicts]
+                assert category not in response_categories
+
+                for category in user.categories:
+                    assert category in response_categories
+
+
+    def test_delete_inexistent_category(self, db, users, categories_to_post, client):
+        user = users[0]
+        category = categories_to_post[0]
+        response = client.delete(f"/users/{user.bankId}/categories/{category.id}")
+        assert response.status == constants.no_content
+
+        response = client.get(f"/users/{user.bankId}/categories")
+        response_dicts = response.json["data"]
+        response_categories = [Category.from_dict(d) for d in response_dicts]
+        for category in user.categories:
+            assert category in response_categories
+
+
+    def test_put_category_on_inexistent_user(self, db, categories_to_post, client):
+        category = categories_to_post[0]
+        response = client.put(f"/users/not-a-user/categories/{category.id}", json=category.to_dict(True))
+        assert response.status == constants.not_found
