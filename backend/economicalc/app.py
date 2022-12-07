@@ -137,10 +137,13 @@ def create_app(config):
 
         return make_response(jsonify(data=receipt.to_dict(True)), created)
 
-    @app.route("/users/<bankId>/receipts/<ObjectId:receiptId>", methods=["PUT"])
+    @app.route("/users/<bankId>/receipts/<ObjectId:receiptId>", methods=["PUT", "DELETE"])
     def user_receipt_by_id(bankId, receiptId):
         # When more methods are added for this URL, check request.method to determine the appropriate method to call
-        return put_receipt(bankId, receiptId, request)
+        if request.method == "PUT":
+            return put_receipt(bankId, receiptId, request)
+
+        return delete_receipt(bankId, receiptId, request)
 
 
     def put_receipt(bankId, receiptId, request):
@@ -162,6 +165,11 @@ def create_app(config):
 
         db.users.find_one_and_update({"bankId": bankId, "receipts._id": receiptId}, {"$set": {"receipts.$": new_receipt.to_dict()}})
         return jsonify(data=new_receipt.to_dict(True))
+
+
+    def delete_receipt(bankId, receiptId, request):
+        db.users.find_one_and_update({"bankId": bankId, "receipts._id": receiptId}, {"$pull": {"receipts": {"_id": receiptId}}})
+        return make_response("", no_content)
 
 
     @app.route("/users/<bankId>/receipts/<ObjectId:receiptId>/image", methods=["GET", "PUT"])
