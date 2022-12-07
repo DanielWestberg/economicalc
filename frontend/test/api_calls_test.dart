@@ -19,6 +19,14 @@ main() {
 
   tearDownAll(() async {
     await deleteCategory(userId, categoryId);
+
+    List<Receipt> receipts = await fetchReceipts(userId);
+    for (Receipt receipt in receipts) {
+      await deleteReceipt(userId, receipt);
+    }
+
+    receipts = await fetchReceipts(userId);
+    expect(receipts.length, 0);
   });
 
   test("Post receipt", () async {
