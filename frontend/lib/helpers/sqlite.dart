@@ -104,8 +104,20 @@ class SQFLite {
     );
   }
 
+  Future<int> numOfCategoriesWithSameName(Transaction transaction) async {
+    int n = 0;
+    List<Transaction> transactionsInLocalDb = await getAllTransactions();
+    for (Transaction tran in transactionsInLocalDb) {
+      if (tran.store!.toLowerCase().trim() ==
+          transaction.store!.toLowerCase().trim()) {
+        n++;
+      }
+    }
+    return (n - 1);
+  }
+
   //Maybe a more suitable name can be found?
-  void assignCategories(Transaction transaction) async {
+  Future<void> assignCategories(Transaction transaction) async {
     List<Transaction> transactionsInLocalDb = await getAllTransactions();
     for (Transaction tran in transactionsInLocalDb) {
       if (tran.store?.toLowerCase().trim() ==
@@ -374,7 +386,9 @@ class SQFLite {
   }
 
   Map<String, dynamic> encodeReceipt(Receipt receipt) {
-    return receipt.toMap();
+    Map<String, dynamic> receiptMap = receipt.toMap();
+    receiptMap['items'] = jsonEncode(receiptMap['items']);
+    return receiptMap;
   }
 
   List<ReceiptItem> parseReceiptItems(String decodedString) {
