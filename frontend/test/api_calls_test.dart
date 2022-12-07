@@ -55,6 +55,8 @@ main() {
 
     final equals = const ListEquality().equals;
     expect(equals(expectedBytes, responseBytes), true);
+
+    deleteImage(userId, backendId);
   });
 
   test ("Update receipt", () async {
