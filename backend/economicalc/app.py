@@ -168,6 +168,7 @@ def create_app(config):
 
 
     def delete_receipt(bankId, receiptId, request):
+        delete_image(bankId, receiptId, request)
         db.users.find_one_and_update({"bankId": bankId, "receipts._id": receiptId}, {"$pull": {"receipts": {"_id": receiptId}}})
         return make_response("", no_content)
 
