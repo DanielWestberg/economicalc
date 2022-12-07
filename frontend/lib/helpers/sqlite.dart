@@ -374,7 +374,9 @@ class SQFLite {
   }
 
   Map<String, dynamic> encodeReceipt(Receipt receipt) {
-    return receipt.toMap();
+    Map<String, dynamic> receiptMap = receipt.toMap();
+    receiptMap['items'] = jsonEncode(receiptMap['items']);
+    return receiptMap;
   }
 
   List<ReceiptItem> parseReceiptItems(String decodedString) {
