@@ -48,7 +48,7 @@ class OpenLinkState extends State<OpenLink> {
 
   @override
   void initState() {
-    if (!widget.test) {
+    if (widget.test == false) {
       selectedUrl =
           "https://link.tink.com/1.0/transactions/connect-accounts/?client_id=1e48aa066d3f46bcb31bf2acb949a6ca&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fcallback&market=SE&locale=en_US";
     }

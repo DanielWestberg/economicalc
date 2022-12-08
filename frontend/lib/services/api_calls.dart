@@ -15,7 +15,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as http_parser;
 import 'dart:convert' as convert;
 
-const String apiServer = "https://api.economicalc.online";
+const String apiServer = "api.economicalc.online";
 
 Future<List<Receipt>> fetchMockedTransactions() async {
   final String response =
