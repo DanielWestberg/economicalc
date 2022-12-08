@@ -460,18 +460,6 @@ class _HomeScreen extends State<HomeScreen> {
               ]),
               centerTitle: true,
               elevation: 0,
-              actions: [
-                IconButton(
-                    onPressed: () {
-                      Navigator.of(_context)
-                          .push(MaterialPageRoute(
-                              builder: (_context) => SettingsScreen()))
-                          .then((value) {
-                        Phoenix.rebirth(_context);
-                      });
-                    },
-                    icon: Icon(Icons.settings))
-              ],
             ),
             key: _globalKey,
             drawer: drawer,
