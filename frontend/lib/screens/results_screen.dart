@@ -102,7 +102,7 @@ class ResultsScreenState extends State<ResultsScreen> {
           onTap: () async {
             int receiptID =
                 await dbConnector.insertReceipt(receipt, dropdownValue);
-            Transaction transaction = new Transaction(
+            Transaction transaction = Transaction(
               date: receipt.date,
               totalAmount: -receipt.total!,
               store: receipt.recipient,
@@ -113,7 +113,10 @@ class ResultsScreenState extends State<ResultsScreen> {
               categoryDesc: dropdownValue,
             );
             await dbConnector.insertTransaction(transaction);
-            Navigator.pop(context);
+            int? n = await dbConnector.numOfCategoriesWithSameName(transaction);
+            if (n > 0) {
+              showAlertDialog(context, n, transaction);
+            }
           },
           child: Icon(Icons.check)),
     );
@@ -159,6 +162,47 @@ class ResultsScreenState extends State<ResultsScreen> {
             return Text("Unexpected error");
           }
         });
+  }
+
+  showAlertDialog(BuildContext context, int n, transaction) {
+    // set up the buttons
+    Widget cancelButton = TextButton(
+      child: Text("No"),
+      onPressed: () {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      },
+    );
+    Widget continueButton = TextButton(
+      child: Text("Yes"),
+      onPressed: () {
+        dbConnector.assignCategories(transaction);
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: n == 1
+          ? Text("$n transaction with the same store name found")
+          : Text("$n transactions with the same store name found"),
+      content: n == 1
+          ? Text(
+              "Would you like to update the category for that transaction as well?")
+          : Text(
+              "Would you like to update the category for those transactions as well?"),
+      actions: [
+        cancelButton,
+        continueButton,
+      ],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
   }
 
   Widget headerInfo() {

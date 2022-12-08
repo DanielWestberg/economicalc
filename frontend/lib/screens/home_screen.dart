@@ -14,6 +14,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:economicalc_client/models/category.dart';
+import 'package:economicalc_client/models/receipt.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 
 late BuildContext _context;
@@ -27,8 +28,12 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreen extends State<HomeScreen> {
   GlobalKey<ScaffoldState> _globalKey = GlobalKey<ScaffoldState>();
+  GlobalKey<HistoryListState> historyListStateKey =
+      GlobalKey<HistoryListState>();
   late String appName = "EconomiCalc";
   final SQFLite dbConnector = SQFLite.instance;
+  bool showSearchBar = false;
+  TextEditingController editingController = TextEditingController();
 
   Map<String, dynamic> startDate = {
     "selected": DateTime(2022, 01, 01),
@@ -67,6 +72,32 @@ class _HomeScreen extends State<HomeScreen> {
     });
   }
 
+  Widget renderSearchField() {
+    return Container(
+        color: Utils.backgroundColor,
+        padding: EdgeInsets.all(25),
+        child: TextField(
+          onChanged: (value) {
+            historyListStateKey.currentState!.search(value);
+          },
+          controller: editingController,
+          decoration: InputDecoration(
+              labelText: "Search",
+              hintText: "Search",
+              prefixIcon: Icon(Icons.search),
+              suffixIcon: IconButton(
+                icon: Icon(Icons.clear),
+                onPressed: (() {
+                  setState(() {
+                    showSearchBar = false;
+                  });
+                }),
+              ),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(25.0)))),
+        ));
+  }
+
   Widget iconSection() {
     return Container(
       color: Utils.backgroundColor,
@@ -94,8 +125,10 @@ class _HomeScreen extends State<HomeScreen> {
         ),
         IconButton(
           icon: Icon(Icons.search),
-          onPressed: (() {
-            print("search");
+          onPressed: (() async {
+            setState(() {
+              showSearchBar = true;
+            });
           }),
         ),
         IconButton(
@@ -171,6 +204,66 @@ class _HomeScreen extends State<HomeScreen> {
                 .then((value) {
               Phoenix.rebirth(_context);
             });
+          },
+        ),
+        ListTile(
+          tileColor: Utils.tileColor,
+          shape: RoundedRectangleBorder(
+            side: BorderSide(color: Utils.drawerColor, width: 10),
+          ),
+          title: Text('Run tests',
+              style:
+                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
+          onTap: () async {
+            print("Running tests");
+            String userId = "bruh";
+            List<ReceiptItem> items = [
+              ReceiptItem(
+                itemName: "Snusk",
+                amount: 9001,
+              ),
+            ];
+            Receipt receipt = Receipt(
+              recipient: "ica",
+              date: DateTime.now(),
+              items: items,
+              total: 100.0,
+              categoryID: 1,
+            );
+            await postReceipt(userId, receipt);
+
+            List<Receipt> responseReceipts = await fetchReceipts(userId);
+            print(responseReceipts);
+
+            print("Take a picture to proceed");
+            final XFile? image =
+                await ImagePicker().pickImage(source: ImageSource.camera);
+            if (image == null) {
+              return;
+            }
+
+            String backendId = responseReceipts[0].backendId!;
+            await updateImage(userId, backendId, image);
+            final responseImage = await fetchImage(userId, backendId);
+            print("Original image size: ${await image.length()}");
+            print("Response image size: ${await responseImage.length()}");
+
+            final responseBytes = await responseImage.readAsBytes();
+            print("Displaying response image...");
+            Navigator.of(_context)
+                .push(MaterialPageRoute(
+                    builder: (_context) => Image.memory(responseBytes)))
+                .then((value) {
+              Phoenix.rebirth(_context);
+            });
+
+            print("Updating a receipt...");
+            receipt.items[0].itemName = "Snus";
+            await updateReceipt(userId, backendId, receipt);
+            responseReceipts = await fetchReceipts(userId);
+            print(responseReceipts);
+
+            print("Tests finished");
           },
         ),
         ListTile(
@@ -337,6 +430,20 @@ class _HomeScreen extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     _context = context;
+    List<Widget> children = [
+      iconSection(),
+      Expanded(
+          child: HistoryList(historyListStateKey, startDate['selected'],
+              endDate['selected'], category['selected']))
+    ];
+    if (showSearchBar) {
+      children = [
+        renderSearchField(),
+        Expanded(
+            child: HistoryList(historyListStateKey, startDate['selected'],
+                endDate['selected'], category['selected']))
+      ];
+    }
     return SafeArea(
         child: Scaffold(
             appBar: AppBar(
@@ -369,12 +476,7 @@ class _HomeScreen extends State<HomeScreen> {
             key: _globalKey,
             drawer: drawer,
             body: Column(
-              children: [
-                iconSection(),
-                Expanded(
-                    child: HistoryList(null, startDate['selected'],
-                        endDate['selected'], category['selected']))
-              ],
+              children: children,
             )));
   }
 }

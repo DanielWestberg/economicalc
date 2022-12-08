@@ -27,7 +27,9 @@ class HistoryList extends StatefulWidget {
 
 class HistoryListState extends State<HistoryList> {
   late Future<List<Transaction>> dataFuture;
-  late List<Transaction> transactions;
+  late List<Transaction> transactions = [];
+  late List<Transaction> transactions_copy;
+  bool initialized = false;
   final SQFLite dbConnector = SQFLite.instance;
 
   late List<Category> categories = [];
@@ -50,6 +52,32 @@ class HistoryListState extends State<HistoryList> {
 
   void initDB() async {
     await dbConnector.initDatabase();
+  }
+
+  void search(String query) async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      List<Transaction> dummySearchList = <Transaction>[];
+      dummySearchList.addAll(transactions_copy);
+      if (query.isNotEmpty) {
+        List<Transaction> dummyListData = <Transaction>[];
+        dummySearchList.forEach((item) {
+          if (item.store!.toLowerCase().contains(query.toLowerCase())) {
+            dummyListData.add(item);
+          }
+        });
+        setState(() {
+          transactions.clear();
+          transactions.addAll(dummyListData);
+        });
+        return;
+      } else {
+        setState(() {
+          print(transactions_copy);
+          transactions.clear();
+          transactions.addAll(transactions_copy);
+        });
+      }
+    });
   }
 
   void fetchBankTransactions() async {
@@ -82,6 +110,7 @@ class HistoryListState extends State<HistoryList> {
 
   void sortByDate() {
     transactions.sort((t1, t2) => t2.date.compareTo(t1.date));
+    transactions_copy.sort((t1, t2) => t2.date.compareTo(t1.date));
   }
 
   @override
@@ -104,6 +133,10 @@ class HistoryListState extends State<HistoryList> {
               return Text("${snapshot.error}");
             } else if (snapshot.hasData) {
               transactions = snapshot.data!;
+              if (!initialized) {
+                transactions_copy = snapshot.data!;
+              }
+              initialized = true;
               sortByDate();
               return Expanded(
                   child: RefreshIndicator(

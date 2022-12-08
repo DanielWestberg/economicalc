@@ -104,8 +104,20 @@ class SQFLite {
     );
   }
 
+  Future<int> numOfCategoriesWithSameName(Transaction transaction) async {
+    int n = 0;
+    List<Transaction> transactionsInLocalDb = await getAllTransactions();
+    for (Transaction tran in transactionsInLocalDb) {
+      if (tran.store!.toLowerCase().trim() ==
+          transaction.store!.toLowerCase().trim()) {
+        n++;
+      }
+    }
+    return (n - 1);
+  }
+
   //Maybe a more suitable name can be found?
-  void assignCategories(Transaction transaction) async {
+  Future<void> assignCategories(Transaction transaction) async {
     List<Transaction> transactionsInLocalDb = await getAllTransactions();
     for (Transaction tran in transactionsInLocalDb) {
       if (tran.store?.toLowerCase().trim() ==
@@ -316,16 +328,27 @@ class SQFLite {
     return items;
   }
 
-  Future<List<ReceiptItem>> getFilteredReceiptItems(startDate, endDate) async {
+  Future<List<ReceiptItem>> getFilteredReceiptItems(
+      startDate, endDate, category) async {
     final receipts = await getAllReceipts();
     List<ReceiptItem> filteredItems = [];
 
-    receipts.forEach((receipt) {
-      if (receipt.date.compareTo(startDate) >= 0 &&
-          receipt.date.compareTo(endDate) <= 0) {
-        receipt.items.forEach((item) => filteredItems.add(item));
+    if (category.description == 'None') {
+      for (var receipt in receipts) {
+        if (receipt.date.compareTo(startDate) >= 0 &&
+            receipt.date.compareTo(endDate) <= 0) {
+          receipt.items.forEach((item) => filteredItems.add(item));
+        }
       }
-    });
+    } else {
+      for (var receipt in receipts) {
+        if (receipt.date.compareTo(startDate) >= 0 &&
+            receipt.date.compareTo(endDate) <= 0 &&
+            receipt.categoryID == category.id) {
+          receipt.items.forEach((item) => filteredItems.add(item));
+        }
+      }
+    }
 
     return filteredItems;
   }
@@ -431,6 +454,13 @@ class SQFLite {
     return obj![0]['description'] as String;
   }
 
+  Future<Category?> getCategoryFromID(int id) async {
+    final db = await instance.database;
+    List<Map<String, dynamic?>>? obj =
+        await db?.rawQuery('SELECT * FROM categories WHERE id = "$id"');
+    return Category.fromJson(obj![0]);
+  }
+
   Future<void> insertDefaultCategories(Database db) async {
     List<Category> categories = [
       Category(description: "Uncategorized", color: Colors.grey),
@@ -478,7 +508,7 @@ class SQFLite {
     );
   }
 
-  Future<void> deleteCategory(int id) async {
+  Future<void> deleteCategoryByID(int id) async {
     final db = await instance.database;
     int? uncategorizedID = await getCategoryIDfromDescription("Uncategorized");
 

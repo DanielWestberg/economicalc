@@ -49,5 +49,5 @@ class Category {
   }
 
   static Category noneCategory =
-      Category(description: "None", color: Colors.black, id: 0);
+      Category(description: "None", color: Colors.black);
 }

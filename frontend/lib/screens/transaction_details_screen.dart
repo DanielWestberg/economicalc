@@ -83,7 +83,8 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
               centerTitle: false,
               elevation: 0,
             ),
-            body: ListView(children: [buildDataTable()])));
+            body:
+                ListView(children: [buildDataTable(), deleteButton(context)])));
   }
 
   Widget dropDown() {
@@ -110,8 +111,12 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                       widget.transaction.categoryID =
                           await SQFLite.getCategoryIDfromDescription(
                               dropdownValue!);
-                      dbConnector.updateTransaction(widget.transaction!);
-                      dbConnector.assignCategories(widget.transaction);
+                      await dbConnector.updateTransaction(widget.transaction);
+                      int? n = await dbConnector
+                          .numOfCategoriesWithSameName(widget.transaction);
+                      if (n > 0) {
+                        showAlertDialog(context, n);
+                      }
                     },
                     items: categories
                         .map<DropdownMenuItem<String>>((Category category) {
@@ -129,6 +134,47 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
             return Text("Unexpected error");
           }
         });
+  }
+
+  showAlertDialog(BuildContext context, int n) {
+    // set up the buttons
+    Widget cancelButton = TextButton(
+      child: Text("No"),
+      onPressed: () {
+        Navigator.of(context).pop();
+      },
+    );
+    Widget continueButton = TextButton(
+      child: Text("Yes"),
+      onPressed: () {
+        dbConnector.assignCategories(widget.transaction);
+        Navigator.of(context).pop();
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: n == 1
+          ? Text("$n transaction with the same store name found")
+          : Text("$n transactions with the same store name found"),
+      content: n == 1
+          ? Text(
+              "Would you like to update the category for that transaction as well?")
+          : Text(
+              "Would you like to update the category for those transactions as well?"),
+      actions: [
+        cancelButton,
+        continueButton,
+      ],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
   }
 
   Widget headerInfo() {
@@ -246,5 +292,70 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
 
   Future<Receipt> getReceipt(SQFLite dbConnector, int id) async {
     return await dbConnector.getReceiptfromID(id);
+  }
+
+  Widget deleteButton(BuildContext context) {
+    return FutureBuilder(
+        future: receiptFutureBuilder,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Text("${snapshot.error}");
+          } else if (snapshot.hasData) {
+            receipt = snapshot.data!;
+            return Center(
+                heightFactor: 2,
+                child: IconButton(
+                  icon: Icon(Icons.delete),
+                  onPressed: () {
+                    deleteAlertDialog(context);
+                  },
+                ));
+          } else {
+            return Center(
+                heightFactor: 2,
+                child: IconButton(
+                  icon: Icon(Icons.delete),
+                  color: Colors.black26,
+                  onPressed: () {},
+                ));
+          }
+        });
+  }
+
+  deleteAlertDialog(BuildContext context) {
+    // set up the buttons
+    Widget cancelButton = TextButton(
+      child: Text("No"),
+      onPressed: () {
+        Navigator.of(context).pop();
+      },
+    );
+    Widget continueButton = TextButton(
+      child: Text("Yes"),
+      onPressed: () {
+        dbConnector.deleteReceipt(widget.transaction.receiptID!);
+        dbConnector.deleteTransaction(widget.transaction.id!);
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text("Delete receipt"),
+      content: Text(
+          "Are you sure you want to delete this receipt? This action cannot be undone."),
+      actions: [
+        cancelButton,
+        continueButton,
+      ],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
   }
 }
