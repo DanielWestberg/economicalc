@@ -111,8 +111,12 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                       widget.transaction.categoryID =
                           await SQFLite.getCategoryIDfromDescription(
                               dropdownValue!);
-                      dbConnector.updateTransaction(widget.transaction!);
-                      dbConnector.assignCategories(widget.transaction);
+                      await dbConnector.updateTransaction(widget.transaction);
+                      int? n = await dbConnector
+                          .numOfCategoriesWithSameName(widget.transaction);
+                      if (n > 0) {
+                        showAlertDialog(context, n);
+                      }
                     },
                     items: categories
                         .map<DropdownMenuItem<String>>((Category category) {
@@ -130,6 +134,47 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
             return Text("Unexpected error");
           }
         });
+  }
+
+  showAlertDialog(BuildContext context, int n) {
+    // set up the buttons
+    Widget cancelButton = TextButton(
+      child: Text("No"),
+      onPressed: () {
+        Navigator.of(context).pop();
+      },
+    );
+    Widget continueButton = TextButton(
+      child: Text("Yes"),
+      onPressed: () {
+        dbConnector.assignCategories(widget.transaction);
+        Navigator.of(context).pop();
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: n == 1
+          ? Text("$n transaction with the same store name found")
+          : Text("$n transactions with the same store name found"),
+      content: n == 1
+          ? Text(
+              "Would you like to update the category for that transaction as well?")
+          : Text(
+              "Would you like to update the category for those transactions as well?"),
+      actions: [
+        cancelButton,
+        continueButton,
+      ],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
   }
 
   Widget headerInfo() {
