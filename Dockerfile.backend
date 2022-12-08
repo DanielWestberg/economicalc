@@ -7,9 +7,9 @@ ENV GROUP_ID=1000 \
 
 WORKDIR /var/www/
 
-RUN apk add gcc musl-dev libffi-dev curl libressl-dev
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="${PATH}:/root/.cargo/bin"
+#RUN apk add gcc musl-dev libffi-dev curl libressl-dev
+#RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+#ENV PATH="${PATH}:/root/.cargo/bin"
 
 ADD . /var/www/
 RUN pip install --upgrade pip
@@ -21,25 +21,25 @@ RUN addgroup -g $GROUP_ID www
 RUN adduser -D -u $USER_ID -G www www -s /bin/sh
 
 #GENERATE ENCEYPTION KEY AND CSR
-RUN apk add openssl
+#RUN apk add openssl
 
-WORKDIR /var/ssl/
-RUN openssl genrsa -out serverkey.pem 2048
-RUN openssl req -new -key serverkey.pem -out server.csr -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=example.com"
-RUN cp serverkey.pem serverkey.pem.org
-RUN openssl rsa -in serverkey.pem.org -out serverkey.pem 
-RUN openssl x509 -req -days 365 -in server.csr -signkey serverkey.pem -out servercrt.pem
-WORKDIR /var/www/
+#WORKDIR /var/ssl/
+#RUN openssl genrsa -out serverkey.pem 2048
+#RUN openssl req -new -key serverkey.pem -out server.csr -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=example.com"
+#RUN cp serverkey.pem serverkey.pem.org
+#RUN openssl rsa -in serverkey.pem.org -out serverkey.pem 
+#RUN openssl x509 -req -days 365 -in server.csr -signkey serverkey.pem -out servercrt.pem
+#WORKDIR /var/www/
 
 
 
 
 USER www
 
-EXPOSE 443
+EXPOSE 5000
 
 RUN ls
 
 
 
-CMD [ "gunicorn","--certfile=../ssl/servercrt.pem", "--keyfile=../ssl/serverkey.pem", "-w", "4", "--bind", "0.0.0.0:443", "wsgi"]
+CMD [ "gunicorn", "-w", "4", "--bind", "0.0.0.0:5000", "wsgi"]
