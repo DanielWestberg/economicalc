@@ -163,6 +163,20 @@ postReceipt(String userId, Receipt receipt) async {
   return Receipt.fromBackendJson(convert.jsonDecode(response.body)["data"]);
 }
 
+postManyReceipts(String userId, List<Receipt> receipts) async {
+  final uri = Uri.http(apiServer, "/users/$userId/receipts");
+  final headers = {"Content-type": "application/json"};
+  final receiptMaps = receipts.map((r) => r.toMap()).toList();
+  final body = convert.jsonEncode(receipts);
+  final response = await http.post(uri, headers: headers, body: body);
+  if (response.statusCode != 201) {
+    throw Exception(
+      "Unexpected status code ${response.statusCode}\n${response.body}"
+    );
+  }
+  return Receipt.fromBackendJsonList(convert.jsonDecode(response.body)["data"]);
+}
+
 updateReceipt(String userId, String receiptId, Receipt receipt) async {
   final uri = Uri.http(apiServer, "/users/$userId/receipts/$receiptId");
   final headers = {"Content-type": "application/json"};
