@@ -58,7 +58,7 @@ def create_app(config):
         }
         print(ENVIRONMENT_TINK_CLIENT_ID)
         print(ENVIRONMENT_TINK_CLIENT_SECRET)
-        data = f'code={code}&client_id={ENVIRONMENT_TINK_CLIENT_ID}&client_secret={ENVIRONMENT_TINK_CLIENT_SECRET}&grant_type=authorization_code'
+        data = f'code={code}&client_id={ENVIRONMENT_TINK_CLIENT_ID}&client_secret={ENVIRONMENT_TINK_CLIENT_SECRET}&grant_type=authorization_code&scope=transactions:read,user:read,account:read'
         print(data)
         response = requests.post('https://api.tink.com/api/v1/oauth/token', headers=headers, data=data)
         print(response.text, flush=True)
