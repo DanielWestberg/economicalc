@@ -130,7 +130,6 @@ class _HomeScreen extends State<HomeScreen> {
           ]),
     );
   }
-
   Widget drawer = Drawer(
     backgroundColor: Utils.drawerColor,
     child: ListView(
