@@ -8,20 +8,13 @@ class Category {
   Category({required this.description, required this.color, this.id});
 
   @override
-  operator ==(Object? other) => (
-        other is Category &&
-        description == other.description &&
-        color == other.color &&
-        id == other.id
-    );
-
+  operator ==(Object? other) => (other is Category &&
+      description == other.description &&
+      color == other.color &&
+      id == other.id);
 
   @override
-  get hashCode => (
-      description.hashCode |
-      color.hashCode |
-      id.hashCode
-  );
+  get hashCode => (description.hashCode | color.hashCode | id.hashCode);
 
   Map<String, dynamic> toJson([bool includeId = false]) {
     final res = {
@@ -54,4 +47,7 @@ class Category {
   static Category getCategoryByDesc(String categoryDesc, categories) {
     return categories.firstWhere((item) => item.description == categoryDesc);
   }
+
+  static Category noneCategory =
+      Category(description: "None", color: Colors.black);
 }

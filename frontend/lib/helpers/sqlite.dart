@@ -150,6 +150,31 @@ class SQFLite {
     });
   }
 
+  Future<List<Transaction>> getFilteredTransactions(
+      startDate, endDate, category) async {
+    final transactions = await getAllTransactions();
+    List<Transaction> filteredTransactions = [];
+
+    if (category.description == 'None') {
+      for (var transaction in transactions) {
+        if (transaction.date.compareTo(startDate) >= 0 &&
+            transaction.date.compareTo(endDate) <= 0) {
+          filteredTransactions.add(transaction);
+        }
+      }
+    } else {
+      for (var transaction in transactions) {
+        if (transaction.date.compareTo(startDate) >= 0 &&
+            transaction.date.compareTo(endDate) <= 0 &&
+            transaction.categoryID == category.id) {
+          filteredTransactions.add(transaction);
+        }
+      }
+    }
+
+    return filteredTransactions;
+  }
+
   Future<void> updateTransaction(Transaction transaction) async {
     // Get a reference to the database.
     final db = await instance.database;
