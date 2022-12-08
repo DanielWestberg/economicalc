@@ -549,3 +549,36 @@ class TestReceipt():
                     assert response.status == constants.no_content
 
                     assert not fs.exists(receipt.image_id)
+
+
+    def test_bulk_post_receipts(self, db, receipts_to_post, client):
+        for (user, receipt_list) in receipts_to_post:
+            receipt_dicts = [r.to_dict(True) for r in receipt_list]
+            for d in receipt_dicts:
+                d.pop("_id", None)
+
+            client.put(f"/users/{user.bankId}")
+            response = client.post(f"/users/{user.bankId}/receipts", json=receipt_dicts)
+            assert response.status == constants.created
+
+            response_dicts = response.json["data"]
+            for response_dict in response_dicts:
+                assert "_id" in response_dict
+
+            response_receipts = [Receipt.from_dict(d) for d in response_dicts]
+            for receipt in receipt_list:
+                failed = True
+                for response_receipt in response_receipts:
+                    receipt.id = response_receipt.id
+                    if receipt == response_receipt:
+                        failed = False
+                        break
+
+                assert not failed
+
+            response = client.get(f"/users/{user.bankId}/receipts")
+            response_dicts = response.json["data"]
+            response_receipts = [Receipt.from_dict(d) for d in response_dicts]
+
+            for receipt in receipt_list:
+                assert receipt in response_receipts
