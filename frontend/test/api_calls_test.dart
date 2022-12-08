@@ -115,4 +115,48 @@ main() {
 
     deleteCategory(userId, category.id!);
   });
+
+  test ("Post multiple receipts", () async {
+    List<Receipt> receipts = [
+      Receipt(
+        recipient: "ica",
+        date: DateTime.utc(2001, 9, 11),
+        items: [
+          ReceiptItem(
+            itemName: "Toalettpapper",
+            amount: 1,
+          ),
+          ReceiptItem(
+            itemName: "Fil",
+            amount: 3,
+          ),
+        ],
+        total: 99.0,
+        categoryID: 2,
+      ),
+      Receipt(
+        recipient: "gamestop",
+        date: DateTime.utc(2022, 2, 24),
+        items: [
+          ReceiptItem(
+            itemName: "Hollow Knight",
+            amount: 1
+          ),
+          ReceiptItem(
+            itemName: "Kerbal Space Program",
+            amount: 1
+          ),
+        ],
+        total: 300.0,
+        categoryID: 3,
+      ),
+    ];
+
+    final responseReceipts = await postManyReceipts(userId, receipts);
+    final fetchedReceipts = await fetchReceipts(userId);
+    for (Receipt receipt in receipts) {
+      expect(responseReceipts, contains(receipt));
+      expect(fetchedReceipts, contains(receipt));
+    }
+  });
 }
