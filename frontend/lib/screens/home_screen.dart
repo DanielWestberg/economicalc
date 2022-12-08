@@ -28,8 +28,12 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreen extends State<HomeScreen> {
   GlobalKey<ScaffoldState> _globalKey = GlobalKey<ScaffoldState>();
+  GlobalKey<HistoryListState> historyListStateKey =
+      GlobalKey<HistoryListState>();
   late String appName = "EconomiCalc";
   final SQFLite dbConnector = SQFLite.instance;
+  bool showSearchBar = false;
+  TextEditingController editingController = TextEditingController();
 
   static void goToResults(XFile? image) {
     //process stuff
@@ -48,53 +52,84 @@ class _HomeScreen extends State<HomeScreen> {
         });*/
   }
 
-  Widget iconSection = Container(
-    color: Utils.backgroundColor,
-    padding: EdgeInsets.only(top: 10),
-    child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: <Widget>[
-          IconButton(
-              icon: Icon(Icons.camera_alt_outlined),
+  Widget renderSearchField() {
+    return Container(
+        color: Utils.backgroundColor,
+        padding: EdgeInsets.all(25),
+        child: TextField(
+          onChanged: (value) {
+            historyListStateKey.currentState!.search(value);
+          },
+          controller: editingController,
+          decoration: InputDecoration(
+              labelText: "Search",
+              hintText: "Search",
+              prefixIcon: Icon(Icons.search),
+              suffixIcon: IconButton(
+                icon: Icon(Icons.clear),
+                onPressed: (() {
+                  setState(() {
+                    showSearchBar = false;
+                  });
+                }),
+              ),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(25.0)))),
+        ));
+  }
+
+  Widget iconSection() {
+    return Container(
+      color: Utils.backgroundColor,
+      padding: EdgeInsets.only(top: 10),
+      child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            IconButton(
+                icon: Icon(Icons.camera_alt_outlined),
+                onPressed: (() async {
+                  final XFile? image =
+                      await ImagePicker().pickImage(source: ImageSource.camera);
+                  //process()
+                  if (image == null) return;
+                  ImageGallerySaver.saveFile(image.path);
+                  goToResults(image);
+                })),
+            IconButton(
+              icon: Icon(Icons.filter),
               onPressed: (() async {
                 final XFile? image =
-                    await ImagePicker().pickImage(source: ImageSource.camera);
-                //process()
+                    await ImagePicker().pickImage(source: ImageSource.gallery);
                 if (image == null) return;
-                ImageGallerySaver.saveFile(image.path);
                 goToResults(image);
-              })),
-          IconButton(
-            icon: Icon(Icons.filter),
-            onPressed: (() async {
-              final XFile? image =
-                  await ImagePicker().pickImage(source: ImageSource.gallery);
-              if (image == null) return;
-              goToResults(image);
-            }),
-          ),
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: (() {
-              print("search");
-            }),
-          ),
-          IconButton(
-            icon: Icon(Icons.auto_graph),
-            onPressed: (() {
-              Navigator.of(_context).push(
-                  MaterialPageRoute(builder: (_context) => StatisticsScreen()));
-            }),
-          ),
-          IconButton(
-            icon: Icon(Icons.filter_alt),
-            onPressed: (() {
-              print("filter");
-            }),
-          ),
-        ]),
-  );
-
+              }),
+            ),
+            IconButton(
+              icon: Icon(Icons.search),
+              onPressed: (() async {
+                setState(() {
+                  showSearchBar = true;
+                });
+              }),
+            ),
+            IconButton(
+              icon: Icon(Icons.auto_graph),
+              onPressed: (() {
+                Navigator.push(
+                    _context,
+                    MaterialPageRoute(
+                        builder: (_context) => StatisticsScreen()));
+              }),
+            ),
+            IconButton(
+              icon: Icon(Icons.filter_alt),
+              onPressed: (() {
+                print("filter");
+              }),
+            ),
+          ]),
+    );
+  }
   Widget drawer = Drawer(
     backgroundColor: Utils.drawerColor,
     child: ListView(
@@ -148,6 +183,67 @@ class _HomeScreen extends State<HomeScreen> {
           shape: RoundedRectangleBorder(
             side: BorderSide(color: Utils.drawerColor, width: 10),
           ),
+          title: Text('Run tests',
+              style:
+                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
+          onTap: () async {
+            print("Running tests");
+            String userId = "bruh";
+            List<ReceiptItem> items = [
+              ReceiptItem(
+                itemName: "Snusk",
+                amount: 9001,
+              ),
+            ];
+            Receipt receipt = Receipt(
+              recipient: "ica",
+              date: DateTime.now(),
+              items: items,
+              total: 100.0,
+              categoryID: 1,
+            );
+            await postReceipt(userId, receipt);
+
+            List<Receipt> responseReceipts = await fetchReceipts(userId);
+            print(responseReceipts);
+
+            print("Take a picture to proceed");
+            final XFile? image =
+            await ImagePicker().pickImage(source: ImageSource.camera);
+            if (image == null) {
+              return;
+            }
+
+            String backendId = responseReceipts[0].backendId!;
+            await updateImage(userId, backendId, image);
+            final responseImage = await fetchImage(userId, backendId);
+            print("Original image size: ${await image.length()}");
+            print("Response image size: ${await responseImage.length()}");
+
+            final responseBytes = await responseImage.readAsBytes();
+            print("Displaying response image...");
+            Navigator.of(_context)
+                .push(
+                MaterialPageRoute(
+                    builder: (_context) => Image.memory(responseBytes))
+            ).then((value) {
+              Phoenix.rebirth(_context);
+            });
+
+            print("Updating a receipt...");
+            receipt.items[0].itemName = "Snus";
+            await updateReceipt(userId, backendId, receipt);
+            responseReceipts = await fetchReceipts(userId);
+            print(responseReceipts);
+
+            print("Tests finished");
+          },
+        ),
+        ListTile(
+          tileColor: Utils.tileColor,
+          shape: RoundedRectangleBorder(
+            side: BorderSide(color: Utils.drawerColor, width: 10),
+          ),
           title: Text('Login',
               style:
                   GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
@@ -166,6 +262,16 @@ class _HomeScreen extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     _context = context;
+    List<Widget> children = [
+      iconSection(),
+      Expanded(child: HistoryList(key: historyListStateKey))
+    ];
+    if (showSearchBar) {
+      children = [
+        renderSearchField(),
+        Expanded(child: HistoryList(key: historyListStateKey))
+      ];
+    }
     return SafeArea(
         child: Scaffold(
             appBar: AppBar(
@@ -198,7 +304,7 @@ class _HomeScreen extends State<HomeScreen> {
             key: _globalKey,
             drawer: drawer,
             body: Column(
-              children: [iconSection, Expanded(child: HistoryList())],
+              children: children,
             )));
   }
 }
