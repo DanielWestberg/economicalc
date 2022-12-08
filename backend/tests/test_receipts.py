@@ -118,23 +118,41 @@ def image_to_put() -> Path:
 
 
 @pytest.fixture()
-def receipts_to_post(users, users_to_post) -> List[Tuple[User, Receipt]]:
+def receipts_to_post(users, users_to_post) -> List[Tuple[User, List[Receipt]]]:
     return [
-        (users[1], Receipt(
-            None,
-            "Specsavers",
-            [Item("Glasögon", 1.)],
-            datetime(2022, 2, 24),
-            1337.5,
-            1,
-        )), (users_to_post[0], Receipt(
-            None,
-            "Yes",
-            [Item("Dood", 1.)],
-            datetime(1970, 1, 1),
-            1.1,
-            5,
-        ))
+        (
+            users[1],
+            [
+                Receipt(
+                    None,
+                    "Specsavers",
+                    [Item("Glasögon", 1.)],
+                    datetime(2022, 2, 24),
+                    1337.5,
+                    1,
+                ),
+                Receipt(
+                    None,
+                    "P",
+                    [Item("P", 1.)],
+                    datetime(2021, 1, 2),
+                    1.,
+                    1,
+                ),
+            ],
+        ), (
+            users_to_post[0],
+            [
+                Receipt(
+                    None,
+                    "Yes",
+                    [Item("Dood", 1.)],
+                    datetime(1970, 1, 1),
+                    1.1,
+                    5,
+                ),
+            ],
+        ),
     ]
 
 
@@ -214,33 +232,34 @@ class TestReceipt():
 
 
     def test_post_user_receipt(self, db, receipts_to_post, client):
-        for (user, receipt) in receipts_to_post:
-            receipt_dict = receipt.to_dict(True)
-            receipt_dict.pop("_id", None)
+        for (user, receipt_list) in receipts_to_post:
+            for receipt in receipt_list:
+                receipt_dict = receipt.to_dict(True)
+                receipt_dict.pop("_id", None)
 
-            client.put(f"/users/{user.bankId}")
-            response = client.post(f"/users/{user.bankId}/receipts", json=receipt_dict)
-            assert response.status == constants.created
+                client.put(f"/users/{user.bankId}")
+                response = client.post(f"/users/{user.bankId}/receipts", json=receipt_dict)
+                assert response.status == constants.created
 
-            response_dict = response.json["data"]
-            assert "_id" in response_dict
+                response_dict = response.json["data"]
+                assert "_id" in response_dict
 
-            receipt.id = ObjectId(response_dict["_id"])
-            response_receipt = Receipt.from_dict(response_dict)
-            assert receipt == response_receipt
+                receipt.id = ObjectId(response_dict["_id"])
+                response_receipt = Receipt.from_dict(response_dict)
+                assert receipt == response_receipt
 
-            user.receipts.append(receipt)
+                user.receipts.append(receipt)
 
-            response = client.get(f"/users/{user.bankId}/receipts")
-            response_receipt_dicts = response.json["data"]
-            response_receipts = [Receipt.from_dict(d) for d in response_receipt_dicts]
+                response = client.get(f"/users/{user.bankId}/receipts")
+                response_receipt_dicts = response.json["data"]
+                response_receipts = [Receipt.from_dict(d) for d in response_receipt_dicts]
 
-            db_receipt_dicts = db.users.find_one({"bankId": user.bankId})["receipts"]
-            db_receipt_ids = [d["_id"] for d in db_receipt_dicts]
-            assert all([type(id) == ObjectId for id in db_receipt_ids])
-            assert receipt.id in db_receipt_ids
+                db_receipt_dicts = db.users.find_one({"bankId": user.bankId})["receipts"]
+                db_receipt_ids = [d["_id"] for d in db_receipt_dicts]
+                assert all([type(id) == ObjectId for id in db_receipt_ids])
+                assert receipt.id in db_receipt_ids
 
-            assert receipt in response_receipts
+                assert receipt in response_receipts
 
 
     def post_errenous_receipt(self, receipt_dict, client):
@@ -249,7 +268,7 @@ class TestReceipt():
 
 
     def test_post_missing_field(self, db, receipts_to_post, client):
-        receipt = receipts_to_post[0][1].to_dict(True)
+        receipt = receipts_to_post[0][1][0].to_dict(True)
         receipt.pop("items", None)
         self.post_errenous_receipt(receipt, client)
 
@@ -258,7 +277,7 @@ class TestReceipt():
 
 
     def test_post_weird_field(self, db, receipts_to_post, client):
-        receipt = receipts_to_post[0][1]
+        receipt = receipts_to_post[0][1][0]
         receipt_dict = receipt.to_dict(True)
         receipt_dict["items"] = {"a": "a"}
         self.post_errenous_receipt(receipt_dict, client)
@@ -269,7 +288,7 @@ class TestReceipt():
 
 
     def test_post_weird_items(self, db, receipts_to_post, client):
-        receipt = receipts_to_post[0][1]
+        receipt = receipts_to_post[0][1][0]
         receipt_dict = receipt.to_dict(True)
         item_dict = receipt_dict["items"][0]
         item_dict["itemName"] = 0
