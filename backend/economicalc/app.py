@@ -5,7 +5,7 @@ from bson.objectid import ObjectId
 from gridfs import GridFS
 import requests
 
-from .objects import Transaction, User
+from .objects import Category, Receipt, User
 from .config import FlaskConfig
 from .constants import *
 
@@ -17,12 +17,12 @@ def create_app(config):
     db = create_db(app)
     fs = GridFS(db)
 
-    @app.route("/users/<bankId>/transactions", methods=["GET", "POST"])
-    def user_transactions(bankId):
+    @app.route("/users/<bankId>/receipts", methods=["GET", "POST"])
+    def user_receipts(bankId):
         if request.method == "GET":
-            return get_transactions(bankId, request)
+            return get_receipts(bankId, request)
         
-        return post_transactions(bankId, request)
+        return post_receipts(bankId, request)
 
 
     @app.route('/initiate_bank_session/')
@@ -95,87 +95,98 @@ def create_app(config):
         return response.text
 
 
-    def get_transactions(bankId, request):
+    def get_receipts(bankId, request):
         user = db.users.find_one_or_404({"bankId": bankId})
         User.make_json_serializable(user)
 
-        return jsonify(data=user["transactions"])
+        return jsonify(data=user["receipts"])
 
 
-    def parse_transaction_or_make_response(transaction_dict):
+    def parse_receipt_or_make_response(receipt_dict):
         try:
-            transaction = Transaction.from_dict(transaction_dict)
+            receipt = Receipt.from_dict(receipt_dict)
         except KeyError as e:
             key = e.args[0]
+            print(key)
             return make_response(f"Missing required field \"{key}\"", unprocessable_entity)
         except TypeError as e:
+            print(e.args[0])
             return make_response(e.args[0], unprocessable_entity)
 
-        return transaction
+        return receipt
 
 
-    def post_transactions(bankId, request):
-        if request.content_type != "application/json":
+    def post_receipts(bankId, request):
+        required_type = "application/json"
+        if request.content_type[:len(required_type)] != "application/json":
             return make_response(f"Expected content type application/json, not {request.content_type}", unsupported_media_type)
-        transaction_dict = request.json
-        transaction_dict.pop("_id", None)
-        transaction_dict.pop("image_id", None)
+        receipt_dict = request.json
+        receipt_dict.pop("_id", None)
+        receipt_dict.pop("imageId", None)
 
-        transaction = parse_transaction_or_make_response(transaction_dict)
-        if type(transaction) != Transaction:
-            return transaction
+        receipt = parse_receipt_or_make_response(receipt_dict)
+        if type(receipt) != Receipt:
+            return receipt
 
-        if len(transaction.items) == 0:
+        if len(receipt.items) == 0:
             return make_response("Field \"items\" may not be an empty list", unprocessable_entity)
 
-        user = db.users.find_one({"bankId": bankId})
-        if user is None:
-            user = User(bankId, [transaction])
-            db.users.insert_one(user.to_dict())
-        else:
-            update_action = {"$push": {"transactions": transaction.to_dict()}}
-            db.users.update_one({"_id": user["_id"]}, update_action)
+        user = db.users.find_one_or_404({"bankId": bankId})
+        update_action = {"$push": {"receipts": receipt.to_dict()}}
+        db.users.update_one({"_id": user["_id"]}, update_action)
 
-        return make_response(jsonify(data=transaction.to_dict(True)), created)
+        return make_response(jsonify(data=receipt.to_dict(True)), created)
 
-    @app.route("/users/<bankId>/transactions/<ObjectId:transactionId>", methods=["PUT"])
-    def user_transaction_by_id(bankId, transactionId):
+    @app.route("/users/<bankId>/receipts/<ObjectId:receiptId>", methods=["PUT", "DELETE"])
+    def user_receipt_by_id(bankId, receiptId):
         # When more methods are added for this URL, check request.method to determine the appropriate method to call
-        return put_transaction(bankId, transactionId, request)
+        if request.method == "PUT":
+            return put_receipt(bankId, receiptId, request)
+
+        return delete_receipt(bankId, receiptId, request)
 
 
-    def put_transaction(bankId, transactionId, request):
-        if request.content_type != "application/json":
+    def put_receipt(bankId, receiptId, request):
+        required_type = "application/json"
+        if request.content_type[:len(required_type)] != required_type:
             return make_response(f"Expected content type application/json, not {request.content_type}", unsupported_media_type)
 
-        transaction_dict = request.json
+        receipt_dict = request.json
 
-        new_transaction = parse_transaction_or_make_response(transaction_dict)
-        if type(new_transaction) != Transaction:
-            return new_transaction
+        new_receipt = parse_receipt_or_make_response(receipt_dict)
+        if type(new_receipt) != Receipt:
+            return new_receipt
 
-        user = db.users.find_one_or_404({"bankId": bankId, "transactions._id": transactionId}, {"_id": 0, "transactions.$": 1})
-        old_transaction = user["transactions"][0]
-        new_transaction.id = old_transaction["_id"]
+        user = db.users.find_one_or_404({"bankId": bankId, "receipts._id": receiptId}, {"_id": 0, "receipts.$": 1})
+        old_receipt = user["receipts"][0]
+        new_receipt.id = old_receipt["_id"]
 
-        new_transaction.image_id = old_transaction["image_id"] if "image_id" in old_transaction else None
+        new_receipt.image_id = old_receipt["imageId"] if "imageId" in old_receipt else None
 
-        db.users.find_one_and_update({"bankId": bankId, "transactions._id": transactionId}, {"$set": {"transactions.$": new_transaction.to_dict()}})
-        return jsonify(data=new_transaction.to_dict(True))
+        db.users.find_one_and_update({"bankId": bankId, "receipts._id": receiptId}, {"$set": {"receipts.$": new_receipt.to_dict()}})
+        return jsonify(data=new_receipt.to_dict(True))
 
 
-    @app.route("/users/<bankId>/transactions/<ObjectId:transactionId>/image", methods=["GET", "PUT"])
-    def user_transaction_image(bankId, transactionId):
+    def delete_receipt(bankId, receiptId, request):
+        delete_image(bankId, receiptId, request)
+        db.users.find_one_and_update({"bankId": bankId, "receipts._id": receiptId}, {"$pull": {"receipts": {"_id": receiptId}}})
+        return make_response("", no_content)
+
+
+    @app.route("/users/<bankId>/receipts/<ObjectId:receiptId>/image", methods=["GET", "PUT", "DELETE"])
+    def user_receipt_image(bankId, receiptId):
         if request.method == "GET":
-            return get_image(bankId, transactionId, request)
+            return get_image(bankId, receiptId, request)
+        elif request.method == "PUT":
+            return put_image(bankId, receiptId, request)
 
-        return put_image(bankId, transactionId, request)
+        return delete_image(bankId, receiptId, request)
 
 
-    def get_image(bankId, transactionId, request):
-        user = db.users.find_one_or_404({"bankId": bankId, "transactions._id": transactionId}, {"_id": 0, "transactions.$": 1})
-        transaction = user["transactions"][0]
-        image_id = transaction["image_id"] if "image_id" in transaction else None
+    def get_image(bankId, receiptId, request):
+        user = db.users.find_one_or_404({"bankId": bankId, "receipts._id": receiptId}, {"_id": 0, "receipts.$": 1})
+        receipt = user["receipts"][0]
+        image_id = receipt["imageId"] if "imageId" in receipt else None
         image = fs.find_one(ObjectId(image_id)) if image_id is not None else None
         if image is None:
             return make_response("No image found", not_found)
@@ -183,20 +194,119 @@ def create_app(config):
         return send_file(image, mimetype=image.content_type[0])
 
     
-    def put_image(bankId, transactionId, request):
-        user = db.users.find_one_or_404({"bankId": bankId, "transactions._id": transactionId}, {"_id": 0, "transactions.$": 1})
-        transaction = user["transactions"][0]
-        image_id = transaction["image_id"] if "image_id" in transaction else None
+    def put_image(bankId, receiptId, request):
+        if len(request.files) == 0:
+            return make_response("No file found in request", bad_request)
+
+        user = db.users.find_one_or_404({"bankId": bankId, "receipts._id": receiptId}, {"_id": 0, "receipts.$": 1})
+        receipt = user["receipts"][0]
+        image_id = receipt["imageId"] if "imageId" in receipt else None
         image_id = ObjectId(image_id)
 
-        if not "image_id" in transaction:
-            db.users.update_one({"bankId": bankId, "transactions._id": transactionId}, {"$set": {"transactions.$.image_id": image_id}})
+        if not "imageId" in receipt:
+            db.users.update_one({"bankId": bankId, "receipts._id": receiptId}, {"$set": {"receipts.$.imageId": image_id}})
         else:
             fs.delete(image_id)
 
-        fs.put(request.stream, _id=image_id, content_type=request.mimetype)
+        file = request.files["file"]
+        fs.put(file, _id=image_id, content_type=request.mimetype)
 
         return make_response("", no_content)
+
+
+    def delete_image(bankId, receiptId, request):
+        user = db.users.find_one({"bankId": bankId, "receipts._id": receiptId}, {"_id": 0, "receipts.$": 1})
+        receipt = user["receipts"][0] if user is not None else None
+        image_id = ObjectId(receipt["imageId"]) if receipt is not None and "imageId" in receipt else None
+        if image_id is not None:
+            fs.delete(image_id)
+
+        return make_response("", no_content)
+
+
+    @app.route("/users/<bankId>/categories", methods=["GET", "POST"])
+    def user_categories(bankId):
+        if request.method == "GET":
+            return get_categories(bankId, request)
+
+        return post_category(bankId, request)
+
+
+    def get_categories(bankId, request):
+        user = db.users.find_one_or_404({"bankId": bankId})
+        categories = user["categories"]
+        return jsonify(data=categories)
+
+
+    def parse_category_or_make_response(category_dict):
+        try:
+            category = Category.from_dict(category_dict)
+        except KeyError as e:
+            key = e.args[0]
+            return make_response(f"Missing required field \"{key}\"", unprocessable_entity)
+        except TypeError as e:
+            return make_response(e.args[0], unprocessable_entity)
+
+        return category
+
+
+    def post_category(bankId, request):
+        user = db.users.find_one_or_404({"bankId": bankId})
+        category = parse_category_or_make_response(request.json)
+        if type(category) != Category:
+            return category
+
+        filtered_user = db.users.find_one({"bankId": bankId, "categories.id": category.id}, {"_id": 0, "categories.$": 1})
+        if filtered_user is not None:
+            return make_response(f"Category with ID {category.id} already exists", conflict)
+
+        update_action = {"$push": {"categories": category.to_dict()}}
+        db.users.update_one({"_id": user["_id"]}, update_action)
+
+        return make_response(jsonify(data=category.to_dict(True)), created)
+
+
+    @app.route("/users/<bankId>/categories/<int:categoryId>", methods=["PUT", "DELETE"])
+    def user_category_by_id(bankId, categoryId):
+        if request.method == "PUT":
+            return put_category(bankId, categoryId, request)
+
+        return delete_category(bankId, categoryId, request)
+
+
+    def put_category(bankId, categoryId, request):
+
+        category_dict = request.json
+        category_dict["id"] = categoryId
+        category = parse_category_or_make_response(category_dict)
+        if type(category) != Category:
+            return category
+
+        user = db.users.find_one({"bankId": bankId, "categories.id": categoryId}, {"_id": 0, "categories.$": 1})
+        if user is None:
+            user = db.users.find_one_or_404({"bankId": bankId})
+            update_action = {"$push": {"categories": category.to_dict()}}
+            db.users.update_one({"_id": user["_id"]}, update_action)
+
+            return make_response(jsonify(data=category.to_dict(True)), created)
+
+        db.users.find_one_and_update({"bankId": bankId, "categories.id": categoryId}, {"$set": {"categories.$": category.to_dict()}})
+        return jsonify(data=category.to_dict(True))
+
+
+    def delete_category(bankId, categoryId, request):
+        db.users.find_one_and_update({"bankId": bankId, "categories.id": categoryId}, {"$pull": {"categories": {"id": categoryId}}})
+        return make_response("", no_content)
+
+
+    # TODO: Add authentication with BankID
+    @app.route("/users/<bankId>", methods=["PUT"])
+    def create_user(bankId):
+        if db.users.find_one({"bankId": bankId}) is None:
+            db.users.insert_one({"bankId": bankId, "receipts": [], "categories": []})
+
+        return make_response("", no_content)
+        
 
     return app
 

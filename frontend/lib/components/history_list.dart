@@ -1,10 +1,8 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
-import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
 import 'package:economicalc_client/screens/transaction_details_screen.dart';
@@ -16,35 +14,80 @@ import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class HistoryList extends StatefulWidget {
+  final DateTime startDate;
+  final DateTime endDate;
+  final Category category;
+
+  HistoryList(Key? key, this.startDate, this.endDate, this.category)
+      : super(key: key);
+
   @override
   HistoryListState createState() => HistoryListState();
 }
 
 class HistoryListState extends State<HistoryList> {
   late Future<List<Transaction>> dataFuture;
-  late List<Transaction> transactions;
+  late List<Transaction> transactions = [];
+  late List<Transaction> transactions_copy;
+  bool initialized = false;
   final SQFLite dbConnector = SQFLite.instance;
 
   late List<Category> categories = [];
+
+  @override
+  void didUpdateWidget(covariant HistoryList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    dataFuture = dbConnector.getFilteredTransactions(
+        widget.startDate, widget.endDate, widget.category);
+  }
 
   @override
   void initState() {
     super.initState();
     initDB();
     fetchBankTransactions();
-    dataFuture = dbConnector.getAllTransactions();
+    dataFuture = dbConnector.getFilteredTransactions(
+        widget.startDate, widget.endDate, widget.category);
   }
 
   void initDB() async {
     await dbConnector.initDatabase();
   }
 
+  void search(String query) async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      List<Transaction> dummySearchList = <Transaction>[];
+      dummySearchList.addAll(transactions_copy);
+      if (query.isNotEmpty) {
+        List<Transaction> dummyListData = <Transaction>[];
+        dummySearchList.forEach((item) {
+          if (item.store!.toLowerCase().contains(query.toLowerCase())) {
+            dummyListData.add(item);
+          }
+        });
+        setState(() {
+          transactions.clear();
+          transactions.addAll(dummyListData);
+        });
+        return;
+      } else {
+        setState(() {
+          print(transactions_copy);
+          transactions.clear();
+          transactions.addAll(transactions_copy);
+        });
+      }
+    });
+  }
+
   void fetchBankTransactions() async {
     categories = await dbConnector.getAllcategories();
     await load_test_data(); // TODO: Replace with fetching from bank
     await dbConnector.importMissingBankTransactions();
+    var updatedDataFuture = dbConnector.getFilteredTransactions(
+        widget.startDate, widget.endDate, widget.category);
     setState(() {
-      dataFuture = dbConnector.getAllTransactions();
+      dataFuture = updatedDataFuture;
     });
   }
 
@@ -67,6 +110,7 @@ class HistoryListState extends State<HistoryList> {
 
   void sortByDate() {
     transactions.sort((t1, t2) => t2.date.compareTo(t1.date));
+    transactions_copy.sort((t1, t2) => t2.date.compareTo(t1.date));
   }
 
   @override
@@ -75,7 +119,7 @@ class HistoryListState extends State<HistoryList> {
       Container(
         color: Utils.backgroundColor,
         padding: const EdgeInsets.all(20),
-        child: Text(
+        child: const Text(
           "History",
           textAlign: TextAlign.left,
           style: TextStyle(
@@ -89,6 +133,10 @@ class HistoryListState extends State<HistoryList> {
               return Text("${snapshot.error}");
             } else if (snapshot.hasData) {
               transactions = snapshot.data!;
+              if (!initialized) {
+                transactions_copy = snapshot.data!;
+              }
+              initialized = true;
               sortByDate();
               return Expanded(
                   child: RefreshIndicator(
@@ -103,20 +151,20 @@ class HistoryListState extends State<HistoryList> {
                                 padding: EdgeInsets.only(top: 5.0),
                                 child: ListTile(
                                   tileColor: Color(0xffD4E6F3),
-                                  shape: ContinuousRectangleBorder(
+                                  shape: const ContinuousRectangleBorder(
                                       side: BorderSide(
                                     width: 1.0,
                                     color: Colors.transparent,
                                   )),
                                   title: Text(
                                     transactions[index].store!,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 18),
                                   ),
                                   subtitle: Text(
                                     "${transactions[index].totalAmount} kr",
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 16),
                                   ),
@@ -127,7 +175,7 @@ class HistoryListState extends State<HistoryList> {
                                         Text(
                                           DateFormat('yyyy-MM-dd')
                                               .format(transactions[index].date),
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                               fontWeight: FontWeight.w600,
                                               fontSize: 16),
                                         ),
