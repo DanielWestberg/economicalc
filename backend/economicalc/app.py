@@ -45,11 +45,14 @@ def create_app(config):
         #request = requests.post()
         return ""
 
-    @app.route('/tink_access_token/<code>')
-    def tink_access_token(code):
-
-        ENVIRONMENT_TINK_CLIENT_ID = os.environ.get('TINK_CLIENT_ID')
-        ENVIRONMENT_TINK_CLIENT_SECRET = os.environ.get('TINK_CLIENT_SECRET')
+    @app.route('/tink_access_token/<code>/<test>')
+    def tink_access_token(code, test):
+        if test == 'T':
+            ENVIRONMENT_TINK_CLIENT_ID = os.environ.get('TINK_CLIENT_ID')
+            ENVIRONMENT_TINK_CLIENT_SECRET = os.environ.get('TINK_CLIENT_SECRET')
+        else:
+            ENVIRONMENT_TINK_CLIENT_ID = os.environ.get('PROD_TINK_CLIENT_ID')
+            ENVIRONMENT_TINK_CLIENT_SECRET = os.environ.get('PROD_TINK_CLIENT_SECRET')
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded',
         }
