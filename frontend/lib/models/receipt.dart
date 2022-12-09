@@ -93,6 +93,10 @@ class Receipt {
     );
   }
 
+  static List<Receipt>
+  fromBackendJsonList(List<dynamic> jsonList) =>
+    jsonList.map((r) => Receipt.fromBackendJson(r)).toList();
+
   factory Receipt.fromJson(Map<String, dynamic> json) {
     List<ReceiptItem> items = json['receipts'][0]["items"]
         .map((e) => ReceiptItem.fromJsonScanned(e))
