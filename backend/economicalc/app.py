@@ -20,12 +20,18 @@ def create_app(config):
     db = create_db(app)
     fs = GridFS(db)
 
+    def make_unauthorized_response(message="Authentication required"):
+        return make_response(message, unauthorized)
+
     def initiate_session(access_token, ssn):
         session_id = str(ObjectId())
         session["id"] = session_id
         session["access_token"] = access_token
         session["ssn"] = ssn
         return session_id
+
+    def session_is_valid(session_id):
+        return "id" in session and session["id"] == session_id
         
     def terminate_session():
         pass
@@ -164,12 +170,16 @@ def create_app(config):
         return response.text
 
 
-    @app.route("/users/<bankId>/receipts", methods=["GET", "POST"])
-    def user_receipts(bankId):
+    @app.route("/users/<session_id>/receipts", methods=["GET", "POST"])
+    def user_receipts(session_id):
+        if not session_is_valid(session_id):
+            return make_unauthorized_response()
+
+        ssn = session["ssn"]
         if request.method == "GET":
-            return get_receipts(bankId, request)
+            return get_receipts(ssn, request)
         
-        return post_receipts(bankId, request)
+        return post_receipts(ssn, request)
 
 
     def get_receipts(bankId, request):
@@ -214,13 +224,16 @@ def create_app(config):
 
         return make_response(jsonify(data=receipt.to_dict(True)), created)
 
-    @app.route("/users/<bankId>/receipts/<ObjectId:receiptId>", methods=["PUT", "DELETE"])
-    def user_receipt_by_id(bankId, receiptId):
-        # When more methods are added for this URL, check request.method to determine the appropriate method to call
-        if request.method == "PUT":
-            return put_receipt(bankId, receiptId, request)
+    @app.route("/users/<session_id>/receipts/<ObjectId:receiptId>", methods=["PUT", "DELETE"])
+    def user_receipt_by_id(session_id, receiptId):
+        if not session_is_valid(session_id):
+            return make_unauthorized_response()
 
-        return delete_receipt(bankId, receiptId, request)
+        ssn = session["ssn"]
+        if request.method == "PUT":
+            return put_receipt(ssn, receiptId, request)
+
+        return delete_receipt(ssn, receiptId, request)
 
 
     def put_receipt(bankId, receiptId, request):
@@ -250,14 +263,18 @@ def create_app(config):
         return make_response("", no_content)
 
 
-    @app.route("/users/<bankId>/receipts/<ObjectId:receiptId>/image", methods=["GET", "PUT", "DELETE"])
-    def user_receipt_image(bankId, receiptId):
-        if request.method == "GET":
-            return get_image(bankId, receiptId, request)
-        elif request.method == "PUT":
-            return put_image(bankId, receiptId, request)
+    @app.route("/users/<session_id>/receipts/<ObjectId:receiptId>/image", methods=["GET", "PUT", "DELETE"])
+    def user_receipt_image(session_id, receiptId):
+        if not session_is_valid(session_id):
+            return make_unauthorized_response()
 
-        return delete_image(bankId, receiptId, request)
+        ssn = session["ssn"]
+        if request.method == "GET":
+            return get_image(ssn, receiptId, request)
+        elif request.method == "PUT":
+            return put_image(ssn, receiptId, request)
+
+        return delete_image(ssn, receiptId, request)
 
 
     def get_image(bankId, receiptId, request):
@@ -301,12 +318,16 @@ def create_app(config):
         return make_response("", no_content)
 
 
-    @app.route("/users/<bankId>/categories", methods=["GET", "POST"])
-    def user_categories(bankId):
-        if request.method == "GET":
-            return get_categories(bankId, request)
+    @app.route("/users/<session_id>/categories", methods=["GET", "POST"])
+    def user_categories(session_id):
+        if not session_is_valid(session_id):
+            return make_unauthorized_response()
 
-        return post_category(bankId, request)
+        ssn = session["ssn"]
+        if request.method == "GET":
+            return get_categories(ssn, request)
+
+        return post_category(ssn, request)
 
 
     def get_categories(bankId, request):
@@ -343,12 +364,16 @@ def create_app(config):
         return make_response(jsonify(data=category.to_dict(True)), created)
 
 
-    @app.route("/users/<bankId>/categories/<int:categoryId>", methods=["PUT", "DELETE"])
-    def user_category_by_id(bankId, categoryId):
-        if request.method == "PUT":
-            return put_category(bankId, categoryId, request)
+    @app.route("/users/<session_id>/categories/<int:categoryId>", methods=["PUT", "DELETE"])
+    def user_category_by_id(session_id, categoryId):
+        if not session_is_valid(session_id):
+            return make_unauthorized_response()
 
-        return delete_category(bankId, categoryId, request)
+        ssn = session["ssn"]
+        if request.method == "PUT":
+            return put_category(ssn, categoryId, request)
+
+        return delete_category(ssn, categoryId, request)
 
 
     def put_category(bankId, categoryId, request):
@@ -377,10 +402,14 @@ def create_app(config):
 
 
     # TODO: Add authentication with BankID
-    @app.route("/users/<bankId>", methods=["PUT"])
-    def create_user(bankId):
-        if db.users.find_one({"bankId": bankId}) is None:
-            db.users.insert_one({"bankId": bankId, "receipts": [], "categories": []})
+    @app.route("/users/<session_id>", methods=["PUT"])
+    def create_user(session_id):
+        if not session_is_valid(session_id):
+            return make_unauthorized_response()
+
+        ssn = session["ssn"]
+        if db.users.find_one({"bankId": ssn}) is None:
+            db.users.insert_one({"bankId": ssn, "receipts": [], "categories": []})
 
         return make_response("", no_content)
         
