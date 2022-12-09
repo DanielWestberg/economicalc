@@ -154,8 +154,7 @@ main() {
 
     final responseReceipts = await postManyReceipts(userId, receipts);
     final fetchedReceipts = await fetchReceipts(userId);
-    for (Receipt receipt in receipts) {
-      expect(responseReceipts, contains(receipt));
+    for (Receipt receipt in responseReceipts) {
       expect(fetchedReceipts, contains(receipt));
     }
   });
