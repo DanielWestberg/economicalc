@@ -20,13 +20,6 @@ def create_app(config):
     db = create_db(app)
     fs = GridFS(db)
 
-    @app.route("/users/<bankId>/receipts", methods=["GET", "POST"])
-    def user_receipts(bankId):
-        if request.method == "GET":
-            return get_receipts(bankId, request)
-        
-        return post_receipts(bankId, request)
-
     def initiate_session(access_token, ssn):
         session_id = str(ObjectId())
         session["id"] = session_id
@@ -169,6 +162,14 @@ def create_app(config):
         print(response.text)
 
         return response.text
+
+
+    @app.route("/users/<bankId>/receipts", methods=["GET", "POST"])
+    def user_receipts(bankId):
+        if request.method == "GET":
+            return get_receipts(bankId, request)
+        
+        return post_receipts(bankId, request)
 
 
     def get_receipts(bankId, request):
