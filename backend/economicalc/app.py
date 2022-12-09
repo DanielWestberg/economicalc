@@ -1,5 +1,6 @@
+from datetime import timedelta
 import os
-from flask import Flask, request, jsonify, make_response, send_file
+from flask import Flask, request, jsonify, make_response, send_file, session
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
 from gridfs import GridFS
@@ -13,6 +14,8 @@ from .constants import *
 def create_app(config):
     app = Flask(__name__)
     app.config["MONGO_URI"] = config.MONGO_URI
+    app.secret_key= os.environ.get('TINK_CLIENT_SECRET')
+    app.permanent_session_lifetime=timedelta(minutes=15)
 
     db = create_db(app)
     fs = GridFS(db)
@@ -24,6 +27,76 @@ def create_app(config):
         
         return post_receipts(bankId, request)
 
+    def initiate_session(access_token, ssn):
+        session_id = str(ObjectId())
+        session["id"] = session_id
+        session["access_token"] = access_token
+        session["ssn"] = ssn
+        return session_id
+        
+    def terminate_session():
+        pass
+
+    @app.route("/tink_user_data")
+    def tink_user_data():
+        account_report_id = request.json["account_report_id"]
+        transaction_report_id = request.json["transaction_report_id"]
+        cred_respose = post_credentials_token(True)
+        print(cred_respose, flush=True)
+        access_token = cred_respose['access_token']
+
+
+        account_report = get_account_info(account_report_id, access_token)
+        transaction_report = get_transaction_data(transaction_report_id, access_token)
+        if account_report.status_code != 200 or transaction_report.status_code != 200:
+            return make_response("Dumbass", bad_request)
+
+        account_report = account_report.json()
+        transaction_report = transaction_report.json()
+        #print(account_report["userDataByProvider"][0])
+        ssn = account_report["userDataByProvider"][0]["identity"]["ssn"]
+        print(ssn)
+
+        #CREATE NEW SESSION
+        session_id = initiate_session(access_token, ssn)
+
+        res_json = {
+            "session_id": str(session_id),
+            "account_report": account_report,
+            "transaction_report": transaction_report,
+        }
+
+        return jsonify(data=res_json)
+
+        
+
+    def get_account_info(account_report_id, access_token):
+        headers = {'Authorization': f'Bearer {access_token}',}
+        response = requests.get(
+        f'https://api.tink.com/api/v1/account-verification-reports/{account_report_id}', headers=headers,)
+        return response
+
+    def get_transaction_data(transaction_report_id, access_token):
+        headers = {'Authorization': f'Bearer {access_token}',}
+        response = requests.get(f'https://api.tink.com/data/v2/transaction-reports/{transaction_report_id}', headers=headers,)
+        return response
+    
+    def post_credentials_token(test : bool):
+        if test:
+            ENVIRONMENT_TINK_CLIENT_ID = os.environ.get('TINK_CLIENT_ID')
+            ENVIRONMENT_TINK_CLIENT_SECRET = os.environ.get('TINK_CLIENT_SECRET')
+        else:
+            ENVIRONMENT_TINK_CLIENT_ID = os.environ.get('PROD_TINK_CLIENT_ID')
+            ENVIRONMENT_TINK_CLIENT_SECRET = os.environ.get('PROD_TINK_CLIENT_SECRET')
+
+        headers = { 'Content-Type': 'application/x-www-form-urlencoded', }
+
+        data = f'client_id={ENVIRONMENT_TINK_CLIENT_ID}&client_secret={ENVIRONMENT_TINK_CLIENT_SECRET}&grant_type=client_credentials&scope=account-verification-reports:read,transaction-reports:readonly'
+
+        response = requests.post('https://api.tink.com/api/v1/oauth/token', headers=headers, data=data)
+
+        return response.json()
+        
 
     @app.route('/initiate_bank_session/')
     def initiate_bank_session():
