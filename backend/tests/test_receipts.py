@@ -576,3 +576,11 @@ class TestReceipt():
                     assert response.status == constants.no_content
 
                     assert not fs.exists(receipt.image_id)
+
+
+    def test_access_wrong_receipt(self, db, users, client):
+        user = users[0]
+        session_id = self.create_session_for_user(client, user)
+        receipt = users[1].receipts[0]
+        response = client.put(f"/users/{session_id}/receipts/{str(receipt.id)}", json=receipt.to_dict(True))
+        assert response.status == constants.not_found
