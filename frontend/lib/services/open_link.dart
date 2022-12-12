@@ -40,7 +40,7 @@ class OpenLinkState extends State<OpenLink> {
   late final String clientId;
   late final String redirectUri;
   late String selectedUrl =
-      "https://link.tink.com/1.0/transactions/connect-accounts/?client_id=1a539460199a4e8bb374893752db14e6&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fcallback&market=SE&locale=sv_SE&test=true";
+      "https://link.tink.com/1.0/reports/create-report?client_id=1a539460199a4e8bb374893752db14e6&redirect_uri=https://console.tink.com/callback&market=SE&report_types=TRANSACTION_REPORT,ACCOUNT_VERIFICATION_REPORT&refreshable_items=IDENTITY_DATA,CHECKING_ACCOUNTS,SAVING_ACCOUNTS,CHECKING_TRANSACTIONS,SAVING_TRANSACTIONS&account_dialog_type=SINGLE";
 
   late final Response response;
   late final List<BankTransaction> transactions;
@@ -83,11 +83,25 @@ class OpenLinkState extends State<OpenLink> {
               transactions = await fetchTransactions(response.accessToken);
               print(transactions);
               for (var transaction in transactions) {
-                print(transaction.descriptions.display);
+                //print(transaction.descriptions.display);
                 dbConnector.postBankTransaction(transaction);
               }
               if (!mounted) return NavigationDecision.prevent;
               Navigator.of(context).popUntil((route) => route.isFirst);
+              return NavigationDecision.prevent;
+            } else if (action.url.contains("console.tink.com/callback") &&
+                action.url.contains("account_verification_report_id") &&
+                action.url.contains("transaction_report_id")) {
+              Map<String, String> params = Uri.splitQueryString(action.url);
+              print("PARAMS");
+              print(params);
+
+              String account_report_id = params["transaction_report_id"]!;
+              String transaction_report_id = params[
+                  "https://console.tink.com/callback?account_verification_report_id"]!;
+
+              var data = await fetchLoginData(
+                  account_report_id, transaction_report_id);
               return NavigationDecision.prevent;
             } else if (action.url
                     .contains("http%3A%2F%2Flocalhost%3A5000%2Fcallback") &&

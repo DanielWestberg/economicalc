@@ -36,10 +36,11 @@ def create_app(config):
     def terminate_session():
         pass
 
-    @app.route("/tink_user_data")
+    @app.route("/tink_user_data", methods=["POST"])
     def tink_user_data():
         account_report_id = request.json["account_report_id"]
         transaction_report_id = request.json["transaction_report_id"]
+        print("Tokens recieved");
         cred_respose = post_credentials_token(True)
         print(cred_respose, flush=True)
         access_token = cred_respose['access_token']
