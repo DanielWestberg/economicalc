@@ -68,7 +68,9 @@ class _HomeScreen extends State<HomeScreen> {
         .push(MaterialPageRoute(
             builder: (context) => ResultsScreen(image: image)))
         .then((value) {
-      Phoenix.rebirth(_context);
+      if (value != false) {
+        Phoenix.rebirth(_context);
+      }
     });
   }
 
@@ -434,7 +436,7 @@ class _HomeScreen extends State<HomeScreen> {
       iconSection(),
       Expanded(
           child: HistoryList(historyListStateKey, startDate['selected'],
-              endDate['selected'], category['selected']))
+              endDate['selected'], category['selected'])),
     ];
     if (showSearchBar) {
       children = [

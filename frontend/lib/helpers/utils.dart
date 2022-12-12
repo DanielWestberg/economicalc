@@ -11,6 +11,7 @@ class Utils {
   static Color backgroundColor = Color(0xFFB8D8D8);
   static Color tileColor = Color(0xffD4E6F3);
   static Color drawerColor = Color(0xff69A3A7);
+  static Color snackBarError = Color(0xFFC72C41);
 
   static List<Category> categories = [
     Category(description: "Groceries", color: Colors.blue),
