@@ -10,22 +10,22 @@ import 'package:economicalc_client/models/receipt.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 main() {
-  String userId = "testUser";
+  String sessionId = "testUser";
   int categoryId = 1234;
 
   setUpAll(() async {
-    await registerUser(userId);
+    await registerUser(sessionId);
   });
 
   tearDownAll(() async {
-    await deleteCategory(userId, categoryId);
+    await deleteCategory(sessionId, categoryId);
 
-    List<Receipt> receipts = await fetchReceipts(userId);
+    List<Receipt> receipts = await fetchReceipts(sessionId);
     for (Receipt receipt in receipts) {
-      await deleteReceipt(userId, receipt);
+      await deleteReceipt(sessionId, receipt);
     }
 
-    receipts = await fetchReceipts(userId);
+    receipts = await fetchReceipts(sessionId);
     expect(receipts.length, 0);
   });
 
@@ -44,8 +44,8 @@ main() {
       categoryID: 1,
     );
 
-    final postedReceipt = await postReceipt(userId, receipt);
-    List<Receipt> fetchedReceipts = await fetchReceipts(userId);
+    final postedReceipt = await postReceipt(sessionId, receipt);
+    List<Receipt> fetchedReceipts = await fetchReceipts(sessionId);
 
     expect(fetchedReceipts, contains(postedReceipt));
   });
@@ -53,25 +53,25 @@ main() {
   test ("Update image", () async {
     final image = XFile("../backend/tests/res/tsu.jpg");
 
-    final receipts = await fetchReceipts(userId);
+    final receipts = await fetchReceipts(sessionId);
     final backendId = receipts[0].backendId!;
-    await updateImage(userId, backendId, image);
+    await updateImage(sessionId, backendId, image);
 
-    final responseImage = await fetchImage(userId, backendId);
+    final responseImage = await fetchImage(sessionId, backendId);
     final expectedBytes = await image.readAsBytes();
     final responseBytes = await responseImage.readAsBytes();
 
     final equals = const ListEquality().equals;
     expect(equals(expectedBytes, responseBytes), true);
 
-    deleteImage(userId, backendId);
+    deleteImage(sessionId, backendId);
   });
 
   test ("Update receipt", () async {
-    final receipt = (await fetchReceipts(userId))[0];
+    final receipt = (await fetchReceipts(sessionId))[0];
     receipt.items[0].itemName = "Snus";
-    await updateReceipt(userId, receipt.backendId, receipt);
-    final responseReceipts = await fetchReceipts(userId);
+    await updateReceipt(sessionId, receipt.backendId, receipt);
+    final responseReceipts = await fetchReceipts(sessionId);
     expect(responseReceipts, contains(receipt));
   });
 
@@ -82,12 +82,12 @@ main() {
         id: categoryId,
     );
 
-    await postCategory(userId, category);
+    await postCategory(sessionId, category);
 
-    List<Category> fetchedCategories = await fetchCategories(userId);
+    List<Category> fetchedCategories = await fetchCategories(sessionId);
     expect(fetchedCategories, contains(category));
 
-    await deleteCategory(userId, categoryId);
+    await deleteCategory(sessionId, categoryId);
   });
 
   test ("Update category", () async {
@@ -99,20 +99,20 @@ main() {
       id: categoryId,
     );
 
-    await updateCategory(userId, category);
+    await updateCategory(sessionId, category);
 
-    var fetchedCategories = await fetchCategories(userId);
+    var fetchedCategories = await fetchCategories(sessionId);
     expect(fetchedCategories, contains(category));
 
     category.description = "Nothing illegal";
-    await updateCategory(userId, category);
+    await updateCategory(sessionId, category);
 
-    fetchedCategories = await fetchCategories(userId);
+    fetchedCategories = await fetchCategories(sessionId);
     expect(fetchedCategories, contains(category));
 
     category.description = originalDescription;
     expect(fetchedCategories, isNot(contains(category)));
 
-    deleteCategory(userId, category.id!);
+    deleteCategory(sessionId, category.id!);
   });
 }
