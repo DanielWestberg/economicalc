@@ -420,6 +420,16 @@ def create_app(config):
     def delete_category(bankId, categoryId, request):
         db.users.find_one_and_update({"bankId": bankId, "categories.id": categoryId}, {"$pull": {"categories": {"id": categoryId}}})
         return make_response("", no_content)
+
+
+    # Primarliy exists for testing
+    @app.route("/users/<sessionId>", methods=["PUT"])
+    def create_user(sessionId):
+        if not session_is_valid(sessionId):
+            return make_unauthorized_response()
+
+        register_user(session["ssn"])
+        return make_response("", no_content)
         
 
     return app
