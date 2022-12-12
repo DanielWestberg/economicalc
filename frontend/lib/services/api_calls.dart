@@ -245,10 +245,6 @@ deleteImage(String sessionId, String receiptId) async {
   }
 }
 
-registerUser(String sessionId) async {
-  await http.put(Uri.https(apiServer, "/users/$sessionId"));
-}
-
 fetchCategories(String sessionId) async {
   final uri = Uri.https(apiServer, "/users/$sessionId/categories");
   final response = await http.get(uri);
