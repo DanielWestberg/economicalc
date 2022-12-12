@@ -48,8 +48,8 @@ def create_app(config):
 
         account_report = get_account_info(account_report_id, access_token)
         transaction_report = get_transaction_data(transaction_report_id, access_token)
-        print(account_report);
-        print(transaction_report);
+        print(account_report.status_code);
+        print(transaction_report.status_code);
         if account_report.status_code != 200 or transaction_report.status_code != 200:
             return make_response("Dumbass", bad_request)
         #HELLOSDSADS
