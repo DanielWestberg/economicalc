@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:collection/collection.dart';
@@ -9,12 +10,37 @@ import 'package:economicalc_client/models/receipt.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 
-main() {
-  String sessionId = "testUser";
-  int categoryId = 1234;
+class MissingParamException implements Exception {
+  final String paramName;
+  get message =>
+      "Missing parameter $paramName. "
+      "Please run 'flutter test' with the flag "
+      "'--dart-define=$paramName=<value>";
 
-  setUpAll(() async {
-    await registerUser(sessionId);
+  const MissingParamException(this.paramName);
+
+  @override
+  String toString() => "MissingParamException: $message";
+}
+
+main() async {
+  print("Report IDs can be found here: $tinkReportEndpoint");
+  const accountReportId = String.fromEnvironment("accountReportId");
+  const transactionReportId = String.fromEnvironment("transactionReportId");
+
+  if (accountReportId == "") {
+    throw const MissingParamException("accountReportId");
+  }
+
+  if (transactionReportId == "") {
+    throw const MissingParamException("transactionReportId");
+  }
+
+  final loginData = await fetchLoginData(accountReportId, transactionReportId);
+  final sessionId = loginData["session_id"];
+  const int categoryId = 1234;
+
+  setUpAll(() {
   });
 
   tearDownAll(() async {
