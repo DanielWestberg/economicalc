@@ -72,20 +72,20 @@ fetchLoginData(String account_report_id, String transaction_report_id) async {
   };
 
   String path = ('tink_user_data');
-  var uri = Uri.https(apiServer, path);
+  var uri = Uri.http(apiServer, path);
   var response =
       await http.post(uri, headers: headers, body: json.encode(data));
-  print(uri);
-  print(response);
+  //print(uri);
+  //print(response);
   if (response.statusCode != 200)
     throw Exception('http.get error: statusCode= ${response.statusCode}');
-  print(response.body);
+  //print(response.body);
   var res = convert.jsonDecode(response.body)["data"];
-  print(res);
-  print(res["session_id"]);
-  print(res["account_report"]);
-  print(res["transaction_report"]);
-  return response.body;
+  //print(res);
+  //print(res["session_id"]);
+  //print(res["account_report"]);
+  //print(res["transaction_report"]);
+  return convert.jsonDecode(response.body)["data"];
 }
 
 Future<List<BankTransaction>> fetchTransactions(String access_token) async {
