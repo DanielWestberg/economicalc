@@ -40,6 +40,8 @@ def create_app(config):
     def tink_user_data():
         account_report_id = request.json["account_report_id"]
         transaction_report_id = request.json["transaction_report_id"]
+        print(account_report_id, flush=True);
+        print(transaction_report_id, flush= True);
         print("Tokens recieved");
         cred_respose = post_credentials_token(True)
         print(cred_respose, flush=True)
