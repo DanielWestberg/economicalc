@@ -163,8 +163,8 @@ processImageWithAsprise(File imageFile) async {
   return respJson;
 }
 
-fetchReceipts(String userId) async {
-  final String path = "/users/$userId/receipts";
+fetchReceipts(String sessionId) async {
+  final String path = "/users/$sessionId/receipts";
   final response = await http.get(Uri.https(apiServer, path));
   if (response.statusCode != 200) {
     throw Exception(
@@ -179,8 +179,8 @@ fetchReceipts(String userId) async {
   return resultReceipts;
 }
 
-postReceipt(String userId, Receipt receipt) async {
-  final String path = "/users/$userId/receipts";
+postReceipt(String sessionId, Receipt receipt) async {
+  final String path = "/users/$sessionId/receipts";
   final Uri uri = Uri.https(apiServer, path);
   final headers = {"Content-type": "application/json"};
   final body = convert.jsonEncode(receipt.toMap());
@@ -192,8 +192,8 @@ postReceipt(String userId, Receipt receipt) async {
   return Receipt.fromBackendJson(convert.jsonDecode(response.body)["data"]);
 }
 
-updateReceipt(String userId, String receiptId, Receipt receipt) async {
-  final uri = Uri.https(apiServer, "/users/$userId/receipts/$receiptId");
+updateReceipt(String sessionId, String receiptId, Receipt receipt) async {
+  final uri = Uri.https(apiServer, "/users/$sessionId/receipts/$receiptId");
   final headers = {"Content-type": "application/json"};
   final body = convert.jsonEncode(receipt.toMap());
   final response = await http.put(uri, headers: headers, body: body);
@@ -203,9 +203,9 @@ updateReceipt(String userId, String receiptId, Receipt receipt) async {
   }
 }
 
-deleteReceipt(String userId, Receipt receipt) async {
+deleteReceipt(String sessionId, Receipt receipt) async {
   final uri =
-      Uri.https(apiServer, "/users/$userId/receipts/${receipt.backendId}");
+      Uri.https(apiServer, "/users/$sessionId/receipts/${receipt.backendId}");
   final response = await http.delete(uri);
   if (response.statusCode != 204) {
     throw Exception(
@@ -213,8 +213,8 @@ deleteReceipt(String userId, Receipt receipt) async {
   }
 }
 
-updateImage(String userId, String receiptId, XFile image) async {
-  final uri = Uri.https(apiServer, "/users/$userId/receipts/$receiptId/image");
+updateImage(String sessionId, String receiptId, XFile image) async {
+  final uri = Uri.https(apiServer, "/users/$sessionId/receipts/$receiptId/image");
   final mimeType = image.mimeType ?? "application/octet-stream";
   final request = http.MultipartRequest("PUT", uri)
     ..files.add(await http.MultipartFile.fromPath("file", image.path,
@@ -226,8 +226,8 @@ updateImage(String userId, String receiptId, XFile image) async {
   }
 }
 
-fetchImage(String userId, String receiptId) async {
-  final uri = Uri.https(apiServer, "/users/$userId/receipts/$receiptId/image");
+fetchImage(String sessionId, String receiptId) async {
+  final uri = Uri.https(apiServer, "/users/$sessionId/receipts/$receiptId/image");
   final response = await http.get(uri);
   if (response.statusCode != 200) {
     throw Exception(
@@ -236,8 +236,8 @@ fetchImage(String userId, String receiptId) async {
   return XFile.fromData(response.bodyBytes);
 }
 
-deleteImage(String userId, String receiptId) async {
-  final uri = Uri.https(apiServer, "/users/$userId/receipts/$receiptId/image");
+deleteImage(String sessionId, String receiptId) async {
+  final uri = Uri.https(apiServer, "/users/$sessionId/receipts/$receiptId/image");
   final response = await http.delete(uri);
   if (response.statusCode != 204) {
     throw Exception(
@@ -245,12 +245,12 @@ deleteImage(String userId, String receiptId) async {
   }
 }
 
-registerUser(String userId) async {
-  await http.put(Uri.https(apiServer, "/users/$userId"));
+registerUser(String sessionId) async {
+  await http.put(Uri.https(apiServer, "/users/$sessionId"));
 }
 
-fetchCategories(String userId) async {
-  final uri = Uri.https(apiServer, "/users/$userId/categories");
+fetchCategories(String sessionId) async {
+  final uri = Uri.https(apiServer, "/users/$sessionId/categories");
   final response = await http.get(uri);
   if (response.statusCode != 200) {
     throw Exception(
@@ -261,8 +261,8 @@ fetchCategories(String userId) async {
   return categories.map((e) => Category.fromJson(e)).toList();
 }
 
-postCategory(String userId, Category category) async {
-  final uri = Uri.https(apiServer, "/users/$userId/categories");
+postCategory(String sessionId, Category category) async {
+  final uri = Uri.https(apiServer, "/users/$sessionId/categories");
   final headers = {"Content-type": "application/json"};
   final body = convert.jsonEncode(category.toJson(true));
   final response = await http.post(uri, headers: headers, body: body);
@@ -272,8 +272,8 @@ postCategory(String userId, Category category) async {
   }
 }
 
-updateCategory(String userId, Category category) async {
-  final uri = Uri.https(apiServer, "/users/$userId/categories/${category.id!}");
+updateCategory(String sessionId, Category category) async {
+  final uri = Uri.https(apiServer, "/users/$sessionId/categories/${category.id!}");
   final headers = {"Content-type": "application/json"};
   final body = convert.jsonEncode(category.toJson(true));
   final response = await http.put(uri, headers: headers, body: body);
@@ -283,5 +283,5 @@ updateCategory(String userId, Category category) async {
   }
 }
 
-deleteCategory(String userId, int categoryId) async => await http
-    .delete(Uri.https(apiServer, "/users/$userId/categories/$categoryId"));
+deleteCategory(String sessionId, int categoryId) async => await http
+    .delete(Uri.https(apiServer, "/users/$sessionId/categories/$categoryId"));
