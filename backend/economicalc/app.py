@@ -23,18 +23,30 @@ def create_app(config):
     def make_unauthorized_response(message="Authentication required"):
         return make_response(message, unauthorized)
 
+
+    def register_user(ssn):
+        if db.users.find_one({"bankId": ssn}) is None:
+            db.users.insert_one({"bankId": ssn, "receipts": [], "categories": []})
+
+
     def initiate_session(access_token, ssn):
         session_id = str(ObjectId())
         session["id"] = session_id
         session["access_token"] = access_token
         session["ssn"] = ssn
+
+        register_user(ssn)
+
         return session_id
+
 
     def session_is_valid(session_id):
         return "id" in session and session["id"] == session_id
         
+
     def terminate_session():
         pass
+
 
     @app.route("/tink_user_data", methods=["POST"])
     def tink_user_data():
@@ -74,17 +86,18 @@ def create_app(config):
         return jsonify(data=res_json)
 
         
-
     def get_account_info(account_report_id, access_token):
         headers = {'Authorization': f'Bearer {access_token}',}
         response = requests.get(
         f'https://api.tink.com/api/v1/account-verification-reports/{account_report_id}', headers=headers,)
         return response
 
+
     def get_transaction_data(transaction_report_id, access_token):
         headers = {'Authorization': f'Bearer {access_token}',}
         response = requests.get(f'https://api.tink.com/data/v2/transaction-reports/{transaction_report_id}', headers=headers,)
         return response
+
     
     def post_credentials_token(test : bool):
         if test:
@@ -123,6 +136,7 @@ def create_app(config):
         #request = requests.post()
         return ""
 
+
     @app.route('/tink_access_token/<code>/<test>')
     def tink_access_token(code, test):
         if test == 'T':
@@ -149,7 +163,6 @@ def create_app(config):
     def session_token_get(session_token):
         return ""
         
-        
 
     @app.route('/tink_transaction_history/<access_token>')
     def tink_transaction_history(access_token):
@@ -161,6 +174,7 @@ def create_app(config):
         response = requests.get('https://api.tink.com/data/v2/transactions', headers=headers)
 
         return response.text
+
 
     @app.route('/tink_transaction_history/<access_token>')
     def tink_account_info(access_token):
@@ -229,6 +243,7 @@ def create_app(config):
         db.users.update_one({"_id": user["_id"]}, update_action)
 
         return make_response(jsonify(data=receipt.to_dict(True)), created)
+
 
     @app.route("/users/<session_id>/receipts/<ObjectId:receiptId>", methods=["PUT", "DELETE"])
     def user_receipt_by_id(session_id, receiptId):
@@ -404,19 +419,6 @@ def create_app(config):
 
     def delete_category(bankId, categoryId, request):
         db.users.find_one_and_update({"bankId": bankId, "categories.id": categoryId}, {"$pull": {"categories": {"id": categoryId}}})
-        return make_response("", no_content)
-
-
-    # TODO: Add authentication with BankID
-    @app.route("/users/<session_id>", methods=["PUT"])
-    def create_user(session_id):
-        if not session_is_valid(session_id):
-            return make_unauthorized_response()
-
-        ssn = session["ssn"]
-        if db.users.find_one({"bankId": ssn}) is None:
-            db.users.insert_one({"bankId": ssn, "receipts": [], "categories": []})
-
         return make_response("", no_content)
         
 
