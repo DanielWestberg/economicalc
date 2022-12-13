@@ -38,20 +38,22 @@ main() async {
 
   final loginData = await fetchLoginData(accountReportId, transactionReportId);
   final sessionId = loginData["session_id"];
+  final session = loginData["session"];
+  final cookie = loginData["cookie"];
   const int categoryId = 1234;
 
   setUpAll(() {
   });
 
   tearDownAll(() async {
-    await deleteCategory(sessionId, categoryId);
+    await deleteCategory(cookie, sessionId, categoryId);
 
-    List<Receipt> receipts = await fetchReceipts(sessionId);
+    List<Receipt> receipts = await fetchReceipts(cookie, sessionId);
     for (Receipt receipt in receipts) {
-      await deleteReceipt(sessionId, receipt);
+      await deleteReceipt(cookie, sessionId, receipt);
     }
 
-    receipts = await fetchReceipts(sessionId);
+    receipts = await fetchReceipts(cookie, sessionId);
     expect(receipts.length, 0);
   });
 
@@ -70,8 +72,8 @@ main() async {
       categoryID: 1,
     );
 
-    final postedReceipt = await postReceipt(sessionId, receipt);
-    List<Receipt> fetchedReceipts = await fetchReceipts(sessionId);
+    final postedReceipt = await postReceipt(cookie, sessionId, receipt);
+    List<Receipt> fetchedReceipts = await fetchReceipts(cookie, sessionId);
 
     expect(fetchedReceipts, contains(postedReceipt));
   });
@@ -79,25 +81,25 @@ main() async {
   test ("Update image", () async {
     final image = XFile("../backend/tests/res/tsu.jpg");
 
-    final receipts = await fetchReceipts(sessionId);
+    final receipts = await fetchReceipts(cookie, sessionId);
     final backendId = receipts[0].backendId!;
-    await updateImage(sessionId, backendId, image);
+    await updateImage(cookie, sessionId, backendId, image);
 
-    final responseImage = await fetchImage(sessionId, backendId);
+    final responseImage = await fetchImage(cookie, sessionId, backendId);
     final expectedBytes = await image.readAsBytes();
     final responseBytes = await responseImage.readAsBytes();
 
     final equals = const ListEquality().equals;
     expect(equals(expectedBytes, responseBytes), true);
 
-    deleteImage(sessionId, backendId);
+    deleteImage(cookie, sessionId, backendId);
   });
 
   test ("Update receipt", () async {
-    final receipt = (await fetchReceipts(sessionId))[0];
+    final receipt = (await fetchReceipts(cookie, sessionId))[0];
     receipt.items[0].itemName = "Snus";
-    await updateReceipt(sessionId, receipt.backendId, receipt);
-    final responseReceipts = await fetchReceipts(sessionId);
+    await updateReceipt(cookie, sessionId, receipt.backendId, receipt);
+    final responseReceipts = await fetchReceipts(cookie, sessionId);
     expect(responseReceipts, contains(receipt));
   });
 
@@ -108,12 +110,12 @@ main() async {
         id: categoryId,
     );
 
-    await postCategory(sessionId, category);
+    await postCategory(cookie, sessionId, category);
 
-    List<Category> fetchedCategories = await fetchCategories(sessionId);
+    List<Category> fetchedCategories = await fetchCategories(cookie, sessionId);
     expect(fetchedCategories, contains(category));
 
-    await deleteCategory(sessionId, categoryId);
+    await deleteCategory(cookie, sessionId, categoryId);
   });
 
   test ("Update category", () async {
@@ -125,20 +127,20 @@ main() async {
       id: categoryId,
     );
 
-    await updateCategory(sessionId, category);
+    await updateCategory(cookie, sessionId, category);
 
-    var fetchedCategories = await fetchCategories(sessionId);
+    var fetchedCategories = await fetchCategories(cookie, sessionId);
     expect(fetchedCategories, contains(category));
 
     category.description = "Nothing illegal";
-    await updateCategory(sessionId, category);
+    await updateCategory(cookie, sessionId, category);
 
-    fetchedCategories = await fetchCategories(sessionId);
+    fetchedCategories = await fetchCategories(cookie, sessionId);
     expect(fetchedCategories, contains(category));
 
     category.description = originalDescription;
     expect(fetchedCategories, isNot(contains(category)));
 
-    deleteCategory(sessionId, category.id!);
+    deleteCategory(cookie, sessionId, category.id!);
   });
 }

@@ -85,7 +85,15 @@ fetchLoginData(String account_report_id, String transaction_report_id) async {
   //print(res["session_id"]);
   //print(res["account_report"]);
   //print(res["transaction_report"]);
-  return convert.jsonDecode(response.body)["data"];
+  final cookie =
+      Cookie.fromSetCookieValue(response.headers["set-cookie"] ?? "");
+  if (cookie.name != "session") {
+    throw Exception("Expected cookie named session, not ${cookie.name}");
+  }
+
+  res["cookie"] = cookie;
+
+  return res;
 }
 
 Future<List<BankTransaction>> fetchTransactions(String access_token) async {
@@ -178,9 +186,13 @@ processImageWithAsprise(File imageFile) async {
   return respJson;
 }
 
-fetchReceipts(String sessionId) async {
+fetchReceipts(Cookie cookie, String sessionId) async {
   final String path = "/users/$sessionId/receipts";
-  final response = await http.get(Uri.http(apiServer, path));
+  final Map<String, String> headers = {
+    "Cookie": cookie.toString(),
+  };
+
+  final response = await http.get(Uri.http(apiServer, path), headers: headers);
   if (response.statusCode != 200) {
     throw Exception(
         "Unexpected status code ${response.statusCode}\n{response.body}");
@@ -194,10 +206,13 @@ fetchReceipts(String sessionId) async {
   return resultReceipts;
 }
 
-postReceipt(String sessionId, Receipt receipt) async {
+postReceipt(Cookie cookie, String sessionId, Receipt receipt) async {
   final String path = "/users/$sessionId/receipts";
   final Uri uri = Uri.http(apiServer, path);
-  final headers = {"Content-type": "application/json"};
+  final headers = {
+    "Content-type": "application/json",
+    "Cookie": cookie.toString(),
+  };
   final body = convert.jsonEncode(receipt.toMap());
   final response = await http.post(uri, headers: headers, body: body);
   if (response.statusCode != 201) {
@@ -207,9 +222,12 @@ postReceipt(String sessionId, Receipt receipt) async {
   return Receipt.fromBackendJson(convert.jsonDecode(response.body)["data"]);
 }
 
-updateReceipt(String sessionId, String receiptId, Receipt receipt) async {
+updateReceipt(Cookie cookie, String sessionId, String receiptId, Receipt receipt) async {
   final uri = Uri.http(apiServer, "/users/$sessionId/receipts/$receiptId");
-  final headers = {"Content-type": "application/json"};
+  final headers = {
+    "Content-type": "application/json",
+    "Cookie": cookie.toString(),
+  };
   final body = convert.jsonEncode(receipt.toMap());
   final response = await http.put(uri, headers: headers, body: body);
   if (response.statusCode != 200) {
@@ -218,22 +236,26 @@ updateReceipt(String sessionId, String receiptId, Receipt receipt) async {
   }
 }
 
-deleteReceipt(String sessionId, Receipt receipt) async {
+deleteReceipt(Cookie cookie, String sessionId, Receipt receipt) async {
   final uri =
       Uri.http(apiServer, "/users/$sessionId/receipts/${receipt.backendId}");
-  final response = await http.delete(uri);
+  final Map<String, String> headers = {
+    "Cookie": cookie.toString(),
+  };
+  final response = await http.delete(uri, headers: headers);
   if (response.statusCode != 204) {
     throw Exception(
         "Unexpected status code ${response.statusCode}\n${response.body}");
   }
 }
 
-updateImage(String sessionId, String receiptId, XFile image) async {
+updateImage(Cookie cookie, String sessionId, String receiptId, XFile image) async {
   final uri = Uri.http(apiServer, "/users/$sessionId/receipts/$receiptId/image");
   final mimeType = image.mimeType ?? "application/octet-stream";
   final request = http.MultipartRequest("PUT", uri)
     ..files.add(await http.MultipartFile.fromPath("file", image.path,
         contentType: http_parser.MediaType.parse(mimeType)));
+  request.headers["Cookie"] = cookie.toString();
   final response = await request.send();
   if (response.statusCode != 204) {
     throw Exception(
@@ -241,9 +263,12 @@ updateImage(String sessionId, String receiptId, XFile image) async {
   }
 }
 
-fetchImage(String sessionId, String receiptId) async {
+fetchImage(Cookie cookie, String sessionId, String receiptId) async {
   final uri = Uri.http(apiServer, "/users/$sessionId/receipts/$receiptId/image");
-  final response = await http.get(uri);
+  final Map<String, String> headers = {
+    "Cookie": cookie.toString(),
+  };
+  final response = await http.get(uri, headers: headers);
   if (response.statusCode != 200) {
     throw Exception(
         "Unexpected status code ${response.statusCode}\n${response.body}");
@@ -251,18 +276,24 @@ fetchImage(String sessionId, String receiptId) async {
   return XFile.fromData(response.bodyBytes);
 }
 
-deleteImage(String sessionId, String receiptId) async {
+deleteImage(Cookie cookie, String sessionId, String receiptId) async {
   final uri = Uri.http(apiServer, "/users/$sessionId/receipts/$receiptId/image");
-  final response = await http.delete(uri);
+  final Map<String, String> headers = {
+    "Cookie": cookie.toString(),
+  };
+  final response = await http.delete(uri, headers: headers);
   if (response.statusCode != 204) {
     throw Exception(
         "Unexpected status code ${response.statusCode}\n${response.body}");
   }
 }
 
-fetchCategories(String sessionId) async {
+fetchCategories(Cookie cookie, String sessionId) async {
   final uri = Uri.http(apiServer, "/users/$sessionId/categories");
-  final response = await http.get(uri);
+  final Map<String, String> headers = {
+    "Cookie": cookie.toString(),
+  };
+  final response = await http.get(uri, headers: headers);
   if (response.statusCode != 200) {
     throw Exception(
         "Unexpected status code ${response.statusCode}\n${response.body}");
@@ -272,9 +303,12 @@ fetchCategories(String sessionId) async {
   return categories.map((e) => Category.fromJson(e)).toList();
 }
 
-postCategory(String sessionId, Category category) async {
+postCategory(Cookie cookie, String sessionId, Category category) async {
   final uri = Uri.http(apiServer, "/users/$sessionId/categories");
-  final headers = {"Content-type": "application/json"};
+  final headers = {
+    "Content-type": "application/json",
+    "Cookie": cookie.toString(),
+  };
   final body = convert.jsonEncode(category.toJson(true));
   final response = await http.post(uri, headers: headers, body: body);
   if (response.statusCode != 201) {
@@ -283,9 +317,12 @@ postCategory(String sessionId, Category category) async {
   }
 }
 
-updateCategory(String sessionId, Category category) async {
+updateCategory(Cookie cookie, String sessionId, Category category) async {
   final uri = Uri.http(apiServer, "/users/$sessionId/categories/${category.id!}");
-  final headers = {"Content-type": "application/json"};
+  final headers = {
+    "Content-type": "application/json",
+    "Cookie": cookie.toString(),
+  };
   final body = convert.jsonEncode(category.toJson(true));
   final response = await http.put(uri, headers: headers, body: body);
   if (response.statusCode != 200 && response.statusCode != 201) {
@@ -294,5 +331,15 @@ updateCategory(String sessionId, Category category) async {
   }
 }
 
-deleteCategory(String sessionId, int categoryId) async => await http
-    .delete(Uri.http(apiServer, "/users/$sessionId/categories/$categoryId"));
+deleteCategory(Cookie cookie, String sessionId, int categoryId) async {
+  final uri = Uri.http(apiServer, "/users/$sessionId/categories/$categoryId");
+  final Map<String, String> headers = {
+    "Cookie": cookie.toString(),
+  };
+  final response = await http.delete(uri, headers: headers);
+  if (response.statusCode != 204) {
+    throw Exception(
+        "Unexpected status code ${response.statusCode}\n${response.body}"
+    );
+  }
+}
