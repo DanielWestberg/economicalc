@@ -30,18 +30,14 @@ def create_app(config):
 
 
     def initiate_session(access_token, ssn):
-        session_id = str(ObjectId())
-        session["id"] = session_id
         session["access_token"] = access_token
         session["ssn"] = ssn
 
         register_user(ssn)
 
-        return session_id
 
-
-    def session_is_valid(session_id):
-        return "id" in session and session["id"] == session_id
+    def session_is_valid():
+        return "ssn" in session
         
 
     def terminate_session():
@@ -75,10 +71,9 @@ def create_app(config):
         print(ssn)
 
         #CREATE NEW SESSION
-        session_id = initiate_session(access_token, ssn)
+        initiate_session(access_token, ssn)
 
         res_json = {
-            "session_id": str(session_id),
             "account_report": account_report,
             "transaction_report": transaction_report,
         }
@@ -190,9 +185,9 @@ def create_app(config):
         return response.text
 
 
-    @app.route("/users/<session_id>/receipts", methods=["GET", "POST"])
-    def user_receipts(session_id):
-        if not session_is_valid(session_id):
+    @app.route("/receipts", methods=["GET", "POST"])
+    def user_receipts():
+        if not session_is_valid():
             return make_unauthorized_response()
 
         ssn = session["ssn"]
@@ -245,9 +240,9 @@ def create_app(config):
         return make_response(jsonify(data=receipt.to_dict(True)), created)
 
 
-    @app.route("/users/<session_id>/receipts/<ObjectId:receiptId>", methods=["PUT", "DELETE"])
-    def user_receipt_by_id(session_id, receiptId):
-        if not session_is_valid(session_id):
+    @app.route("/receipts/<ObjectId:receiptId>", methods=["PUT", "DELETE"])
+    def user_receipt_by_id(receiptId):
+        if not session_is_valid():
             return make_unauthorized_response()
 
         ssn = session["ssn"]
@@ -284,9 +279,9 @@ def create_app(config):
         return make_response("", no_content)
 
 
-    @app.route("/users/<session_id>/receipts/<ObjectId:receiptId>/image", methods=["GET", "PUT", "DELETE"])
-    def user_receipt_image(session_id, receiptId):
-        if not session_is_valid(session_id):
+    @app.route("/receipts/<ObjectId:receiptId>/image", methods=["GET", "PUT", "DELETE"])
+    def user_receipt_image(receiptId):
+        if not session_is_valid():
             return make_unauthorized_response()
 
         ssn = session["ssn"]
@@ -339,9 +334,9 @@ def create_app(config):
         return make_response("", no_content)
 
 
-    @app.route("/users/<session_id>/categories", methods=["GET", "POST"])
-    def user_categories(session_id):
-        if not session_is_valid(session_id):
+    @app.route("/categories", methods=["GET", "POST"])
+    def user_categories():
+        if not session_is_valid():
             return make_unauthorized_response()
 
         ssn = session["ssn"]
@@ -385,9 +380,9 @@ def create_app(config):
         return make_response(jsonify(data=category.to_dict(True)), created)
 
 
-    @app.route("/users/<session_id>/categories/<int:categoryId>", methods=["PUT", "DELETE"])
-    def user_category_by_id(session_id, categoryId):
-        if not session_is_valid(session_id):
+    @app.route("/categories/<int:categoryId>", methods=["PUT", "DELETE"])
+    def user_category_by_id(categoryId):
+        if not session_is_valid():
             return make_unauthorized_response()
 
         ssn = session["ssn"]
@@ -423,9 +418,9 @@ def create_app(config):
 
 
     # Primarliy exists for testing
-    @app.route("/users/<sessionId>", methods=["PUT"])
-    def create_user(sessionId):
-        if not session_is_valid(sessionId):
+    @app.route("/", methods=["PUT"])
+    def create_user():
+        if not session_is_valid():
             return make_unauthorized_response()
 
         register_user(session["ssn"])
