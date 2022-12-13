@@ -37,8 +37,7 @@ main() async {
   }
 
   final loginData = await fetchLoginData(accountReportId, transactionReportId);
-  final session = loginData["session"];
-  final cookie = loginData["cookie"];
+  final cookie = loginData.cookie;
   const int categoryId = 1234;
 
   setUpAll(() {

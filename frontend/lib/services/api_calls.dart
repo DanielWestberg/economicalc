@@ -32,6 +32,27 @@ const String tinkReportEndpoint =
         ",SAVING_TRANSACTIONS"
     "&account_dialog_type=SINGLE";
 
+class LoginData {
+  final Map<String, dynamic> accountReport;
+  final Map<String, dynamic> transactionReport;
+  final Cookie cookie;
+
+  LoginData({
+    required this.accountReport,
+    required this.transactionReport,
+    required this.cookie
+  });
+
+  factory LoginData.fromResponse(http.Response response) {
+    final dict = convert.jsonDecode(response.body)["data"];
+    return LoginData(
+      accountReport: dict["account_report"],
+      transactionReport: dict["transaction_report"],
+      cookie: Cookie.fromSetCookieValue(response.headers["set-cookie"] ?? ""),
+    );
+  }
+}
+
 Future<List<Receipt>> fetchMockedTransactions() async {
   final String response =
       await rootBundle.loadString('assets/ocr_outputs.json');
@@ -80,20 +101,7 @@ fetchLoginData(String account_report_id, String transaction_report_id) async {
   if (response.statusCode != 200)
     throw Exception('http.get error: statusCode= ${response.statusCode}');
   //print(response.body);
-  var res = convert.jsonDecode(response.body)["data"];
-  //print(res);
-  //print(res["session_id"]);
-  //print(res["account_report"]);
-  //print(res["transaction_report"]);
-  final cookie =
-      Cookie.fromSetCookieValue(response.headers["set-cookie"] ?? "");
-  if (cookie.name != "session") {
-    throw Exception("Expected cookie named session, not ${cookie.name}");
-  }
-
-  res["cookie"] = cookie;
-
-  return res;
+  return LoginData.fromResponse(response);
 }
 
 Future<List<BankTransaction>> fetchTransactions(String access_token) async {
