@@ -37,7 +37,6 @@ main() async {
   }
 
   final loginData = await fetchLoginData(accountReportId, transactionReportId);
-  final sessionId = loginData["session_id"];
   final session = loginData["session"];
   final cookie = loginData["cookie"];
   const int categoryId = 1234;
@@ -46,14 +45,14 @@ main() async {
   });
 
   tearDownAll(() async {
-    await deleteCategory(cookie, sessionId, categoryId);
+    await deleteCategory(cookie, categoryId);
 
-    List<Receipt> receipts = await fetchReceipts(cookie, sessionId);
+    List<Receipt> receipts = await fetchReceipts(cookie);
     for (Receipt receipt in receipts) {
-      await deleteReceipt(cookie, sessionId, receipt);
+      await deleteReceipt(cookie, receipt);
     }
 
-    receipts = await fetchReceipts(cookie, sessionId);
+    receipts = await fetchReceipts(cookie);
     expect(receipts.length, 0);
   });
 
@@ -72,8 +71,8 @@ main() async {
       categoryID: 1,
     );
 
-    final postedReceipt = await postReceipt(cookie, sessionId, receipt);
-    List<Receipt> fetchedReceipts = await fetchReceipts(cookie, sessionId);
+    final postedReceipt = await postReceipt(cookie, receipt);
+    List<Receipt> fetchedReceipts = await fetchReceipts(cookie);
 
     expect(fetchedReceipts, contains(postedReceipt));
   });
@@ -81,25 +80,25 @@ main() async {
   test ("Update image", () async {
     final image = XFile("../backend/tests/res/tsu.jpg");
 
-    final receipts = await fetchReceipts(cookie, sessionId);
+    final receipts = await fetchReceipts(cookie);
     final backendId = receipts[0].backendId!;
-    await updateImage(cookie, sessionId, backendId, image);
+    await updateImage(cookie, backendId, image);
 
-    final responseImage = await fetchImage(cookie, sessionId, backendId);
+    final responseImage = await fetchImage(cookie, backendId);
     final expectedBytes = await image.readAsBytes();
     final responseBytes = await responseImage.readAsBytes();
 
     final equals = const ListEquality().equals;
     expect(equals(expectedBytes, responseBytes), true);
 
-    deleteImage(cookie, sessionId, backendId);
+    deleteImage(cookie, backendId);
   });
 
   test ("Update receipt", () async {
-    final receipt = (await fetchReceipts(cookie, sessionId))[0];
+    final receipt = (await fetchReceipts(cookie))[0];
     receipt.items[0].itemName = "Snus";
-    await updateReceipt(cookie, sessionId, receipt.backendId, receipt);
-    final responseReceipts = await fetchReceipts(cookie, sessionId);
+    await updateReceipt(cookie, receipt.backendId, receipt);
+    final responseReceipts = await fetchReceipts(cookie);
     expect(responseReceipts, contains(receipt));
   });
 
@@ -110,12 +109,12 @@ main() async {
         id: categoryId,
     );
 
-    await postCategory(cookie, sessionId, category);
+    await postCategory(cookie, category);
 
-    List<Category> fetchedCategories = await fetchCategories(cookie, sessionId);
+    List<Category> fetchedCategories = await fetchCategories(cookie);
     expect(fetchedCategories, contains(category));
 
-    await deleteCategory(cookie, sessionId, categoryId);
+    await deleteCategory(cookie, categoryId);
   });
 
   test ("Update category", () async {
@@ -127,20 +126,20 @@ main() async {
       id: categoryId,
     );
 
-    await updateCategory(cookie, sessionId, category);
+    await updateCategory(cookie, category);
 
-    var fetchedCategories = await fetchCategories(cookie, sessionId);
+    var fetchedCategories = await fetchCategories(cookie);
     expect(fetchedCategories, contains(category));
 
     category.description = "Nothing illegal";
-    await updateCategory(cookie, sessionId, category);
+    await updateCategory(cookie, category);
 
-    fetchedCategories = await fetchCategories(cookie, sessionId);
+    fetchedCategories = await fetchCategories(cookie);
     expect(fetchedCategories, contains(category));
 
     category.description = originalDescription;
     expect(fetchedCategories, isNot(contains(category)));
 
-    deleteCategory(cookie, sessionId, category.id!);
+    deleteCategory(cookie, category.id!);
   });
 }

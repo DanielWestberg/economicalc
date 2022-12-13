@@ -186,8 +186,8 @@ processImageWithAsprise(File imageFile) async {
   return respJson;
 }
 
-fetchReceipts(Cookie cookie, String sessionId) async {
-  final String path = "/users/$sessionId/receipts";
+fetchReceipts(Cookie cookie) async {
+  const String path = "/receipts";
   final Map<String, String> headers = {
     "Cookie": cookie.toString(),
   };
@@ -206,8 +206,8 @@ fetchReceipts(Cookie cookie, String sessionId) async {
   return resultReceipts;
 }
 
-postReceipt(Cookie cookie, String sessionId, Receipt receipt) async {
-  final String path = "/users/$sessionId/receipts";
+postReceipt(Cookie cookie, Receipt receipt) async {
+  const String path = "/receipts";
   final Uri uri = Uri.http(apiServer, path);
   final headers = {
     "Content-type": "application/json",
@@ -222,8 +222,8 @@ postReceipt(Cookie cookie, String sessionId, Receipt receipt) async {
   return Receipt.fromBackendJson(convert.jsonDecode(response.body)["data"]);
 }
 
-updateReceipt(Cookie cookie, String sessionId, String receiptId, Receipt receipt) async {
-  final uri = Uri.http(apiServer, "/users/$sessionId/receipts/$receiptId");
+updateReceipt(Cookie cookie, String receiptId, Receipt receipt) async {
+  final uri = Uri.http(apiServer, "/receipts/$receiptId");
   final headers = {
     "Content-type": "application/json",
     "Cookie": cookie.toString(),
@@ -236,9 +236,9 @@ updateReceipt(Cookie cookie, String sessionId, String receiptId, Receipt receipt
   }
 }
 
-deleteReceipt(Cookie cookie, String sessionId, Receipt receipt) async {
+deleteReceipt(Cookie cookie, Receipt receipt) async {
   final uri =
-      Uri.http(apiServer, "/users/$sessionId/receipts/${receipt.backendId}");
+      Uri.http(apiServer, "/receipts/${receipt.backendId}");
   final Map<String, String> headers = {
     "Cookie": cookie.toString(),
   };
@@ -249,8 +249,8 @@ deleteReceipt(Cookie cookie, String sessionId, Receipt receipt) async {
   }
 }
 
-updateImage(Cookie cookie, String sessionId, String receiptId, XFile image) async {
-  final uri = Uri.http(apiServer, "/users/$sessionId/receipts/$receiptId/image");
+updateImage(Cookie cookie, String receiptId, XFile image) async {
+  final uri = Uri.http(apiServer, "/receipts/$receiptId/image");
   final mimeType = image.mimeType ?? "application/octet-stream";
   final request = http.MultipartRequest("PUT", uri)
     ..files.add(await http.MultipartFile.fromPath("file", image.path,
@@ -263,8 +263,8 @@ updateImage(Cookie cookie, String sessionId, String receiptId, XFile image) asyn
   }
 }
 
-fetchImage(Cookie cookie, String sessionId, String receiptId) async {
-  final uri = Uri.http(apiServer, "/users/$sessionId/receipts/$receiptId/image");
+fetchImage(Cookie cookie, String receiptId) async {
+  final uri = Uri.http(apiServer, "/receipts/$receiptId/image");
   final Map<String, String> headers = {
     "Cookie": cookie.toString(),
   };
@@ -276,8 +276,8 @@ fetchImage(Cookie cookie, String sessionId, String receiptId) async {
   return XFile.fromData(response.bodyBytes);
 }
 
-deleteImage(Cookie cookie, String sessionId, String receiptId) async {
-  final uri = Uri.http(apiServer, "/users/$sessionId/receipts/$receiptId/image");
+deleteImage(Cookie cookie, String receiptId) async {
+  final uri = Uri.http(apiServer, "/receipts/$receiptId/image");
   final Map<String, String> headers = {
     "Cookie": cookie.toString(),
   };
@@ -288,8 +288,8 @@ deleteImage(Cookie cookie, String sessionId, String receiptId) async {
   }
 }
 
-fetchCategories(Cookie cookie, String sessionId) async {
-  final uri = Uri.http(apiServer, "/users/$sessionId/categories");
+fetchCategories(Cookie cookie) async {
+  final uri = Uri.http(apiServer, "/categories");
   final Map<String, String> headers = {
     "Cookie": cookie.toString(),
   };
@@ -303,8 +303,8 @@ fetchCategories(Cookie cookie, String sessionId) async {
   return categories.map((e) => Category.fromJson(e)).toList();
 }
 
-postCategory(Cookie cookie, String sessionId, Category category) async {
-  final uri = Uri.http(apiServer, "/users/$sessionId/categories");
+postCategory(Cookie cookie, Category category) async {
+  final uri = Uri.http(apiServer, "/categories");
   final headers = {
     "Content-type": "application/json",
     "Cookie": cookie.toString(),
@@ -317,8 +317,8 @@ postCategory(Cookie cookie, String sessionId, Category category) async {
   }
 }
 
-updateCategory(Cookie cookie, String sessionId, Category category) async {
-  final uri = Uri.http(apiServer, "/users/$sessionId/categories/${category.id!}");
+updateCategory(Cookie cookie, Category category) async {
+  final uri = Uri.http(apiServer, "/categories/${category.id!}");
   final headers = {
     "Content-type": "application/json",
     "Cookie": cookie.toString(),
@@ -331,8 +331,8 @@ updateCategory(Cookie cookie, String sessionId, Category category) async {
   }
 }
 
-deleteCategory(Cookie cookie, String sessionId, int categoryId) async {
-  final uri = Uri.http(apiServer, "/users/$sessionId/categories/$categoryId");
+deleteCategory(Cookie cookie, int categoryId) async {
+  final uri = Uri.http(apiServer, "/categories/$categoryId");
   final Map<String, String> headers = {
     "Cookie": cookie.toString(),
   };
