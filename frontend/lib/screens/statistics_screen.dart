@@ -2,6 +2,7 @@ import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
+import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -39,6 +40,18 @@ class StatisticsScreenState extends State<StatisticsScreen> {
     "dialog": Category(description: "None", color: Colors.black, id: 0),
   };
 
+  Map<String, dynamic> contentSelection = {
+    "selected": [true, false],
+    "previous": [true, false],
+    "dialog": [true, false],
+  };
+
+  Map<String, dynamic> expIncSelection = {
+    "selected": [true, false],
+    "previous": [true, false],
+    "dialog": [true, false],
+  };
+
   Category noneCategory =
       Category(description: "None", color: Colors.black, id: 0);
   String dropdownValue = dropdownList.first;
@@ -49,25 +62,45 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   late Future<List<Category>> categoriesFutureBuilder;
 
   final columns = ["Items", "Sum"];
-  late Future<List<ReceiptItem>> dataFuture;
-  List<ReceiptItem> rows = [];
+  late Future<List<ReceiptItem>> dataFutureItems;
+  late Future<List<Map<String, Object>>> dataFutureCategorySums;
+  List<ReceiptItem> rowsItems = [];
+  List<Map<String, Object>> rowsTotals = [];
 
   @override
   void initState() {
     super.initState();
     categoriesFutureBuilder = dbConnector.getAllcategories();
 
-    dataFuture = dbConnector.getFilteredReceiptItems(
+    dataFutureItems = dbConnector.getFilteredReceiptItems(
         startDate['selected'], endDate['selected'], category['selected']);
+
+    dataFutureCategorySums = dbConnector.getFilteredCategoryTotals(
+        startDate['selected'],
+        endDate['selected'],
+        expIncSelection['selected'][0]);
   }
 
   updateData() async {
-    var updatedDataFuture = dbConnector.getFilteredReceiptItems(
-        startDate['selected'], endDate['selected'], category['selected']);
+    if (contentSelection['selected'][0]) {
+      var updatedDataFutureItems = dbConnector.getFilteredReceiptItems(
+          startDate['selected'], endDate['selected'], category['selected']);
 
-    setState(() {
-      dataFuture = updatedDataFuture;
-    });
+      setState(() {
+        dataFutureItems = updatedDataFutureItems;
+      });
+    }
+
+    if (contentSelection['selected'][1]) {
+      var updatedDataFutureCategorySums = dbConnector.getFilteredCategoryTotals(
+          startDate['selected'],
+          endDate['selected'],
+          expIncSelection['selected'][0]);
+
+      setState(() {
+        dataFutureCategorySums = updatedDataFutureCategorySums;
+      });
+    }
   }
 
   @override
@@ -108,6 +141,10 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                     category['previous'] =
                         category['dialog'] = category['selected'];
                     dropdownValueCategory = category['selected'].description;
+                    contentSelection['previous'] = contentSelection['dialog'] =
+                        contentSelection['selected'];
+                    expIncSelection['previous'] =
+                        expIncSelection['dialog'] = expIncSelection['selected'];
                     showDialog(
                         context: context,
                         builder: (context) {
@@ -123,6 +160,9 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget displayStats(String dropdownValue) {
+    if (contentSelection['selected'][1]) {
+      return totalsChart();
+    }
     if (dropdownValue == "Table") {
       return ListView(children: [buildDataTable()]);
     } else if (dropdownValue == "Chart") {
@@ -152,22 +192,26 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                     )),
                   ),
                 ]),
-                Row(
-                  children: [
-                    Icon(Icons.category),
-                    Padding(
-                        padding: EdgeInsets.only(left: 5),
-                        child: Text(category['selected'].description,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: category['selected'].color))),
-                  ],
-                ),
+                contentSelection['selected'][0]
+                    ? Row(
+                        children: [
+                          Icon(Icons.category),
+                          Padding(
+                              padding: EdgeInsets.only(left: 5),
+                              child: Text(category['selected'].description,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: category['selected'].color))),
+                        ],
+                      )
+                    : Text(""),
               ],
             )),
-            Padding(padding: EdgeInsets.only(right: 20), child: dropDown()),
+            Padding(
+                padding: EdgeInsets.only(right: 20),
+                child: contentSelection['selected'][0] ? dropDown() : Text("")),
           ],
         ));
   }
@@ -182,9 +226,9 @@ class StatisticsScreenState extends State<StatisticsScreen> {
             Text("Start date:"),
             TextButton(
               style: ButtonStyle(
-                foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
+                foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
                 backgroundColor:
-                    MaterialStateProperty.all<Color>(Colors.black12),
+                    MaterialStateProperty.all<Color>(Utils.backgroundColor),
               ),
               child: Text(DateFormat('yyyy-MM-dd').format(startDate['dialog'])),
               onPressed: () async {
@@ -206,9 +250,9 @@ class StatisticsScreenState extends State<StatisticsScreen> {
               TextButton(
                 style: ButtonStyle(
                   foregroundColor:
-                      MaterialStateProperty.all<Color>(Colors.black),
+                      MaterialStateProperty.all<Color>(Colors.white),
                   backgroundColor:
-                      MaterialStateProperty.all<Color>(Colors.black12),
+                      MaterialStateProperty.all<Color>(Utils.backgroundColor),
                 ),
                 child: Text(DateFormat('yyyy-MM-dd').format(endDate['dialog'])),
                 onPressed: () async {
@@ -229,10 +273,61 @@ class StatisticsScreenState extends State<StatisticsScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Text("Category:"),
-                  dropDownCategory(context, setState),
+                  Text("Content:"),
+                  ToggleButtons(
+                    color: Colors.black,
+                    selectedColor: Colors.white,
+                    fillColor: Utils.backgroundColor,
+                    children: [Text("Items"), Text("Totals")],
+                    onPressed: (int index) {
+                      List<bool> contentSelectionTemp = [];
+                      for (int i = 0;
+                          i < contentSelection['dialog'].length;
+                          i++) {
+                        contentSelectionTemp.add(i == index);
+                      }
+                      setState(() {
+                        contentSelection['dialog'] = contentSelectionTemp;
+                      });
+                    },
+                    isSelected: contentSelection['dialog'],
+                  )
                 ],
-              ))
+              )),
+          contentSelection['dialog'][0]
+              ? Container(
+                  padding: EdgeInsets.only(top: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Text("Category:"),
+                      dropDownCategory(context, setState),
+                    ],
+                  ))
+              : Container(
+                  padding: EdgeInsets.only(top: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Text("Exp/Inc:"),
+                      ToggleButtons(
+                        color: Colors.black,
+                        selectedColor: Colors.white,
+                        fillColor: Utils.backgroundColor,
+                        children: [Text("Expenses"), Text("Income")],
+                        onPressed: (int index) {
+                          setState(() {
+                            for (int i = 0;
+                                i < expIncSelection['dialog'].length;
+                                i++) {
+                              expIncSelection['dialog'][i] = (i == index);
+                            }
+                          });
+                        },
+                        isSelected: expIncSelection['dialog'],
+                      )
+                    ],
+                  )),
         ],
       ),
       actions: [
@@ -246,6 +341,8 @@ class StatisticsScreenState extends State<StatisticsScreen> {
               category['selected'] = category['dialog'];
               startDate['selected'] = startDate['dialog'];
               endDate['selected'] = endDate['dialog'];
+              contentSelection['selected'] = contentSelection['dialog'];
+              expIncSelection['selected'] = expIncSelection['dialog'];
             });
             await updateData();
             Navigator.of(context).pop();
@@ -261,6 +358,8 @@ class StatisticsScreenState extends State<StatisticsScreen> {
               category['selected'] = category['previous'];
               startDate['selected'] = startDate['previous'];
               endDate['selected'] = endDate['previous'];
+              contentSelection['selected'] = contentSelection['previous'];
+              expIncSelection['selected'] = expIncSelection['previous'];
             });
             await updateData();
             Navigator.of(context).pop();
@@ -337,18 +436,18 @@ class StatisticsScreenState extends State<StatisticsScreen> {
 
   Widget buildDataTable() {
     return FutureBuilder(
-        future: dataFuture,
+        future: dataFutureItems,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Text("${snapshot.error}");
           } else if (snapshot.hasData) {
-            rows = snapshot.data!;
+            rowsItems = snapshot.data!;
             return DataTable(
                 columnSpacing: 30,
                 sortAscending: isAscending,
                 sortColumnIndex: sortColumnIndex,
                 columns: getColumns(columns),
-                rows: getRows(rows));
+                rows: getRows(rowsItems));
           } else {
             return Text('Waiting....');
           }
@@ -373,10 +472,10 @@ class StatisticsScreenState extends State<StatisticsScreen> {
 
   void onSort(int columnIndex, bool ascending) {
     if (columnIndex == 0) {
-      rows.sort((row1, row2) =>
+      rowsItems.sort((row1, row2) =>
           Utils.compareString(ascending, row1.itemName, row2.itemName));
     } else if (columnIndex == 1) {
-      rows.sort((row1, row2) =>
+      rowsItems.sort((row1, row2) =>
           Utils.compareNumber(ascending, row1.amount, row2.amount));
     }
 
@@ -386,7 +485,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
     });
   }
 
-  double getMaxSum(List<ReceiptItem> items) {
+  double getMaxItemsSum(List<ReceiptItem> items) {
     var max = items.first;
     items.forEach((e) {
       if (e.amount > max.amount) {
@@ -396,35 +495,99 @@ class StatisticsScreenState extends State<StatisticsScreen> {
     return max.amount.toDouble();
   }
 
+  double getMaxCategorySum(List<Map<String, Object>> categorySums) {
+    double max = categorySums.first['totalSum'] as double;
+    categorySums.forEach((e) {
+      double elementSum = e['totalSum']! as double;
+      if (elementSum > max) {
+        max = e['totalSum'] as double;
+      }
+    });
+    return max;
+  }
+
   @override
   Widget itemsChart() {
     return FutureBuilder(
-        future: dataFuture,
+        future: dataFutureItems,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Text("${snapshot.error}");
           } else if (snapshot.hasData) {
-            rows = snapshot.data!;
-            rows.sort((a, b) => Utils.compareNumber(true, a.amount, b.amount));
+            rowsItems = snapshot.data!;
+            rowsItems
+                .sort((a, b) => Utils.compareNumber(true, a.amount, b.amount));
             return Container(
                 padding: EdgeInsets.all(5),
                 child: SfCartesianChart(
+                    backgroundColor: Utils.backgroundColor,
                     primaryXAxis: CategoryAxis(),
                     primaryYAxis: NumericAxis(
                         minimum: 0,
-                        maximum: getMaxSum(rows),
+                        maximum: getMaxItemsSum(rowsItems),
                         interval: 100,
                         visibleMinimum: 0,
                         decimalPlaces: 2),
                     tooltipBehavior: TooltipBehavior(enable: true),
                     series: <ChartSeries<ReceiptItem, String>>[
                       BarSeries<ReceiptItem, String>(
-                          dataSource: rows,
-                          xValueMapper: (ReceiptItem rows, _) => rows.itemName,
-                          yValueMapper: (ReceiptItem rows, _) => rows.amount,
+                          dataSource: rowsItems,
+                          xValueMapper: (ReceiptItem rowsItems, _) =>
+                              rowsItems.itemName,
+                          yValueMapper: (ReceiptItem rowsItems, _) =>
+                              rowsItems.amount,
                           name: '',
                           dataLabelSettings: DataLabelSettings(isVisible: true),
-                          color: Color.fromARGB(255, 68, 104, 107))
+                          color: Utils.chartBarColor)
+                    ]));
+          } else {
+            return Center(
+                child: LoadingAnimationWidget.threeArchedCircle(
+                    color: Colors.black, size: 40));
+          }
+        });
+  }
+
+  @override
+  Widget totalsChart() {
+    return FutureBuilder(
+        future: dataFutureCategorySums,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Text("${snapshot.error}");
+          } else if (snapshot.hasData) {
+            rowsTotals = snapshot.data!;
+            rowsTotals.sort((a, b) => Utils.compareNumber(
+                true, a['totalSum'] as double, b['totalSum'] as double));
+            return Container(
+                padding: EdgeInsets.all(5),
+                child: SfCartesianChart(
+                    plotAreaBackgroundColor: Utils.backgroundColor,
+                    plotAreaBorderColor: Utils.backgroundColor,
+                    backgroundColor: Utils.backgroundColor,
+                    primaryXAxis: CategoryAxis(
+                        labelPosition: ChartDataLabelPosition.outside,
+                        labelsExtent: 80),
+                    primaryYAxis: NumericAxis(
+                        labelPosition: ChartDataLabelPosition.outside,
+                        minimum: 0,
+                        maximum: getMaxCategorySum(rowsTotals),
+                        interval: (getMaxCategorySum(rowsTotals) / 10),
+                        numberFormat: NumberFormat.compact(locale: "sv_SE"),
+                        visibleMinimum: 0,
+                        decimalPlaces: 2),
+                    tooltipBehavior: TooltipBehavior(enable: true),
+                    series: [
+                      BarSeries(
+                          sortingOrder: SortingOrder.ascending,
+                          dataSource: rowsTotals,
+                          xValueMapper: (Map<String, Object> object, _) =>
+                              (object['category'] as Category).description,
+                          yValueMapper: (Map<String, Object> object, _) =>
+                              object['totalSum'] as double,
+                          name: '',
+                          dataLabelSettings: DataLabelSettings(isVisible: true),
+                          color: Utils.chartBarColor)
                     ]));
           } else {
             return Center(
