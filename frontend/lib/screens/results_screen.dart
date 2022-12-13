@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
+import 'package:economicalc_client/helpers/quota_exception.dart';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
@@ -310,36 +311,40 @@ class ResultsScreenState extends State<ResultsScreen> {
       items.map((ReceiptItem item) {
         final cells = [item.itemName, item.amount];
         return DataRow(cells: getCells(cells));
-      }).toList();  
+      }).toList();
 
-  List<DataCell> getCells(List<dynamic> cells) =>
-      cells.map((data) => DataCell(
-    TextFormField(
-     initialValue: '$data',  
-     onChanged: (value){
-        print(receipt);
-        if(data == cells[0]) {
-          int index = receipt.items.indexWhere((element) => element.itemName == data);
-          setState(() {
-            receipt.items[index].itemName = value;
-          });
-        } else {
-          int index = receipt.items.indexWhere((element) => element.amount == data && element.itemName == cells[0]);
-          double newValue = 0;
-          double.tryParse(value) == null ? newValue = 0 : newValue = double.parse(value);
-        
-          setState(() {
-            receipt.items[index].amount = newValue;
-            receipt.total = receipt.total! - data;
-            receipt.total = receipt.total! + newValue;
-            receipt.total = double.parse((receipt.total)!.toStringAsFixed(2));
-          });
-        }
-        
-     },
-   ),
-  
-)).toList();
+  List<DataCell> getCells(List<dynamic> cells) => cells
+      .map((data) => DataCell(
+            TextFormField(
+              initialValue: '$data',
+              onChanged: (value) {
+                print(receipt);
+                if (data == cells[0]) {
+                  int index = receipt.items
+                      .indexWhere((element) => element.itemName == data);
+                  setState(() {
+                    receipt.items[index].itemName = value;
+                  });
+                } else {
+                  int index = receipt.items.indexWhere((element) =>
+                      element.amount == data && element.itemName == cells[0]);
+                  double newValue = 0;
+                  double.tryParse(value) == null
+                      ? newValue = 0
+                      : newValue = double.parse(value);
+
+                  setState(() {
+                    receipt.items[index].amount = newValue;
+                    receipt.total = receipt.total! - data;
+                    receipt.total = receipt.total! + newValue;
+                    receipt.total =
+                        double.parse((receipt.total)!.toStringAsFixed(2));
+                  });
+                }
+              },
+            ),
+          ))
+      .toList();
 
   void onSort(int columnIndex, bool ascending) {
     if (columnIndex == 0) {
@@ -358,14 +363,38 @@ class ResultsScreenState extends State<ResultsScreen> {
 
   Future<Receipt> getTransactionFromImage(image) async {
     final imageFile = File(image.path);
-    var response = await processImageWithAsprise(imageFile);
-    Receipt receipt = Receipt.fromJson(response);
+    try {
+      var response = await processImageWithAsprise(imageFile);
+      Receipt receipt = Receipt.fromJson(response);
 
-    setState(() {
-      isLoading = false;
-    });
+      setState(() {
+        isLoading = false;
+      });
 
-    return receipt;
+      return receipt;
+    } on QuotaException catch (e) {
+      Navigator.of(context).pop(false);
+      final snackBar = SnackBar(
+        backgroundColor: Utils.snackBarError,
+        content: Text(
+          'ERROR: Hourly quota exceeded. Try again in a few hours or use a VPN.',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      rethrow;
+    } catch (e) {
+      Navigator.of(context).pop(false);
+      final snackBar = SnackBar(
+        backgroundColor: Utils.snackBarError,
+        content: Text(
+          'ERROR: Image could not be processed.',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      rethrow;
+    }
   }
 
   Future<List<Category>> getCategories(SQFLite dbConnector) async {
