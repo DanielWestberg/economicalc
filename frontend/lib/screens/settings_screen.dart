@@ -16,7 +16,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Utils.backgroundColor,
+        backgroundColor: Utils.mediumLightColor,
         foregroundColor: Colors.black,
         title: Text("Settings"),
         centerTitle: true,
@@ -36,11 +36,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget settings(context) {
     return Expanded(
         child: SettingsList(
-      lightTheme:
-          SettingsThemeData(settingsListBackground: Utils.backgroundColor),
+      lightTheme: SettingsThemeData(settingsListBackground: Utils.lightColor),
       sections: [
         SettingsSection(
-          title: Text('Common'),
+          title: Text(
+            'Common',
+            style: TextStyle(color: Utils.darkColor),
+          ),
           tiles: <SettingsTile>[
             SettingsTile.navigation(
               leading: Icon(Icons.category),

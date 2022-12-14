@@ -1,3 +1,4 @@
+import 'package:economicalc_client/components/drawer.dart';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
@@ -107,25 +108,16 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
         child: Scaffold(
+            drawer: DrawerMenu(1),
             appBar: AppBar(
               toolbarHeight: 180,
-              backgroundColor: Utils.backgroundColor,
+              backgroundColor: Utils.mediumLightColor,
               foregroundColor: Colors.black,
               title: Column(children: [
-                const Text("Statistics",
-                    style: TextStyle(
-                        color: Color(0xff000000),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 25.0)),
+                Text("Statistics",
+                    style: TextStyle(color: Utils.textColor, fontSize: 25.0)),
                 headerInfo(context)
               ]),
-              leading: IconButton(
-                  alignment: Alignment.topCenter,
-                  padding: EdgeInsets.only(left: 10, top: 50),
-                  onPressed: (() {
-                    Navigator.pop(context);
-                  }),
-                  icon: Icon(Icons.arrow_back)),
               centerTitle: true,
               elevation: 0,
               actions: [
@@ -226,9 +218,10 @@ class StatisticsScreenState extends State<StatisticsScreen> {
             Text("Start date:"),
             TextButton(
               style: ButtonStyle(
-                foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                foregroundColor:
+                    MaterialStateProperty.all<Color>(Utils.textColor),
                 backgroundColor:
-                    MaterialStateProperty.all<Color>(Utils.backgroundColor),
+                    MaterialStateProperty.all<Color>(Utils.mediumLightColor),
               ),
               child: Text(DateFormat('yyyy-MM-dd').format(startDate['dialog'])),
               onPressed: () async {
@@ -250,9 +243,9 @@ class StatisticsScreenState extends State<StatisticsScreen> {
               TextButton(
                 style: ButtonStyle(
                   foregroundColor:
-                      MaterialStateProperty.all<Color>(Colors.white),
+                      MaterialStateProperty.all<Color>(Utils.textColor),
                   backgroundColor:
-                      MaterialStateProperty.all<Color>(Utils.backgroundColor),
+                      MaterialStateProperty.all<Color>(Utils.mediumLightColor),
                 ),
                 child: Text(DateFormat('yyyy-MM-dd').format(endDate['dialog'])),
                 onPressed: () async {
@@ -275,9 +268,9 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                 children: [
                   Text("Content:"),
                   ToggleButtons(
-                    color: Colors.black,
-                    selectedColor: Colors.white,
-                    fillColor: Utils.backgroundColor,
+                    color: Utils.textColor,
+                    selectedColor: Utils.textColor,
+                    fillColor: Utils.mediumLightColor,
                     children: [Text("Items"), Text("Totals")],
                     onPressed: (int index) {
                       List<bool> contentSelectionTemp = [];
@@ -311,9 +304,9 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                     children: [
                       Text("Exp/Inc:"),
                       ToggleButtons(
-                        color: Colors.black,
-                        selectedColor: Colors.white,
-                        fillColor: Utils.backgroundColor,
+                        color: Utils.textColor,
+                        selectedColor: Utils.textColor,
+                        fillColor: Utils.mediumLightColor,
                         children: [Text("Expenses"), Text("Income")],
                         onPressed: (int index) {
                           setState(() {
@@ -333,8 +326,10 @@ class StatisticsScreenState extends State<StatisticsScreen> {
       actions: [
         ElevatedButton(
           style: ButtonStyle(
-              backgroundColor:
-                  MaterialStateProperty.all<Color>(Utils.backgroundColor)),
+            foregroundColor: MaterialStateProperty.all<Color>(Utils.textColor),
+            backgroundColor:
+                MaterialStateProperty.all<Color>(Utils.mediumLightColor),
+          ),
           child: const Text('Apply'),
           onPressed: () async {
             setState(() {
@@ -350,8 +345,10 @@ class StatisticsScreenState extends State<StatisticsScreen> {
         ),
         ElevatedButton(
           style: ButtonStyle(
-              backgroundColor:
-                  MaterialStateProperty.all<Color>(Utils.backgroundColor)),
+            foregroundColor: MaterialStateProperty.all<Color>(Utils.textColor),
+            backgroundColor:
+                MaterialStateProperty.all<Color>(Utils.mediumLightColor),
+          ),
           child: const Text('Cancel'),
           onPressed: () async {
             setState(() {
@@ -403,7 +400,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
               categories.insert(0, noneCategory);
             }
             return SizedBox(
-                width: 130,
+                width: 140,
                 height: 30,
                 child: DropdownButton<String>(
                     isDense: true,
@@ -421,11 +418,16 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                         .map<DropdownMenuItem<String>>((Category category) {
                       return DropdownMenuItem<String>(
                         value: category.description,
-                        child: Text(category.description,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: category.color)),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Container(
+                                  padding: EdgeInsets.only(right: 10),
+                                  child: Icon(Icons.circle_rounded,
+                                      color: category.color)),
+                              Text(category.description,
+                                  overflow: TextOverflow.ellipsis)
+                            ]),
                       );
                     }).toList()));
           } else {
@@ -518,10 +520,10 @@ class StatisticsScreenState extends State<StatisticsScreen> {
             rowsItems
                 .sort((a, b) => Utils.compareNumber(true, a.amount, b.amount));
             return Container(
-                padding: EdgeInsets.all(5),
                 child: SfCartesianChart(
-                    backgroundColor: Utils.backgroundColor,
-                    primaryXAxis: CategoryAxis(),
+                    backgroundColor: Utils.lightColor,
+                    primaryXAxis: CategoryAxis(
+                        labelsExtent: 100, labelStyle: TextStyle(fontSize: 10)),
                     primaryYAxis: NumericAxis(
                         minimum: 0,
                         maximum: getMaxItemsSum(rowsItems),
@@ -530,16 +532,16 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                         decimalPlaces: 2),
                     tooltipBehavior: TooltipBehavior(enable: true),
                     series: <ChartSeries<ReceiptItem, String>>[
-                      BarSeries<ReceiptItem, String>(
-                          dataSource: rowsItems,
-                          xValueMapper: (ReceiptItem rowsItems, _) =>
-                              rowsItems.itemName,
-                          yValueMapper: (ReceiptItem rowsItems, _) =>
-                              rowsItems.amount,
-                          name: '',
-                          dataLabelSettings: DataLabelSettings(isVisible: true),
-                          color: Utils.chartBarColor)
-                    ]));
+                  BarSeries<ReceiptItem, String>(
+                      dataSource: rowsItems,
+                      xValueMapper: (ReceiptItem rowsItems, _) =>
+                          rowsItems.itemName,
+                      yValueMapper: (ReceiptItem rowsItems, _) =>
+                          rowsItems.amount,
+                      name: '',
+                      dataLabelSettings: DataLabelSettings(isVisible: true),
+                      color: Utils.darkColor)
+                ]));
           } else {
             return Center(
                 child: LoadingAnimationWidget.threeArchedCircle(
@@ -560,14 +562,12 @@ class StatisticsScreenState extends State<StatisticsScreen> {
             rowsTotals.sort((a, b) => Utils.compareNumber(
                 true, a['totalSum'] as double, b['totalSum'] as double));
             return Container(
-                padding: EdgeInsets.all(5),
                 child: SfCartesianChart(
-                    plotAreaBackgroundColor: Utils.backgroundColor,
-                    plotAreaBorderColor: Utils.backgroundColor,
-                    backgroundColor: Utils.backgroundColor,
+                    plotAreaBackgroundColor: Utils.lightColor,
                     primaryXAxis: CategoryAxis(
                         labelPosition: ChartDataLabelPosition.outside,
-                        labelsExtent: 80),
+                        labelsExtent: 80,
+                        labelStyle: TextStyle(fontSize: 14)),
                     primaryYAxis: NumericAxis(
                         labelPosition: ChartDataLabelPosition.outside,
                         minimum: 0,
@@ -578,17 +578,17 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                         decimalPlaces: 2),
                     tooltipBehavior: TooltipBehavior(enable: true),
                     series: [
-                      BarSeries(
-                          sortingOrder: SortingOrder.ascending,
-                          dataSource: rowsTotals,
-                          xValueMapper: (Map<String, Object> object, _) =>
-                              (object['category'] as Category).description,
-                          yValueMapper: (Map<String, Object> object, _) =>
-                              object['totalSum'] as double,
-                          name: '',
-                          dataLabelSettings: DataLabelSettings(isVisible: true),
-                          color: Utils.chartBarColor)
-                    ]));
+                  BarSeries(
+                      sortingOrder: SortingOrder.ascending,
+                      dataSource: rowsTotals,
+                      xValueMapper: (Map<String, Object> object, _) =>
+                          (object['category'] as Category).description,
+                      yValueMapper: (Map<String, Object> object, _) =>
+                          object['totalSum'] as double,
+                      name: '',
+                      dataLabelSettings: DataLabelSettings(isVisible: true),
+                      color: Utils.darkColor)
+                ]));
           } else {
             return Center(
                 child: LoadingAnimationWidget.threeArchedCircle(

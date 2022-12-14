@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
         title: 'EconomiCalc',
-        theme: ThemeData(scaffoldBackgroundColor: Utils.backgroundColor),
+        theme: ThemeData(scaffoldBackgroundColor: Utils.lightColor),
         home: HomeScreen());
   }
 }

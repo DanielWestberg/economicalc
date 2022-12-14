@@ -1,3 +1,4 @@
+import 'package:economicalc_client/components/drawer.dart';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/screens/results_screen.dart';
@@ -76,7 +77,7 @@ class _HomeScreen extends State<HomeScreen> {
 
   Widget renderSearchField() {
     return Container(
-        color: Utils.backgroundColor,
+        color: Utils.mediumLightColor,
         padding: EdgeInsets.all(25),
         child: TextField(
           onChanged: (value) {
@@ -84,11 +85,13 @@ class _HomeScreen extends State<HomeScreen> {
           },
           controller: editingController,
           decoration: InputDecoration(
+              focusColor: Utils.lightColor,
+              hoverColor: Utils.lightColor,
               labelText: "Search",
               hintText: "Search",
-              prefixIcon: Icon(Icons.search),
+              prefixIcon: Icon(Icons.search_rounded),
               suffixIcon: IconButton(
-                icon: Icon(Icons.clear),
+                icon: Icon(Icons.clear_rounded),
                 onPressed: (() {
                   setState(() {
                     showSearchBar = false;
@@ -102,120 +105,124 @@ class _HomeScreen extends State<HomeScreen> {
 
   Widget iconSection() {
     return Container(
-      color: Utils.backgroundColor,
-      padding: EdgeInsets.only(top: 10),
-      child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: <
-          Widget>[
-        IconButton(
-            icon: Icon(Icons.camera_alt_outlined),
-            onPressed: (() async {
-              final XFile? image =
-                  await ImagePicker().pickImage(source: ImageSource.camera);
-              //process()
-              if (image == null) return;
-              ImageGallerySaver.saveFile(image.path);
-              goToResults(image);
-            })),
-        IconButton(
-          icon: Icon(Icons.filter),
-          onPressed: (() async {
-            final XFile? image =
-                await ImagePicker().pickImage(source: ImageSource.gallery);
-            if (image == null) return;
-            goToResults(image);
-          }),
-        ),
-        IconButton(
-          icon: Icon(Icons.search),
-          onPressed: (() async {
-            setState(() {
-              showSearchBar = true;
-            });
-          }),
-        ),
-        IconButton(
-          icon: Icon(Icons.auto_graph),
-          onPressed: (() {
-            Navigator.push(_context,
-                MaterialPageRoute(builder: (_context) => StatisticsScreen()));
-          }),
-        ),
-        IconButton(
-          icon: Icon(Icons.filter_alt),
-          onPressed: (() {
-            startDate['previous'] = startDate['dialog'] = startDate['selected'];
-            endDate['previous'] = endDate['dialog'] = endDate['selected'];
-            category['previous'] = category['dialog'] = category['selected'];
-            dropdownValueCategory = category['selected'].description;
-            showDialog(
-                context: _context,
-                builder: (context) {
-                  return StatefulBuilder(builder: (context, setState) {
-                    return filterPopup(context, setState);
-                  });
+      color: Utils.mediumLightColor,
+      padding: EdgeInsets.only(top: 10, bottom: 10),
+      child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            IconButton(
+                iconSize: 30,
+                icon: Icon(Icons.camera_alt_outlined),
+                onPressed: (() async {
+                  final XFile? image =
+                      await ImagePicker().pickImage(source: ImageSource.camera);
+                  //process()
+                  if (image == null) return;
+                  ImageGallerySaver.saveFile(image.path);
+                  goToResults(image);
+                })),
+            IconButton(
+              iconSize: 30,
+              icon: Icon(Icons.filter_rounded),
+              onPressed: (() async {
+                final XFile? image =
+                    await ImagePicker().pickImage(source: ImageSource.gallery);
+                if (image == null) return;
+                goToResults(image);
+              }),
+            ),
+            IconButton(
+              iconSize: 30,
+              icon: Icon(Icons.search_rounded),
+              onPressed: (() async {
+                setState(() {
+                  showSearchBar = true;
                 });
-          }),
-        ),
-      ]),
+              }),
+            ),
+            IconButton(
+              iconSize: 30,
+              icon: Icon(Icons.filter_alt_rounded),
+              onPressed: (() {
+                startDate['previous'] =
+                    startDate['dialog'] = startDate['selected'];
+                endDate['previous'] = endDate['dialog'] = endDate['selected'];
+                category['previous'] =
+                    category['dialog'] = category['selected'];
+                dropdownValueCategory = category['selected'].description;
+                showDialog(
+                    context: _context,
+                    builder: (context) {
+                      return StatefulBuilder(builder: (context, setState) {
+                        return filterPopup(context, setState);
+                      });
+                    });
+              }),
+            ),
+          ]),
     );
   }
 
   Widget drawer = Drawer(
-    backgroundColor: Utils.drawerColor,
+    width: 250,
+    backgroundColor: Utils.lightColor.withOpacity(1),
     child: ListView(
-      padding: EdgeInsets.fromLTRB(0, 80, 0, 0),
-      itemExtent: 70.0,
+      padding: EdgeInsets.fromLTRB(10, 50, 10, 0),
+      itemExtent: 60.0,
       children: [
         ListTile(
-          tileColor: Utils.tileColor,
+          iconColor: Utils.mediumDarkColor,
+          textColor: Utils.mediumDarkColor,
+          selected: true,
+          selectedColor: Utils.darkColor,
+          selectedTileColor: Utils.mediumDarkColor.withOpacity(0.7),
+          style: ListTileStyle.drawer,
+          minLeadingWidth: 10,
+          leading: Icon(Icons.history_rounded),
           shape: RoundedRectangleBorder(
-            side: BorderSide(color: Utils.drawerColor, width: 10),
+            borderRadius: BorderRadius.all(Radius.circular(10)),
           ),
-          title: Text('History',
-              style:
-                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
+          title:
+              Text('History', style: TextStyle(fontSize: Utils.drawerFontsize)),
           onTap: () {
             Navigator.push(_context,
                 MaterialPageRoute(builder: (_context) => HomeScreen()));
           },
         ),
         ListTile(
-          tileColor: Utils.tileColor,
+          iconColor: Utils.mediumDarkColor,
+          textColor: Utils.mediumDarkColor,
+          selected: false,
+          selectedColor: Utils.darkColor,
+          selectedTileColor: Utils.mediumLightColor.withOpacity(0.7),
+          style: ListTileStyle.drawer,
+          minLeadingWidth: 10,
+          leading: Icon(Icons.auto_graph_rounded),
           shape: RoundedRectangleBorder(
-            side: BorderSide(color: Utils.drawerColor, width: 10),
+            borderRadius: BorderRadius.all(Radius.circular(10)),
           ),
-          title: Text('Scan',
-              style:
-                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
+          title: Text('Statistics',
+              style: TextStyle(fontSize: Utils.drawerFontsize)),
           onTap: () {
-            print("scan in hamburger");
+            Navigator.push(_context,
+                MaterialPageRoute(builder: (_context) => StatisticsScreen()));
           },
         ),
         ListTile(
-          tileColor: Utils.tileColor,
+          iconColor: Utils.mediumDarkColor,
+          textColor: Utils.mediumDarkColor,
+          selected: false,
+          selectedColor: Utils.darkColor,
+          selectedTileColor: Utils.mediumLightColor.withOpacity(0.7),
+          style: ListTileStyle.drawer,
+          minLeadingWidth: 10,
+          leading: Icon(Icons.science_rounded),
+          tileColor: Utils.lightColor.withOpacity(0.5),
           shape: RoundedRectangleBorder(
-            side: BorderSide(color: Utils.drawerColor, width: 10),
-          ),
-          title: Text('Settings',
-              style:
-                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
-          onTap: () {
-            Navigator.of(_context)
-                .push(
-                    MaterialPageRoute(builder: (_context) => SettingsScreen()))
-                .then((value) {
-              Phoenix.rebirth(_context);
-            });
-          },
-        ),
-        ListTile(
-          tileColor: Utils.tileColor,
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: Utils.drawerColor, width: 10),
+            borderRadius: BorderRadius.all(Radius.circular(10)),
           ),
           title: Text('Run tests',
-              style:
-                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
+              style: TextStyle(fontSize: Utils.drawerFontsize)),
           onTap: () async {
             print("Running tests");
             String userId = "bruh";
@@ -269,16 +276,47 @@ class _HomeScreen extends State<HomeScreen> {
           },
         ),
         ListTile(
-          tileColor: Utils.tileColor,
+          iconColor: Utils.mediumDarkColor,
+          textColor: Utils.mediumDarkColor,
+          selected: false,
+          selectedColor: Utils.darkColor,
+          selectedTileColor: Utils.mediumLightColor.withOpacity(0.7),
+          style: ListTileStyle.drawer,
+          minLeadingWidth: 10,
+          leading: Icon(Icons.account_balance_rounded),
+          tileColor: Utils.lightColor.withOpacity(0.5),
           shape: RoundedRectangleBorder(
-            side: BorderSide(color: Utils.drawerColor, width: 10),
+            borderRadius: BorderRadius.all(Radius.circular(10)),
           ),
-          title: Text('Login',
-              style:
-                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
+          title: Text('Connect to bank',
+              style: TextStyle(fontSize: Utils.drawerFontsize)),
           onTap: () {
             Navigator.of(_context)
                 .push(MaterialPageRoute(builder: (_context) => OpenLink()))
+                .then((value) {
+              Phoenix.rebirth(_context);
+            });
+          },
+        ),
+        ListTile(
+          iconColor: Utils.mediumDarkColor,
+          textColor: Utils.mediumDarkColor,
+          selected: false,
+          selectedColor: Utils.darkColor,
+          selectedTileColor: Utils.mediumLightColor.withOpacity(0.7),
+          style: ListTileStyle.drawer,
+          minLeadingWidth: 10,
+          leading: Icon(Icons.settings_rounded),
+          tileColor: Utils.lightColor.withOpacity(0.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(10)),
+          ),
+          title: Text('Settings',
+              style: TextStyle(fontSize: Utils.drawerFontsize)),
+          onTap: () {
+            Navigator.of(_context)
+                .push(
+                    MaterialPageRoute(builder: (_context) => SettingsScreen()))
                 .then((value) {
               Phoenix.rebirth(_context);
             });
@@ -306,9 +344,10 @@ class _HomeScreen extends State<HomeScreen> {
             Text("Start date:"),
             TextButton(
               style: ButtonStyle(
-                foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
+                foregroundColor:
+                    MaterialStateProperty.all<Color>(Utils.textColor),
                 backgroundColor:
-                    MaterialStateProperty.all<Color>(Colors.black12),
+                    MaterialStateProperty.all<Color>(Utils.mediumLightColor),
               ),
               child: Text(DateFormat('yyyy-MM-dd').format(startDate['dialog'])),
               onPressed: () async {
@@ -330,9 +369,9 @@ class _HomeScreen extends State<HomeScreen> {
               TextButton(
                 style: ButtonStyle(
                   foregroundColor:
-                      MaterialStateProperty.all<Color>(Colors.black),
+                      MaterialStateProperty.all<Color>(Utils.textColor),
                   backgroundColor:
-                      MaterialStateProperty.all<Color>(Colors.black12),
+                      MaterialStateProperty.all<Color>(Utils.mediumLightColor),
                 ),
                 child: Text(DateFormat('yyyy-MM-dd').format(endDate['dialog'])),
                 onPressed: () async {
@@ -362,8 +401,10 @@ class _HomeScreen extends State<HomeScreen> {
       actions: [
         ElevatedButton(
           style: ButtonStyle(
-              backgroundColor:
-                  MaterialStateProperty.all<Color>(Utils.backgroundColor)),
+            foregroundColor: MaterialStateProperty.all<Color>(Utils.textColor),
+            backgroundColor:
+                MaterialStateProperty.all<Color>(Utils.mediumLightColor),
+          ),
           child: const Text('Apply'),
           onPressed: () async {
             updateSelected(
@@ -373,8 +414,10 @@ class _HomeScreen extends State<HomeScreen> {
         ),
         ElevatedButton(
           style: ButtonStyle(
-              backgroundColor:
-                  MaterialStateProperty.all<Color>(Utils.backgroundColor)),
+            foregroundColor: MaterialStateProperty.all<Color>(Utils.textColor),
+            backgroundColor:
+                MaterialStateProperty.all<Color>(Utils.mediumLightColor),
+          ),
           child: const Text('Cancel'),
           onPressed: () async {
             updateSelected(startDate['previous'], endDate['previous'],
@@ -416,11 +459,16 @@ class _HomeScreen extends State<HomeScreen> {
                         .map<DropdownMenuItem<String>>((Category category) {
                       return DropdownMenuItem<String>(
                         value: category.description,
-                        child: Text(category.description,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: category.color)),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Container(
+                                  padding: EdgeInsets.only(right: 10),
+                                  child: Icon(Icons.circle_rounded,
+                                      color: category.color)),
+                              Text(category.description,
+                                  overflow: TextOverflow.ellipsis)
+                            ]),
                       );
                     }).toList()));
           } else {
@@ -433,17 +481,17 @@ class _HomeScreen extends State<HomeScreen> {
   Widget build(BuildContext context) {
     _context = context;
     List<Widget> children = [
-      iconSection(),
       Expanded(
           child: HistoryList(historyListStateKey, startDate['selected'],
               endDate['selected'], category['selected'])),
+      iconSection(),
     ];
     if (showSearchBar) {
       children = [
-        renderSearchField(),
         Expanded(
             child: HistoryList(historyListStateKey, startDate['selected'],
-                endDate['selected'], category['selected']))
+                endDate['selected'], category['selected'])),
+        renderSearchField(),
       ];
     }
     return SafeArea(
@@ -451,20 +499,14 @@ class _HomeScreen extends State<HomeScreen> {
             appBar: AppBar(
               toolbarHeight: 80,
               toolbarOpacity: 1,
-              backgroundColor: Utils.backgroundColor,
-              foregroundColor: Colors.black,
-              title: Column(children: const [
-                Text("EconomiCalc",
-                    style: TextStyle(
-                        color: Color(0xff000000),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 36.0)),
-              ]),
+              backgroundColor: Utils.mediumLightColor,
+              foregroundColor: Utils.textColor,
+              title: Text("EconomiCalc", style: TextStyle(fontSize: 36.0)),
               centerTitle: true,
-              elevation: 0,
+              elevation: 5,
             ),
             key: _globalKey,
-            drawer: drawer,
+            drawer: DrawerMenu(0),
             body: Column(
               children: children,
             )));

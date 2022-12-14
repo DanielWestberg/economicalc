@@ -61,25 +61,14 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                     icon: Icon(Icons.receipt_long))
               ],
               toolbarHeight: 180,
-              backgroundColor: Utils.backgroundColor,
+              backgroundColor: Utils.mediumLightColor,
               foregroundColor: Colors.black,
               leading: new IconButton(
                   onPressed: (() {
                     Navigator.pop(context);
                   }),
                   icon: Icon(Icons.arrow_back)),
-              title: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                        padding: EdgeInsets.only(left: 10),
-                        child: Text("EconomiCalc",
-                            style: TextStyle(
-                                color: Color(0xff000000),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 36.0))),
-                    headerInfo()
-                  ]),
+              title: headerInfo(),
               centerTitle: false,
               elevation: 0,
             ),

@@ -52,14 +52,14 @@ class ResultsScreenState extends State<ResultsScreen> {
     return SafeArea(
         child: isLoading
             ? Scaffold(
-                backgroundColor: Utils.backgroundColor,
+                backgroundColor: Utils.mediumLightColor,
                 body: Center(
                     child: LoadingAnimationWidget.threeArchedCircle(
                         color: Colors.black, size: 40)))
             : Scaffold(
                 appBar: AppBar(
                   toolbarHeight: 180,
-                  backgroundColor: Utils.backgroundColor,
+                  backgroundColor: Utils.mediumLightColor,
                   foregroundColor: Colors.black,
                   title: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,9 +68,7 @@ class ResultsScreenState extends State<ResultsScreen> {
                             padding: EdgeInsets.only(left: 10),
                             child: Text("EconomiCalc",
                                 style: TextStyle(
-                                    color: Color(0xff000000),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 36.0))),
+                                    color: Color(0xff000000), fontSize: 36.0))),
                       ]),
                   centerTitle: false,
                   elevation: 0,
@@ -375,7 +373,7 @@ class ResultsScreenState extends State<ResultsScreen> {
     } on QuotaException catch (e) {
       Navigator.of(context).pop(false);
       final snackBar = SnackBar(
-        backgroundColor: Utils.snackBarError,
+        backgroundColor: Utils.errorColor,
         content: Text(
           'ERROR: Hourly quota exceeded. Try again in a few hours or use a VPN.',
           style: TextStyle(color: Colors.white),
@@ -386,7 +384,7 @@ class ResultsScreenState extends State<ResultsScreen> {
     } catch (e) {
       Navigator.of(context).pop(false);
       final snackBar = SnackBar(
-        backgroundColor: Utils.snackBarError,
+        backgroundColor: Utils.errorColor,
         content: Text(
           'ERROR: Image could not be processed.',
           style: TextStyle(color: Colors.white),

@@ -14,7 +14,7 @@ class CategoriesScreen extends StatefulWidget {
 class _CategoriesScreenState extends State<CategoriesScreen> {
   late Future<List<Category>> categoryFuture;
   late List<Category> categories;
-  Color pickerColor = Utils.backgroundColor;
+  Color pickerColor = Utils.mediumLightColor;
   String description = "";
   final SQFLite dbConnector = SQFLite.instance;
 
@@ -45,7 +45,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             return Scaffold(
                 appBar: AppBar(
                   foregroundColor: Colors.black,
-                  backgroundColor: Utils.backgroundColor,
+                  backgroundColor: Utils.mediumLightColor,
                   title: Text("Categories", style: TextStyle(fontSize: 30)),
                   centerTitle: true,
                 ),
@@ -93,8 +93,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                 trailing: categories[index].description !=
                                         'Uncategorized'
                                     ? PopupMenuButton(
-                                        icon: Icon(Icons.remove_circle,
-                                            color: Colors.red),
+                                        icon: Icon(Icons.delete),
                                         itemBuilder: (context) => [
                                               PopupMenuItem(
                                                 child: Text("Remove"),
