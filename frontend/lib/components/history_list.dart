@@ -166,7 +166,7 @@ class HistoryListState extends State<HistoryList> {
                                                 transactions[index].categoryID!,
                                                 categories)
                                             .color,
-                                        width: 6),
+                                        width: 10),
                                     top: BorderSide(
                                         color: Utils.mediumDarkColor,
                                         width: 0.5),

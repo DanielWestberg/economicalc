@@ -58,19 +58,10 @@ class ResultsScreenState extends State<ResultsScreen> {
                         color: Colors.black, size: 40)))
             : Scaffold(
                 appBar: AppBar(
-                  toolbarHeight: 180,
                   backgroundColor: Utils.mediumLightColor,
                   foregroundColor: Colors.black,
-                  title: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                            padding: EdgeInsets.only(left: 10),
-                            child: Text("EconomiCalc",
-                                style: TextStyle(
-                                    color: Color(0xff000000), fontSize: 36.0))),
-                      ]),
-                  centerTitle: false,
+                  title: Text('Scan result'),
+                  centerTitle: true,
                   elevation: 0,
                 ),
                 body: ListView(children: [
