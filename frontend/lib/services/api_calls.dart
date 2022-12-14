@@ -60,8 +60,10 @@ fetchLoginData(String account_report_id, String transaction_report_id) async {
   var uri = Uri.https(apiServer, path);
   var response =
       await http.post(uri, headers: headers, body: json.encode(data));
+  print(await http.post(uri, headers: headers, body: json.encode(data)));
+  print(json.encode(data));
   print(uri);
-  print(response);
+  print(response.body);
   if (response.statusCode != 200)
     throw Exception('http.get error: statusCode= ${response.statusCode}');
   print(response.body);
@@ -69,7 +71,7 @@ fetchLoginData(String account_report_id, String transaction_report_id) async {
   print(res);
   print(res["session_id"]);
   print(res["account_report"]);
-  print(res["transaction_report"]);
+  print(res["transaction_report"]["transactions"]);
   return response.body;
 }
 
