@@ -16,7 +16,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as http_parser;
 import 'dart:convert' as convert;
 
-const String apiServer = "192.168.0.165:5000";
+const String apiServer = "api.economicalc.online";
 
 Future<List<Receipt>> fetchMockedTransactions() async {
   final String response =
@@ -51,7 +51,7 @@ Future<List<BankTransaction>> fetchTransactions(String access_token) async {
   //print("INSIDE TRANSACTIOn");
   String path = '/tink_transaction_history/';
   path += access_token;
-  final response = await http.get(Uri.http(apiServer, path));
+  final response = await http.get(Uri.https(apiServer, path));
   if (response.statusCode == 200) {
     List<dynamic> transactions =
         convert.jsonDecode(response.body)["transactions"];
@@ -69,14 +69,18 @@ Future<List<BankTransaction>> fetchTransactions(String access_token) async {
   }
 }
 
-Future<Response> CodeToAccessToken(String code) async {
+Future<Response> CodeToAccessToken(String code, bool test) async {
   String path = '/tink_access_token/';
   path += code;
+  if (test)
+    path += '/T';
+  else
+    path += '/F';
   print("PATH: " + path);
   print("APISERVER: " + apiServer);
   print("URIU PÅATH");
   print(Uri.https(apiServer, path));
-  final response = await http.get(Uri.http(apiServer, path));
+  final response = await http.get(Uri.https(apiServer, path));
   print("Hej");
   print("response: ${response.body}");
   Response accessToken = Response.fromJson(convert.jsonDecode(response.body));
@@ -148,7 +152,7 @@ processImageWithAsprise(File imageFile) async {
 
 fetchReceipts(String userId) async {
   final String path = "/users/$userId/receipts";
-  final response = await http.get(Uri.http(apiServer, path));
+  final response = await http.get(Uri.https(apiServer, path));
   if (response.statusCode != 200) {
     throw Exception(
         "Unexpected status code ${response.statusCode}\n{response.body}");
@@ -164,7 +168,7 @@ fetchReceipts(String userId) async {
 
 postReceipt(String userId, Receipt receipt) async {
   final String path = "/users/$userId/receipts";
-  final Uri uri = Uri.http(apiServer, path);
+  final Uri uri = Uri.https(apiServer, path);
   final headers = {"Content-type": "application/json"};
   final body = convert.jsonEncode(receipt.toMap());
   final response = await http.post(uri, headers: headers, body: body);
@@ -176,7 +180,7 @@ postReceipt(String userId, Receipt receipt) async {
 }
 
 updateReceipt(String userId, String receiptId, Receipt receipt) async {
-  final uri = Uri.http(apiServer, "/users/$userId/receipts/$receiptId");
+  final uri = Uri.https(apiServer, "/users/$userId/receipts/$receiptId");
   final headers = {"Content-type": "application/json"};
   final body = convert.jsonEncode(receipt.toMap());
   final response = await http.put(uri, headers: headers, body: body);
@@ -188,7 +192,7 @@ updateReceipt(String userId, String receiptId, Receipt receipt) async {
 
 deleteReceipt(String userId, Receipt receipt) async {
   final uri =
-      Uri.http(apiServer, "/users/$userId/receipts/${receipt.backendId}");
+      Uri.https(apiServer, "/users/$userId/receipts/${receipt.backendId}");
   final response = await http.delete(uri);
   if (response.statusCode != 204) {
     throw Exception(
@@ -197,7 +201,7 @@ deleteReceipt(String userId, Receipt receipt) async {
 }
 
 updateImage(String userId, String receiptId, XFile image) async {
-  final uri = Uri.http(apiServer, "/users/$userId/receipts/$receiptId/image");
+  final uri = Uri.https(apiServer, "/users/$userId/receipts/$receiptId/image");
   final mimeType = image.mimeType ?? "application/octet-stream";
   final request = http.MultipartRequest("PUT", uri)
     ..files.add(await http.MultipartFile.fromPath("file", image.path,
@@ -210,7 +214,7 @@ updateImage(String userId, String receiptId, XFile image) async {
 }
 
 fetchImage(String userId, String receiptId) async {
-  final uri = Uri.http(apiServer, "/users/$userId/receipts/$receiptId/image");
+  final uri = Uri.https(apiServer, "/users/$userId/receipts/$receiptId/image");
   final response = await http.get(uri);
   if (response.statusCode != 200) {
     throw Exception(
@@ -220,7 +224,7 @@ fetchImage(String userId, String receiptId) async {
 }
 
 deleteImage(String userId, String receiptId) async {
-  final uri = Uri.http(apiServer, "/users/$userId/receipts/$receiptId/image");
+  final uri = Uri.https(apiServer, "/users/$userId/receipts/$receiptId/image");
   final response = await http.delete(uri);
   if (response.statusCode != 204) {
     throw Exception(
@@ -229,11 +233,11 @@ deleteImage(String userId, String receiptId) async {
 }
 
 registerUser(String userId) async {
-  await http.put(Uri.http(apiServer, "/users/$userId"));
+  await http.put(Uri.https(apiServer, "/users/$userId"));
 }
 
 fetchCategories(String userId) async {
-  final uri = Uri.http(apiServer, "/users/$userId/categories");
+  final uri = Uri.https(apiServer, "/users/$userId/categories");
   final response = await http.get(uri);
   if (response.statusCode != 200) {
     throw Exception(
@@ -245,7 +249,7 @@ fetchCategories(String userId) async {
 }
 
 postCategory(String userId, Category category) async {
-  final uri = Uri.http(apiServer, "/users/$userId/categories");
+  final uri = Uri.https(apiServer, "/users/$userId/categories");
   final headers = {"Content-type": "application/json"};
   final body = convert.jsonEncode(category.toJson(true));
   final response = await http.post(uri, headers: headers, body: body);
@@ -256,7 +260,7 @@ postCategory(String userId, Category category) async {
 }
 
 updateCategory(String userId, Category category) async {
-  final uri = Uri.http(apiServer, "/users/$userId/categories/${category.id!}");
+  final uri = Uri.https(apiServer, "/users/$userId/categories/${category.id!}");
   final headers = {"Content-type": "application/json"};
   final body = convert.jsonEncode(category.toJson(true));
   final response = await http.put(uri, headers: headers, body: body);
@@ -267,4 +271,4 @@ updateCategory(String userId, Category category) async {
 }
 
 deleteCategory(String userId, int categoryId) async => await http
-    .delete(Uri.http(apiServer, "/users/$userId/categories/$categoryId"));
+    .delete(Uri.https(apiServer, "/users/$userId/categories/$categoryId"));

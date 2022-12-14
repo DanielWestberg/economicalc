@@ -160,6 +160,7 @@ class _HomeScreen extends State<HomeScreen> {
     );
   }
 
+  bool test = true;
   Widget drawer = Drawer(
     backgroundColor: Utils.drawerColor,
     child: ListView(
@@ -273,12 +274,28 @@ class _HomeScreen extends State<HomeScreen> {
           shape: RoundedRectangleBorder(
             side: BorderSide(color: Utils.drawerColor, width: 10),
           ),
-          title: Text('Login',
+          title: Text('Login TEST',
               style:
                   GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
           onTap: () {
             Navigator.of(_context)
-                .push(MaterialPageRoute(builder: (_context) => OpenLink()))
+                .push(MaterialPageRoute(builder: (_context) => OpenLink(true)))
+                .then((value) {
+              Phoenix.rebirth(_context);
+            });
+          },
+        ),
+        ListTile(
+          tileColor: Utils.tileColor,
+          shape: RoundedRectangleBorder(
+            side: BorderSide(color: Utils.drawerColor, width: 10),
+          ),
+          title: Text('Login BANKID',
+              style:
+                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
+          onTap: () {
+            Navigator.of(_context)
+                .push(MaterialPageRoute(builder: (_context) => OpenLink(false)))
                 .then((value) {
               Phoenix.rebirth(_context);
             });

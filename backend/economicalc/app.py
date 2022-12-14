@@ -45,17 +45,20 @@ def create_app(config):
         #request = requests.post()
         return ""
 
-    @app.route('/tink_access_token/<code>')
-    def tink_access_token(code):
-
-        ENVIRONMENT_TINK_CLIENT_ID = os.environ.get('TINK_CLIENT_ID')
-        ENVIRONMENT_TINK_CLIENT_SECRET = os.environ.get('TINK_CLIENT_SECRET')
+    @app.route('/tink_access_token/<code>/<test>')
+    def tink_access_token(code, test):
+        if test == 'T':
+            ENVIRONMENT_TINK_CLIENT_ID = os.environ.get('TINK_CLIENT_ID')
+            ENVIRONMENT_TINK_CLIENT_SECRET = os.environ.get('TINK_CLIENT_SECRET')
+        else:
+            ENVIRONMENT_TINK_CLIENT_ID = os.environ.get('PROD_TINK_CLIENT_ID')
+            ENVIRONMENT_TINK_CLIENT_SECRET = os.environ.get('PROD_TINK_CLIENT_SECRET')
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded',
         }
         print(ENVIRONMENT_TINK_CLIENT_ID)
         print(ENVIRONMENT_TINK_CLIENT_SECRET)
-        data = f'code={code}&client_id={ENVIRONMENT_TINK_CLIENT_ID}&client_secret={ENVIRONMENT_TINK_CLIENT_SECRET}&grant_type=authorization_code'
+        data = f'code={code}&client_id={ENVIRONMENT_TINK_CLIENT_ID}&client_secret={ENVIRONMENT_TINK_CLIENT_SECRET}&grant_type=authorization_code&scope=transactions:read,user:read,account:read'
         print(data)
         response = requests.post('https://api.tink.com/api/v1/oauth/token', headers=headers, data=data)
         print(response.text, flush=True)
