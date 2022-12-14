@@ -20,7 +20,7 @@ import '../models/LoginData.dart';
 // XXX: DO NOT INCLUDE THE FOLLOWING TEMPORARY CHANGES IN MASTER:
 // - CHANGED API SERVER IP TO LOCAL MACHINE
 // - CHANGED API SERVER CALLS FROM HTTPS TO HTTP
-const String apiServer = "api.economicalc.online";
+const String apiServer = "192.168.0.165:5000";
 const String tinkReportEndpoint =
     "https://link.tink.com/1.0/reports/create-report"
     "?client_id=1a539460199a4e8bb374893752db14e6"
@@ -64,7 +64,7 @@ Future<List<ReceiptItem>> fetchMockedReceiptItems() async {
 }
 
 Future<LoginData> fetchLoginData(
-    String account_report_id, String transaction_report_id, String test) async {
+    String account_report_id, String transaction_report_id, bool test) async {
   var headers = {
     'Content-type': 'application/json',
   };
@@ -74,8 +74,9 @@ Future<LoginData> fetchLoginData(
     "transaction_report_id": transaction_report_id
   };
 
-  String path = ('tink_user_data/$test');
-  var uri = Uri.https(apiServer, path);
+  final testString = test ? "T" : "F";
+  String path = ('tink_user_data/$testString');
+  var uri = Uri.http(apiServer, path);
   var response =
       await http.post(uri, headers: headers, body: json.encode(data));
   //print(uri);

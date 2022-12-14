@@ -36,7 +36,9 @@ main() async {
     throw const MissingParamException("transactionReportId");
   }
 
-  final loginData = await fetchLoginData(accountReportId, transactionReportId);
+  final loginData = await fetchLoginData(
+      accountReportId, transactionReportId, true
+  );
   final cookie = loginData.cookie;
   const int categoryId = 1234;
 

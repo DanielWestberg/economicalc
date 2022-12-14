@@ -101,11 +101,8 @@ class OpenLinkState extends State<OpenLink> {
               String transaction_report_id = params["transaction_report_id"]!;
               String account_report_id = params[
                   "https://console.tink.com/callback?account_verification_report_id"]!;
-              String t = "";
-              if (widget.test) t = 'T';
-              if (!widget.test) t = 'F';
               LoginData data = await fetchLoginData(
-                  account_report_id, transaction_report_id, t);
+                  account_report_id, transaction_report_id, widget.test);
 
               print(data.transactionReport["transactions"]);
               print(data.accountReport["userDataByProvider"][0]
