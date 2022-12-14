@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:core';
 
 import 'package:economicalc_client/helpers/sqlite.dart';
+import 'package:economicalc_client/models/LoginData.dart';
 import 'package:economicalc_client/models/response.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
 import 'package:economicalc_client/screens/home_screen.dart';
@@ -14,6 +15,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:device_apps/device_apps.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:android_intent/android_intent.dart';
+import 'dart:convert' as convert;
 
 class OpenLink extends StatefulWidget {
   final bool test;
@@ -40,7 +42,7 @@ class OpenLinkState extends State<OpenLink> {
   late final String clientId;
   late final String redirectUri;
   late String selectedUrl =
-      "https://link.tink.com/1.0/reports/create-report?client_id=1a539460199a4e8bb374893752db14e6&redirect_uri=https://console.tink.com/callback&market=SE&report_types=TRANSACTION_REPORT,ACCOUNT_VERIFICATION_REPORT&refreshable_items=IDENTITY_DATA,CHECKING_ACCOUNTS,SAVING_ACCOUNTS,CHECKING_TRANSACTIONS,SAVING_TRANSACTIONS&account_dialog_type=SINGLE";
+      "https://link.tink.com/1.0/reports/create-report?client_id=1a539460199a4e8bb374893752db14e6&redirect_uri=https://console.tink.com/callback&market=SE&report_types=TRANSACTION_REPORT,ACCOUNT_VERIFICATION_REPORT&refreshable_items=IDENTITY_DATA,CHECKING_ACCOUNTS,SAVING_ACCOUNTS,CHECKING_TRANSACTIONS,SAVING_TRANSACTIONS";
 
   late final Response response;
   late final List<BankTransaction> transactions;
@@ -50,7 +52,7 @@ class OpenLinkState extends State<OpenLink> {
   void initState() {
     if (widget.test == false) {
       selectedUrl =
-          "https://link.tink.com/1.0/transactions/connect-accounts/?client_id=1e48aa066d3f46bcb31bf2acb949a6ca&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fcallback&market=SE&locale=en_US";
+          "https://link.tink.com/1.0/reports/create-report?client_id=1e48aa066d3f46bcb31bf2acb949a6ca&redirect_uri=https://console.tink.com/callback&market=SE&report_types=TRANSACTION_REPORT,ACCOUNT_VERIFICATION_REPORT&refreshable_items=IDENTITY_DATA,CHECKING_ACCOUNTS,SAVING_ACCOUNTS,CHECKING_TRANSACTIONS,SAVING_TRANSACTIONS";
     }
     // TODO: implement initState
 
@@ -99,9 +101,29 @@ class OpenLinkState extends State<OpenLink> {
               String transaction_report_id = params["transaction_report_id"]!;
               String account_report_id = params[
                   "https://console.tink.com/callback?account_verification_report_id"]!;
+              String t = "";
+              if (widget.test) t = 'T';
+              if (!widget.test) t = 'F';
+              LoginData data = await fetchLoginData(
+                  account_report_id, transaction_report_id, t);
 
-              var data = await fetchLoginData(
-                  account_report_id, transaction_report_id);
+              print(data.transactionReport["transactions"]);
+              print(data.accountReport["userDataByProvider"][0]
+                  ["financialInstitutionName"]);
+              print(data.accountReport["userDataByProvider"][0]["identity"]
+                  ["name"]);
+
+              List<BankTransaction> resTrans = [];
+              data.transactionReport["transactions"].forEach((transaction) {
+                resTrans.add(BankTransaction.fromJson(transaction));
+              });
+
+              for (var transaction in resTrans) {
+                dbConnector.postBankTransaction(transaction);
+              }
+
+              if (!mounted) return NavigationDecision.prevent;
+              Navigator.of(context).popUntil((route) => route.isFirst);
               return NavigationDecision.prevent;
             } else if (action.url
                     .contains("http%3A%2F%2Flocalhost%3A5000%2Fcallback") &&

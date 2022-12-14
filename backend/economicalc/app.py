@@ -23,27 +23,37 @@ def create_app(config):
     def make_unauthorized_response(message="Authentication required"):
         return make_response(message, unauthorized)
 
+
+    def register_user(ssn):
+        if db.users.find_one({"bankId": ssn}) is None:
+            db.users.insert_one({"bankId": ssn, "receipts": [], "categories": []})
+
+
     def initiate_session(access_token, ssn):
-        session_id = str(ObjectId())
-        session["id"] = session_id
         session["access_token"] = access_token
         session["ssn"] = ssn
-        return session_id
 
-    def session_is_valid(session_id):
-        return "id" in session and session["id"] == session_id
+        register_user(ssn)
+
+
+    def session_is_valid():
+        return "ssn" in session
         
+
     def terminate_session():
         pass
 
-    @app.route("/tink_user_data", methods=["POST"])
-    def tink_user_data():
+
+    @app.route("/tink_user_data/<test>", methods=["POST"])
+    def tink_user_data(test):
+        if test == "T": test = True
+        if test == "F": test = False
         account_report_id = request.json["account_report_id"]
         transaction_report_id = request.json["transaction_report_id"]
         print(account_report_id, flush=True);
         print(transaction_report_id, flush= True);
         print("Tokens recieved");
-        cred_respose = post_credentials_token(True)
+        cred_respose = post_credentials_token(test)
         print(cred_respose, flush=True)
         access_token = cred_respose['access_token']
 
@@ -63,10 +73,9 @@ def create_app(config):
         print(ssn)
 
         #CREATE NEW SESSION
-        session_id = initiate_session(access_token, ssn)
+        initiate_session(access_token, ssn)
 
         res_json = {
-            "session_id": str(session_id),
             "account_report": account_report,
             "transaction_report": transaction_report,
         }
@@ -74,17 +83,18 @@ def create_app(config):
         return jsonify(data=res_json)
 
         
-
     def get_account_info(account_report_id, access_token):
         headers = {'Authorization': f'Bearer {access_token}',}
         response = requests.get(
         f'https://api.tink.com/api/v1/account-verification-reports/{account_report_id}', headers=headers,)
         return response
 
+
     def get_transaction_data(transaction_report_id, access_token):
         headers = {'Authorization': f'Bearer {access_token}',}
         response = requests.get(f'https://api.tink.com/data/v2/transaction-reports/{transaction_report_id}', headers=headers,)
         return response
+
     
     def post_credentials_token(test : bool):
         if test:
@@ -123,6 +133,7 @@ def create_app(config):
         #request = requests.post()
         return ""
 
+
     @app.route('/tink_access_token/<code>/<test>')
     def tink_access_token(code, test):
         if test == 'T':
@@ -149,7 +160,6 @@ def create_app(config):
     def session_token_get(session_token):
         return ""
         
-        
 
     @app.route('/tink_transaction_history/<access_token>')
     def tink_transaction_history(access_token):
@@ -161,6 +171,7 @@ def create_app(config):
         response = requests.get('https://api.tink.com/data/v2/transactions', headers=headers)
 
         return response.text
+
 
     @app.route('/tink_transaction_history/<access_token>')
     def tink_account_info(access_token):
@@ -176,9 +187,9 @@ def create_app(config):
         return response.text
 
 
-    @app.route("/users/<session_id>/receipts", methods=["GET", "POST"])
-    def user_receipts(session_id):
-        if not session_is_valid(session_id):
+    @app.route("/receipts", methods=["GET", "POST"])
+    def user_receipts():
+        if not session_is_valid():
             return make_unauthorized_response()
 
         ssn = session["ssn"]
@@ -230,9 +241,10 @@ def create_app(config):
 
         return make_response(jsonify(data=receipt.to_dict(True)), created)
 
-    @app.route("/users/<session_id>/receipts/<ObjectId:receiptId>", methods=["PUT", "DELETE"])
-    def user_receipt_by_id(session_id, receiptId):
-        if not session_is_valid(session_id):
+
+    @app.route("/receipts/<ObjectId:receiptId>", methods=["PUT", "DELETE"])
+    def user_receipt_by_id(receiptId):
+        if not session_is_valid():
             return make_unauthorized_response()
 
         ssn = session["ssn"]
@@ -269,9 +281,9 @@ def create_app(config):
         return make_response("", no_content)
 
 
-    @app.route("/users/<session_id>/receipts/<ObjectId:receiptId>/image", methods=["GET", "PUT", "DELETE"])
-    def user_receipt_image(session_id, receiptId):
-        if not session_is_valid(session_id):
+    @app.route("/receipts/<ObjectId:receiptId>/image", methods=["GET", "PUT", "DELETE"])
+    def user_receipt_image(receiptId):
+        if not session_is_valid():
             return make_unauthorized_response()
 
         ssn = session["ssn"]
@@ -324,9 +336,9 @@ def create_app(config):
         return make_response("", no_content)
 
 
-    @app.route("/users/<session_id>/categories", methods=["GET", "POST"])
-    def user_categories(session_id):
-        if not session_is_valid(session_id):
+    @app.route("/categories", methods=["GET", "POST"])
+    def user_categories():
+        if not session_is_valid():
             return make_unauthorized_response()
 
         ssn = session["ssn"]
@@ -370,9 +382,9 @@ def create_app(config):
         return make_response(jsonify(data=category.to_dict(True)), created)
 
 
-    @app.route("/users/<session_id>/categories/<int:categoryId>", methods=["PUT", "DELETE"])
-    def user_category_by_id(session_id, categoryId):
-        if not session_is_valid(session_id):
+    @app.route("/categories/<int:categoryId>", methods=["PUT", "DELETE"])
+    def user_category_by_id(categoryId):
+        if not session_is_valid():
             return make_unauthorized_response()
 
         ssn = session["ssn"]
@@ -407,16 +419,13 @@ def create_app(config):
         return make_response("", no_content)
 
 
-    # TODO: Add authentication with BankID
-    @app.route("/users/<session_id>", methods=["PUT"])
-    def create_user(session_id):
-        if not session_is_valid(session_id):
+    # Primarliy exists for testing
+    @app.route("/", methods=["PUT"])
+    def create_user():
+        if not session_is_valid():
             return make_unauthorized_response()
 
-        ssn = session["ssn"]
-        if db.users.find_one({"bankId": ssn}) is None:
-            db.users.insert_one({"bankId": ssn, "receipts": [], "categories": []})
-
+        register_user(session["ssn"])
         return make_response("", no_content)
         
 
