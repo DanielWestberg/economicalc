@@ -13,7 +13,6 @@ import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class HistoryList extends StatefulWidget {
   final DateTime startDate;
