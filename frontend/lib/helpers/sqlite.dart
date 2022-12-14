@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/bank_transaction.dart'
     as bank_transaction;
 import 'package:economicalc_client/models/category.dart';
@@ -459,6 +460,26 @@ class SQFLite {
     List<Map<String, dynamic?>>? obj =
         await db?.rawQuery('SELECT * FROM categories WHERE id = "$id"');
     return Category.fromJson(obj![0]);
+  }
+
+  Future<List<Map<String, Object>>> getFilteredCategoryTotals(
+      startDate, endDate, isExpenses) async {
+    final categories = await getAllcategories();
+
+    List<Map<String, Object>> categoryTotals = [];
+
+    for (var category in categories) {
+      var filteredTransactions =
+          await getFilteredTransactions(startDate, endDate, category);
+      var categoryTotal = {
+        "category": category,
+        "totalSum":
+            Utils.getSumOfTransactionsTotals(filteredTransactions, isExpenses)
+      };
+      categoryTotals.add(categoryTotal);
+    }
+
+    return categoryTotals;
   }
 
   Future<void> insertDefaultCategories(Database db) async {

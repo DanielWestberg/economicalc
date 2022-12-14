@@ -68,7 +68,9 @@ class _HomeScreen extends State<HomeScreen> {
         .push(MaterialPageRoute(
             builder: (context) => ResultsScreen(image: image)))
         .then((value) {
-      Phoenix.rebirth(_context);
+      if (value != false) {
+        Phoenix.rebirth(_context);
+      }
     });
   }
 
@@ -451,7 +453,7 @@ class _HomeScreen extends State<HomeScreen> {
       iconSection(),
       Expanded(
           child: HistoryList(historyListStateKey, startDate['selected'],
-              endDate['selected'], category['selected']))
+              endDate['selected'], category['selected'])),
     ];
     if (showSearchBar) {
       children = [
@@ -477,18 +479,6 @@ class _HomeScreen extends State<HomeScreen> {
               ]),
               centerTitle: true,
               elevation: 0,
-              actions: [
-                IconButton(
-                    onPressed: () {
-                      Navigator.of(_context)
-                          .push(MaterialPageRoute(
-                              builder: (_context) => SettingsScreen()))
-                          .then((value) {
-                        Phoenix.rebirth(_context);
-                      });
-                    },
-                    icon: Icon(Icons.settings))
-              ],
             ),
             key: _globalKey,
             drawer: drawer,
