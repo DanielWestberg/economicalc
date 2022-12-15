@@ -12,8 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 class MissingParamException implements Exception {
   final String paramName;
-  get message =>
-      "Missing parameter $paramName. "
+  get message => "Missing parameter $paramName. "
       "Please run 'flutter test' with the flag "
       "'--dart-define=$paramName=<value>";
 
@@ -36,12 +35,12 @@ main() async {
     throw const MissingParamException("transactionReportId");
   }
 
-  final loginData = await fetchLoginData(accountReportId, transactionReportId);
+  final loginData =
+      await fetchLoginData(accountReportId, transactionReportId, "T");
   final cookie = loginData.cookie;
   const int categoryId = 1234;
 
-  setUpAll(() {
-  });
+  setUpAll(() {});
 
   tearDownAll(() async {
     await deleteCategory(cookie, categoryId);
@@ -76,7 +75,7 @@ main() async {
     expect(fetchedReceipts, contains(postedReceipt));
   });
 
-  test ("Update image", () async {
+  test("Update image", () async {
     final image = XFile("../backend/tests/res/tsu.jpg");
 
     final receipts = await fetchReceipts(cookie);
@@ -93,7 +92,7 @@ main() async {
     deleteImage(cookie, backendId);
   });
 
-  test ("Update receipt", () async {
+  test("Update receipt", () async {
     final receipt = (await fetchReceipts(cookie))[0];
     receipt.items[0].itemName = "Snus";
     await updateReceipt(cookie, receipt.backendId, receipt);
@@ -101,11 +100,11 @@ main() async {
     expect(responseReceipts, contains(receipt));
   });
 
-  test ("Post category", () async {
+  test("Post category", () async {
     final category = Category(
-        description: "Groceries",
-        color: const Color(0xFFFF7733),
-        id: categoryId,
+      description: "Groceries",
+      color: const Color(0xFFFF7733),
+      id: categoryId,
     );
 
     await postCategory(cookie, category);
@@ -116,7 +115,7 @@ main() async {
     await deleteCategory(cookie, categoryId);
   });
 
-  test ("Update category", () async {
+  test("Update category", () async {
     final originalDescription = "Explosives";
 
     final category = Category(

@@ -224,7 +224,7 @@ class SQFLite {
 
       if (transaction!.length == 0) {
         Transaction newTransaction = Transaction(
-          store: bankTransaction['descriptionsoriginal'],
+          store: bankTransaction['descriptionsdisplay'],
           date: DateTime.parse(bankTransaction['datesbooked']),
           totalAmount:
               double.parse(bankTransaction['amountvalueunscaledValue']) / 10,
