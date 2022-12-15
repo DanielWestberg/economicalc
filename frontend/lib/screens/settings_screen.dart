@@ -20,7 +20,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         foregroundColor: Colors.black,
         title: Text("Settings"),
         centerTitle: true,
-        leading: new IconButton(
+        leading: IconButton(
             onPressed: (() {
               Navigator.pop(context);
             }),

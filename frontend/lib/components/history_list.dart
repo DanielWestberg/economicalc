@@ -17,9 +17,11 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 class HistoryList extends StatefulWidget {
   final DateTime startDate;
   final DateTime endDate;
-  final ReceiptCategory category;
+  final TransactionCategory category;
+  final bool onlyReceipts;
 
-  HistoryList(Key? key, this.startDate, this.endDate, this.category)
+  HistoryList(
+      Key? key, this.startDate, this.endDate, this.category, this.onlyReceipts)
       : super(key: key);
 
   @override
@@ -33,22 +35,22 @@ class HistoryListState extends State<HistoryList> {
   bool initialized = false;
   final SQFLite dbConnector = SQFLite.instance;
 
-  late List<ReceiptCategory> categories = [];
+  late List<TransactionCategory> categories = [];
 
   @override
   void didUpdateWidget(covariant HistoryList oldWidget) {
     super.didUpdateWidget(oldWidget);
     dataFuture = dbConnector.getFilteredTransactions(
-        widget.startDate, widget.endDate, widget.category);
+        widget.startDate, widget.endDate, widget.category, widget.onlyReceipts);
   }
 
   @override
   void initState() {
     super.initState();
     initDB();
-    fetchBankTransactions();
+    updateData();
     dataFuture = dbConnector.getFilteredTransactions(
-        widget.startDate, widget.endDate, widget.category);
+        widget.startDate, widget.endDate, widget.category, widget.onlyReceipts);
   }
 
   void initDB() async {
@@ -81,12 +83,12 @@ class HistoryListState extends State<HistoryList> {
     });
   }
 
-  void fetchBankTransactions() async {
+  void updateData() async {
     categories = await dbConnector.getAllcategories();
     // await load_test_data(); // TODO: Replace with fetching from bank
     await dbConnector.importMissingBankTransactions();
     var updatedDataFuture = dbConnector.getFilteredTransactions(
-        widget.startDate, widget.endDate, widget.category);
+        widget.startDate, widget.endDate, widget.category, widget.onlyReceipts);
     setState(() {
       dataFuture = updatedDataFuture;
     });
@@ -150,7 +152,7 @@ class HistoryListState extends State<HistoryList> {
               sortByDate();
               return Expanded(
                   child: RefreshIndicator(
-                      onRefresh: () async => fetchBankTransactions(),
+                      onRefresh: () async => updateData(),
                       backgroundColor: Utils.mediumLightColor,
                       color: Utils.textColor,
                       child: ListView.builder(
@@ -162,15 +164,34 @@ class HistoryListState extends State<HistoryList> {
                                   style: ListTileStyle.list,
                                   shape: Border(
                                     left: BorderSide(
-                                        color: ReceiptCategory.getCategory(
+                                        color: TransactionCategory.getCategory(
                                                 transactions[index].categoryID!,
                                                 categories)
                                             .color,
-                                        width: 10),
+                                        width: 20),
                                     top: BorderSide(
                                         color: Utils.mediumDarkColor,
                                         width: 0.5),
                                   ),
+                                  leading: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        Text(
+                                          DateFormat('yyyy-MM-dd')
+                                              .format(transactions[index].date),
+                                          style: TextStyle(
+                                              color: Utils.textColor,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14),
+                                        ),
+                                        transactions[index].receiptID != null
+                                            ? Icon(
+                                                Icons.receipt_long_rounded,
+                                                size: 15,
+                                              )
+                                            : Text("")
+                                      ]),
                                   title: Text(
                                     transactions[index].store!,
                                     style: TextStyle(
@@ -187,14 +208,6 @@ class HistoryListState extends State<HistoryList> {
                                         fontWeight: FontWeight.w500,
                                         fontSize: 12),
                                   ),
-                                  leading: Text(
-                                    DateFormat('yyyy-MM-dd')
-                                        .format(transactions[index].date),
-                                    style: TextStyle(
-                                        color: Utils.textColor,
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 14),
-                                  ),
                                   trailing: Icon(
                                     Icons.arrow_right_rounded,
                                     size: 40,
@@ -207,7 +220,7 @@ class HistoryListState extends State<HistoryList> {
                                                 TransactionDetailsScreen(
                                                     null, transactions[index])))
                                         .then((value) {
-                                      Phoenix.rebirth(context);
+                                      updateData();
                                     });
                                   },
                                 ));

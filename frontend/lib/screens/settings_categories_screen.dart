@@ -12,8 +12,8 @@ class CategoriesScreen extends StatefulWidget {
 }
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
-  late Future<List<ReceiptCategory>> categoryFuture;
-  late List<ReceiptCategory> categories;
+  late Future<List<TransactionCategory>> categoryFuture;
+  late List<TransactionCategory> categories;
   Color pickerColor = Utils.mediumLightColor;
   String description = "";
   final SQFLite dbConnector = SQFLite.instance;
@@ -62,7 +62,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                   showDialog(
                                       context: context,
                                       builder: (BuildContext context) {
-                                        List<ReceiptCategory>
+                                        List<TransactionCategory>
                                             categoriesPopUpCategory =
                                             categories;
                                         return popUpAddCategory(
@@ -97,12 +97,24 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                         icon: Icon(Icons.delete),
                                         itemBuilder: (context) => [
                                               PopupMenuItem(
-                                                child: Text("Remove"),
+                                                child: Text("Delete"),
                                                 onTap: () async {
                                                   await dbConnector
                                                       .deleteCategoryByID(
                                                           categories[index]
                                                               .id!);
+                                                  final snackBar = SnackBar(
+                                                    backgroundColor:
+                                                        Utils.mediumDarkColor,
+                                                    content: Text(
+                                                      "Category '${categories[index].description}' was deleted",
+                                                      style: TextStyle(
+                                                          color:
+                                                              Utils.lightColor),
+                                                    ),
+                                                  );
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(snackBar);
                                                   await updateCategories();
                                                 },
                                               )
@@ -140,7 +152,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           child: const Text('Save'),
           onPressed: () async {
             if (description.length > 0) {
-              ReceiptCategory newCategory = new ReceiptCategory(
+              TransactionCategory newCategory = new TransactionCategory(
                   description: description, color: pickerColor);
               await dbConnector.insertCategory(newCategory);
               await updateCategories();

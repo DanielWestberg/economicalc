@@ -17,6 +17,7 @@ import 'package:intl/intl.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:month_year_picker/month_year_picker.dart';
 
 late BuildContext _context;
 
@@ -35,6 +36,7 @@ class _HomeScreen extends State<HomeScreen> {
   final SQFLite dbConnector = SQFLite.instance;
   bool showSearchBar = false;
   TextEditingController editingController = TextEditingController();
+  bool onlyReceipts = false;
 
   Map<String, dynamic> startDate = {
     "selected": DateTime(2022, 01, 01),
@@ -49,14 +51,14 @@ class _HomeScreen extends State<HomeScreen> {
   };
 
   Map<String, dynamic> category = {
-    "selected": ReceiptCategory.noneCategory,
-    "previous": ReceiptCategory.noneCategory,
-    "dialog": ReceiptCategory.noneCategory,
+    "selected": TransactionCategory.noneCategory,
+    "previous": TransactionCategory.noneCategory,
+    "dialog": TransactionCategory.noneCategory,
   };
 
   String dropdownValueCategory = 'None';
-  late List<ReceiptCategory> categories;
-  late Future<List<ReceiptCategory>> categoriesFutureBuilder;
+  late List<TransactionCategory> categories;
+  late Future<List<TransactionCategory>> categoriesFutureBuilder;
 
   @override
   void initState() {
@@ -77,7 +79,7 @@ class _HomeScreen extends State<HomeScreen> {
 
   Widget renderSearchField() {
     return Container(
-        color: Utils.mediumLightColor,
+        color: Utils.lightColor,
         padding: EdgeInsets.all(25),
         child: TextField(
           onChanged: (value) {
@@ -85,13 +87,20 @@ class _HomeScreen extends State<HomeScreen> {
           },
           controller: editingController,
           decoration: InputDecoration(
-              focusColor: Utils.lightColor,
-              hoverColor: Utils.lightColor,
+              labelStyle: TextStyle(color: Utils.mediumDarkColor),
+              hintStyle: TextStyle(color: Utils.textColor),
               labelText: "Search",
               hintText: "Search",
-              prefixIcon: Icon(Icons.search_rounded),
+              focusColor: Utils.mediumDarkColor,
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: Utils.mediumDarkColor,
+              ),
               suffixIcon: IconButton(
-                icon: Icon(Icons.clear_rounded),
+                icon: Icon(
+                  Icons.clear_rounded,
+                  color: Utils.mediumDarkColor,
+                ),
                 onPressed: (() {
                   setState(() {
                     showSearchBar = false;
@@ -99,14 +108,18 @@ class _HomeScreen extends State<HomeScreen> {
                 }),
               ),
               border: OutlineInputBorder(
+                  borderSide: BorderSide(color: Utils.darkColor),
+                  borderRadius: BorderRadius.all(Radius.circular(25.0))),
+              focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Utils.mediumDarkColor),
                   borderRadius: BorderRadius.all(Radius.circular(25.0)))),
         ));
   }
 
   Widget iconSection() {
     return Container(
-      color: Utils.mediumLightColor,
       padding: EdgeInsets.only(top: 10, bottom: 10),
+      color: Utils.mediumLightColor,
       child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
@@ -307,9 +320,9 @@ class _HomeScreen extends State<HomeScreen> {
                 backgroundColor:
                     MaterialStateProperty.all<Color>(Utils.mediumLightColor),
               ),
-              child: Text(DateFormat('yyyy-MM-dd').format(startDate['dialog'])),
+              child: Text(DateFormat.yMMM().format(startDate['dialog'])),
               onPressed: () async {
-                DateTime? newStartDate = await showDatePicker(
+                DateTime? newStartDate = await showMonthYearPicker(
                     context: context,
                     initialDate: startDate['dialog'],
                     firstDate: DateTime(1900),
@@ -331,13 +344,15 @@ class _HomeScreen extends State<HomeScreen> {
                   backgroundColor:
                       MaterialStateProperty.all<Color>(Utils.mediumLightColor),
                 ),
-                child: Text(DateFormat('yyyy-MM-dd').format(endDate['dialog'])),
+                child: Text(DateFormat.yMMM().format(endDate['dialog'])),
                 onPressed: () async {
-                  DateTime? newEndDate = await showDatePicker(
+                  DateTime? newEndDate = await showMonthYearPicker(
                       context: context,
                       initialDate: endDate['dialog'],
                       firstDate: DateTime(1900),
                       lastDate: DateTime(2100));
+                  newEndDate =
+                      DateTime(newEndDate!.year, newEndDate.month + 1, 0);
                   setState(() {
                     endDate['dialog'] = newEndDate ?? endDate['dialog'];
                   });
@@ -353,7 +368,23 @@ class _HomeScreen extends State<HomeScreen> {
                   const Text("Category:"),
                   dropDownCategory(context, setState),
                 ],
-              ))
+              )),
+          Container(
+              padding: EdgeInsets.only(top: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  const Text("Only receipts:"),
+                  Switch(
+                    value: onlyReceipts,
+                    onChanged: (bool newValue) {
+                      setState(() {
+                        onlyReceipts = newValue;
+                      });
+                    },
+                  )
+                ],
+              )),
         ],
       ),
       actions: [
@@ -365,9 +396,20 @@ class _HomeScreen extends State<HomeScreen> {
           ),
           child: const Text('Apply'),
           onPressed: () async {
-            updateSelected(
-                startDate['dialog'], endDate['dialog'], category['dialog']);
-            Navigator.of(context).pop();
+            if (endDate['dialog'].compareTo(startDate['dialog']) < 0) {
+              final snackBar = SnackBar(
+                backgroundColor: Utils.errorColor,
+                content: Text(
+                  "Start date cannot be later than the end date",
+                  style: TextStyle(color: Colors.white),
+                ),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+            } else {
+              updateSelected(
+                  startDate['dialog'], endDate['dialog'], category['dialog']);
+              Navigator.of(context).pop();
+            }
           },
         ),
         ElevatedButton(
@@ -395,8 +437,8 @@ class _HomeScreen extends State<HomeScreen> {
             return Text("${snapshot.error}");
           } else if (snapshot.hasData) {
             categories = snapshot.data!;
-            if (!categories.contains(ReceiptCategory.noneCategory)) {
-              categories.insert(0, ReceiptCategory.noneCategory);
+            if (!categories.contains(TransactionCategory.noneCategory)) {
+              categories.insert(0, TransactionCategory.noneCategory);
             }
             return SizedBox(
                 width: 130,
@@ -406,15 +448,16 @@ class _HomeScreen extends State<HomeScreen> {
                     isExpanded: true,
                     value: dropdownValueCategory,
                     onChanged: (value) {
-                      ReceiptCategory newCategory =
-                          ReceiptCategory.getCategoryByDesc(value!, categories);
+                      TransactionCategory newCategory =
+                          TransactionCategory.getCategoryByDesc(
+                              value!, categories);
                       setState(() {
                         dropdownValueCategory = value;
                         category['dialog'] = newCategory;
                       });
                     },
                     items: categories.map<DropdownMenuItem<String>>(
-                        (ReceiptCategory category) {
+                        (TransactionCategory category) {
                       return DropdownMenuItem<String>(
                         value: category.description,
                         child: Row(
@@ -422,7 +465,7 @@ class _HomeScreen extends State<HomeScreen> {
                             children: [
                               Container(
                                   padding: EdgeInsets.only(right: 10),
-                                  child: Icon(Icons.circle_rounded,
+                                  child: Icon(Icons.label_rounded,
                                       color: category.color)),
                               Text(category.description,
                                   overflow: TextOverflow.ellipsis)
@@ -438,20 +481,6 @@ class _HomeScreen extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     _context = context;
-    List<Widget> children = [
-      Expanded(
-          child: HistoryList(historyListStateKey, startDate['selected'],
-              endDate['selected'], category['selected'])),
-      iconSection(),
-    ];
-    if (showSearchBar) {
-      children = [
-        Expanded(
-            child: HistoryList(historyListStateKey, startDate['selected'],
-                endDate['selected'], category['selected'])),
-        renderSearchField(),
-      ];
-    }
     return SafeArea(
         child: Scaffold(
             appBar: AppBar(
@@ -465,8 +494,19 @@ class _HomeScreen extends State<HomeScreen> {
             ),
             key: _globalKey,
             drawer: DrawerMenu(0),
+            resizeToAvoidBottomInset: false,
+            bottomNavigationBar: iconSection(),
             body: Column(
-              children: children,
+              children: [
+                showSearchBar ? renderSearchField() : Container(),
+                Expanded(
+                    child: HistoryList(
+                        historyListStateKey,
+                        startDate['selected'],
+                        endDate['selected'],
+                        category['selected'],
+                        onlyReceipts)),
+              ],
             )));
   }
 }

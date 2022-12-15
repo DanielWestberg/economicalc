@@ -30,12 +30,12 @@ class DrawerMenu extends StatelessWidget {
             selectedTileColor: Utils.mediumLightColor.withOpacity(0.7),
             style: ListTileStyle.drawer,
             minLeadingWidth: 10,
-            leading: Icon(Icons.list_rounded),
+            leading: Icon(Icons.home_rounded),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(10)),
             ),
-            title: Text('History',
-                style: TextStyle(fontSize: Utils.drawerFontsize)),
+            title:
+                Text('Home', style: TextStyle(fontSize: Utils.drawerFontsize)),
             onTap: () {
               Navigator.push(context,
                   MaterialPageRoute(builder: (context) => HomeScreen()));

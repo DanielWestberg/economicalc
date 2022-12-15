@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:month_year_picker/month_year_picker.dart';
 
 const List<String> dropdownList = <String>['Table', 'Chart'];
 
@@ -37,14 +38,15 @@ class StatisticsScreenState extends State<StatisticsScreen> {
 
   Map<String, dynamic> category = {
     "selected":
-        ReceiptCategory(description: "None", color: Colors.black, id: 0),
+        TransactionCategory(description: "None", color: Colors.black, id: 0),
     "previous":
-        ReceiptCategory(description: "None", color: Colors.black, id: 0),
-    "dialog": ReceiptCategory(description: "None", color: Colors.black, id: 0),
+        TransactionCategory(description: "None", color: Colors.black, id: 0),
+    "dialog":
+        TransactionCategory(description: "None", color: Colors.black, id: 0),
   };
 
-  ReceiptCategory noneCategory =
-      ReceiptCategory(description: "None", color: Colors.black, id: 0);
+  TransactionCategory noneCategory =
+      TransactionCategory(description: "None", color: Colors.black, id: 0);
   Map<String, dynamic> contentSelection = {
     "selected": [true, false],
     "previous": [true, false],
@@ -61,8 +63,8 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   String dropdownValueCategory = 'None';
 
   final SQFLite dbConnector = SQFLite.instance;
-  late List<ReceiptCategory> categories;
-  late Future<List<ReceiptCategory>> categoriesFutureBuilder;
+  late List<TransactionCategory> categories;
+  late Future<List<TransactionCategory>> categoriesFutureBuilder;
 
   final columns = ["Items", "Sum"];
   late Future<List<ReceiptItem>> dataFutureItems;
@@ -109,105 +111,122 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-        child: Scaffold(
-            drawer: DrawerMenu(1),
-            appBar: AppBar(
-              toolbarHeight: 180,
-              backgroundColor: Utils.mediumLightColor,
-              foregroundColor: Colors.black,
-              title: Column(children: [
-                Text("Statistics",
-                    style: TextStyle(color: Utils.textColor, fontSize: 25.0)),
-                headerInfo(context)
-              ]),
-              centerTitle: true,
-              elevation: 0,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.filter_alt),
-                  alignment: Alignment.topCenter,
-                  padding: const EdgeInsets.only(right: 20, top: 50),
-                  onPressed: () {
-                    startDate['previous'] =
-                        startDate['dialog'] = startDate['selected'];
-                    endDate['previous'] =
-                        endDate['dialog'] = endDate['selected'];
-                    category['previous'] =
-                        category['dialog'] = category['selected'];
-                    dropdownValueCategory = category['selected'].description;
-                    contentSelection['previous'] = contentSelection['dialog'] =
-                        contentSelection['selected'];
-                    expIncSelection['previous'] =
-                        expIncSelection['dialog'] = expIncSelection['selected'];
-                    showDialog(
-                        context: context,
-                        builder: (context) {
-                          return StatefulBuilder(builder: (context, setState) {
-                            return filterPopup(context, setState);
-                          });
-                        });
-                  },
-                )
-              ],
-            ),
-            body: displayStats(dropdownValue)));
-  }
-
-  Widget displayStats(String dropdownValue) {
-    if (contentSelection['selected'][1]) {
-      return totalsChart();
-    }
-    if (dropdownValue == "Table") {
-      return ListView(children: [buildDataTable()]);
-    } else if (dropdownValue == "Chart") {
-      return itemsChart();
-    }
-    return Text("Invalid input");
+        child: DefaultTabController(
+            length: contentSelection['selected'][0] ? 2 : 1,
+            child: Scaffold(
+                // drawer: DrawerMenu(1),
+                appBar: AppBar(
+                  leading: IconButton(
+                      onPressed: (() {
+                        Navigator.pop(context);
+                      }),
+                      icon: Icon(Icons.arrow_back)),
+                  toolbarHeight: 100,
+                  backgroundColor: Utils.mediumLightColor,
+                  foregroundColor: Colors.black,
+                  title: Column(children: [
+                    Container(
+                        padding: EdgeInsets.all(5),
+                        child: Text("Statistics",
+                            style: TextStyle(
+                                color: Utils.textColor, fontSize: 25.0))),
+                    headerInfo(context)
+                  ]),
+                  centerTitle: true,
+                  elevation: 0,
+                  actions: [
+                    IconButton(
+                      icon: Icon(
+                        Icons.filter_alt,
+                        color: Utils.textColor,
+                      ),
+                      alignment: Alignment.center,
+                      onPressed: () {
+                        startDate['previous'] =
+                            startDate['dialog'] = startDate['selected'];
+                        endDate['previous'] =
+                            endDate['dialog'] = endDate['selected'];
+                        category['previous'] =
+                            category['dialog'] = category['selected'];
+                        dropdownValueCategory =
+                            category['selected'].description;
+                        contentSelection['previous'] =
+                            contentSelection['dialog'] =
+                                contentSelection['selected'];
+                        expIncSelection['previous'] =
+                            expIncSelection['dialog'] =
+                                expIncSelection['selected'];
+                        showDialog(
+                            context: context,
+                            builder: (context) {
+                              return StatefulBuilder(
+                                  builder: (context, setState) {
+                                return filterPopup(context, setState);
+                              });
+                            });
+                      },
+                    )
+                  ],
+                  bottom: TabBar(
+                    labelColor: Utils.darkColor,
+                    indicatorColor: Utils.mediumDarkColor,
+                    tabs: contentSelection['selected'][0]
+                        ? [
+                            Tab(
+                              text: "Table",
+                            ),
+                            Tab(
+                              text: "Chart",
+                            ),
+                          ]
+                        : [
+                            Tab(
+                              text: "Chart",
+                            ),
+                          ],
+                  ),
+                ),
+                body: contentSelection['selected'][0]
+                    ? TabBarView(children: [
+                        ListView(children: [buildDataTable()]),
+                        itemsChart(),
+                      ])
+                    : TabBarView(children: [
+                        totalsChart(),
+                      ]))));
   }
 
   Widget headerInfo(context) {
     return Container(
-        padding: EdgeInsets.only(top: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
+        child: Container(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.date_range),
             Container(
-                child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Icon(Icons.date_range),
+              padding: EdgeInsets.only(left: 5),
+              child: Flexible(
+                  child: Text(
+                "${DateFormat.yMMMd('sv_SE').format(startDate['selected'])} - ${DateFormat.yMMMd('sv_SE').format(endDate['selected'])}",
+                style: TextStyle(color: Utils.textColor, fontSize: 14),
+              )),
+            ),
+          ]),
+          contentSelection['selected'][0]
+              ? Row(mainAxisAlignment: MainAxisAlignment.start, children: [
                   Container(
-                    padding: EdgeInsets.only(left: 5),
-                    child: Flexible(
-                        child: Text(
-                      "${DateFormat('yyyy/MM/dd').format(startDate['selected'])}-${DateFormat('yyyy/MM/dd').format(endDate['selected'])}",
-                      style: TextStyle(fontSize: 12),
-                    )),
-                  ),
-                ]),
-                contentSelection['selected'][0]
-                    ? Row(
-                        children: [
-                          Icon(Icons.category),
-                          Padding(
-                              padding: EdgeInsets.only(left: 5),
-                              child: Text(category['selected'].description,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                      color: category['selected'].color))),
-                        ],
-                      )
-                    : Text(""),
-              ],
-            )),
-            Padding(
-                padding: EdgeInsets.only(right: 20),
-                child: contentSelection['selected'][0] ? dropDown() : Text("")),
-          ],
-        ));
+                      padding: EdgeInsets.only(right: 10),
+                      child: Icon(Icons.label_rounded,
+                          color: category['selected'].color)),
+                  Text(category['selected'].description,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 14, color: Utils.textColor))
+                ])
+              : Text(""),
+        ],
+      ),
+    ));
   }
 
   Widget filterPopup(context, setState) {
@@ -225,9 +244,9 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                 backgroundColor:
                     MaterialStateProperty.all<Color>(Utils.mediumLightColor),
               ),
-              child: Text(DateFormat('yyyy-MM-dd').format(startDate['dialog'])),
+              child: Text(DateFormat.yMMM().format(startDate['dialog'])),
               onPressed: () async {
-                DateTime? newStartDate = await showDatePicker(
+                DateTime? newStartDate = await showMonthYearPicker(
                     context: context,
                     initialDate: startDate['dialog'],
                     firstDate: DateTime(1900),
@@ -249,9 +268,9 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                   backgroundColor:
                       MaterialStateProperty.all<Color>(Utils.mediumLightColor),
                 ),
-                child: Text(DateFormat('yyyy-MM-dd').format(endDate['dialog'])),
+                child: Text(DateFormat.yMMM().format(endDate['dialog'])),
                 onPressed: () async {
-                  DateTime? newEndDate = await showDatePicker(
+                  DateTime? newEndDate = await showMonthYearPicker(
                       context: context,
                       initialDate: endDate['dialog'],
                       firstDate: DateTime(1900),
@@ -368,28 +387,6 @@ class StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
-  Widget dropDown() {
-    return DropdownButton<String>(
-      value: dropdownValue,
-      elevation: 16,
-      underline: Container(
-        height: 2,
-        color: Colors.black,
-      ),
-      onChanged: (String? value) {
-        setState(() {
-          dropdownValue = value!;
-        });
-      },
-      items: dropdownList.map<DropdownMenuItem<String>>((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: Text(value),
-        );
-      }).toList(),
-    );
-  }
-
   Widget dropDownCategory(context, setState) {
     return FutureBuilder(
         future: categoriesFutureBuilder,
@@ -409,15 +406,16 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                     isExpanded: true,
                     value: dropdownValueCategory,
                     onChanged: (value) {
-                      ReceiptCategory newCategory =
-                          ReceiptCategory.getCategoryByDesc(value!, categories);
+                      TransactionCategory newCategory =
+                          TransactionCategory.getCategoryByDesc(
+                              value!, categories);
                       setState(() {
                         dropdownValueCategory = value;
                         category['dialog'] = newCategory;
                       });
                     },
                     items: categories.map<DropdownMenuItem<String>>(
-                        (ReceiptCategory category) {
+                        (TransactionCategory category) {
                       return DropdownMenuItem<String>(
                         value: category.description,
                         child: Row(
@@ -425,7 +423,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                             children: [
                               Container(
                                   padding: EdgeInsets.only(right: 10),
-                                  child: Icon(Icons.circle_rounded,
+                                  child: Icon(Icons.label_rounded,
                                       color: category.color)),
                               Text(category.description,
                                   overflow: TextOverflow.ellipsis)
@@ -584,7 +582,8 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                       sortingOrder: SortingOrder.ascending,
                       dataSource: rowsTotals,
                       xValueMapper: (Map<String, Object> object, _) =>
-                          (object['category'] as ReceiptCategory).description,
+                          (object['category'] as TransactionCategory)
+                              .description,
                       yValueMapper: (Map<String, Object> object, _) =>
                           object['totalSum'] as double,
                       name: '',
