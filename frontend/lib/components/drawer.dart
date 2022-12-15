@@ -130,6 +130,29 @@ class DrawerMenu extends StatelessWidget {
           ListTile(
             iconColor: Utils.mediumDarkColor,
             textColor: Utils.mediumDarkColor,
+            selected: false,
+            selectedColor: Utils.darkColor,
+            selectedTileColor: Utils.mediumLightColor.withOpacity(0.7),
+            style: ListTileStyle.drawer,
+            minLeadingWidth: 10,
+            leading: Icon(Icons.science_rounded),
+            tileColor: Utils.lightColor.withOpacity(0.5),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(10)),
+            ),
+            title: Text('Login TEST',
+                style: TextStyle(fontSize: Utils.drawerFontsize)),
+            onTap: () {
+              Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (context) => OpenLink(true)))
+                  .then((value) {
+                Phoenix.rebirth(context);
+              });
+            },
+          ),
+          ListTile(
+            iconColor: Utils.mediumDarkColor,
+            textColor: Utils.mediumDarkColor,
             selected: selectedIndex == 3,
             selectedColor: Utils.darkColor,
             selectedTileColor: Utils.mediumLightColor.withOpacity(0.7),
@@ -144,7 +167,8 @@ class DrawerMenu extends StatelessWidget {
                 style: TextStyle(fontSize: Utils.drawerFontsize)),
             onTap: () {
               Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (context) => OpenLink()))
+                  .push(
+                      MaterialPageRoute(builder: (context) => OpenLink(false)))
                   .then((value) {
                 Phoenix.rebirth(context);
               });

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/open_link.dart';
 
 class TinkLogin extends StatelessWidget {
+  bool test = true;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -13,8 +14,8 @@ class TinkLogin extends StatelessWidget {
         child: FloatingActionButton(
           child: Text("Open login"),
           onPressed: () {
-            Navigator.push(
-                context, MaterialPageRoute(builder: (context) => OpenLink()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => OpenLink(test)));
           },
         ),
       ),

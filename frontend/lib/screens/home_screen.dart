@@ -49,14 +49,14 @@ class _HomeScreen extends State<HomeScreen> {
   };
 
   Map<String, dynamic> category = {
-    "selected": Category.noneCategory,
-    "previous": Category.noneCategory,
-    "dialog": Category.noneCategory,
+    "selected": ReceiptCategory.noneCategory,
+    "previous": ReceiptCategory.noneCategory,
+    "dialog": ReceiptCategory.noneCategory,
   };
 
   String dropdownValueCategory = 'None';
-  late List<Category> categories;
-  late Future<List<Category>> categoriesFutureBuilder;
+  late List<ReceiptCategory> categories;
+  late Future<List<ReceiptCategory>> categoriesFutureBuilder;
 
   @override
   void initState() {
@@ -163,6 +163,7 @@ class _HomeScreen extends State<HomeScreen> {
     );
   }
 
+  bool test = true;
   Widget drawer = Drawer(
     width: 250,
     backgroundColor: Utils.lightColor.withOpacity(1),
@@ -221,58 +222,15 @@ class _HomeScreen extends State<HomeScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(10)),
           ),
-          title: Text('Run tests',
-              style: TextStyle(fontSize: Utils.drawerFontsize)),
-          onTap: () async {
-            print("Running tests");
-            String userId = "bruh";
-            List<ReceiptItem> items = [
-              ReceiptItem(
-                itemName: "Snusk",
-                amount: 9001,
-              ),
-            ];
-            Receipt receipt = Receipt(
-              recipient: "ica",
-              date: DateTime.now(),
-              items: items,
-              total: 100.0,
-              categoryID: 1,
-            );
-            await postReceipt(userId, receipt);
-
-            List<Receipt> responseReceipts = await fetchReceipts(userId);
-            print(responseReceipts);
-
-            print("Take a picture to proceed");
-            final XFile? image =
-                await ImagePicker().pickImage(source: ImageSource.camera);
-            if (image == null) {
-              return;
-            }
-
-            String backendId = responseReceipts[0].backendId!;
-            await updateImage(userId, backendId, image);
-            final responseImage = await fetchImage(userId, backendId);
-            print("Original image size: ${await image.length()}");
-            print("Response image size: ${await responseImage.length()}");
-
-            final responseBytes = await responseImage.readAsBytes();
-            print("Displaying response image...");
+          title: Text('Login TEST',
+              style:
+                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
+          onTap: () {
             Navigator.of(_context)
-                .push(MaterialPageRoute(
-                    builder: (_context) => Image.memory(responseBytes)))
+                .push(MaterialPageRoute(builder: (_context) => OpenLink(true)))
                 .then((value) {
               Phoenix.rebirth(_context);
             });
-
-            print("Updating a receipt...");
-            receipt.items[0].itemName = "Snus";
-            await updateReceipt(userId, backendId, receipt);
-            responseReceipts = await fetchReceipts(userId);
-            print(responseReceipts);
-
-            print("Tests finished");
           },
         ),
         ListTile(
@@ -292,7 +250,7 @@ class _HomeScreen extends State<HomeScreen> {
               style: TextStyle(fontSize: Utils.drawerFontsize)),
           onTap: () {
             Navigator.of(_context)
-                .push(MaterialPageRoute(builder: (_context) => OpenLink()))
+                .push(MaterialPageRoute(builder: (_context) => OpenLink(false)))
                 .then((value) {
               Phoenix.rebirth(_context);
             });
@@ -437,8 +395,8 @@ class _HomeScreen extends State<HomeScreen> {
             return Text("${snapshot.error}");
           } else if (snapshot.hasData) {
             categories = snapshot.data!;
-            if (!categories.contains(Category.noneCategory)) {
-              categories.insert(0, Category.noneCategory);
+            if (!categories.contains(ReceiptCategory.noneCategory)) {
+              categories.insert(0, ReceiptCategory.noneCategory);
             }
             return SizedBox(
                 width: 130,
@@ -448,15 +406,15 @@ class _HomeScreen extends State<HomeScreen> {
                     isExpanded: true,
                     value: dropdownValueCategory,
                     onChanged: (value) {
-                      Category newCategory =
-                          Category.getCategoryByDesc(value!, categories);
+                      ReceiptCategory newCategory =
+                          ReceiptCategory.getCategoryByDesc(value!, categories);
                       setState(() {
                         dropdownValueCategory = value;
                         category['dialog'] = newCategory;
                       });
                     },
-                    items: categories
-                        .map<DropdownMenuItem<String>>((Category category) {
+                    items: categories.map<DropdownMenuItem<String>>(
+                        (ReceiptCategory category) {
                       return DropdownMenuItem<String>(
                         value: category.description,
                         child: Row(

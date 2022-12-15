@@ -36,11 +36,15 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   };
 
   Map<String, dynamic> category = {
-    "selected": Category(description: "None", color: Colors.black, id: 0),
-    "previous": Category(description: "None", color: Colors.black, id: 0),
-    "dialog": Category(description: "None", color: Colors.black, id: 0),
+    "selected":
+        ReceiptCategory(description: "None", color: Colors.black, id: 0),
+    "previous":
+        ReceiptCategory(description: "None", color: Colors.black, id: 0),
+    "dialog": ReceiptCategory(description: "None", color: Colors.black, id: 0),
   };
 
+  ReceiptCategory noneCategory =
+      ReceiptCategory(description: "None", color: Colors.black, id: 0);
   Map<String, dynamic> contentSelection = {
     "selected": [true, false],
     "previous": [true, false],
@@ -53,14 +57,12 @@ class StatisticsScreenState extends State<StatisticsScreen> {
     "dialog": [true, false],
   };
 
-  Category noneCategory =
-      Category(description: "None", color: Colors.black, id: 0);
   String dropdownValue = dropdownList.first;
   String dropdownValueCategory = 'None';
 
   final SQFLite dbConnector = SQFLite.instance;
-  late List<Category> categories;
-  late Future<List<Category>> categoriesFutureBuilder;
+  late List<ReceiptCategory> categories;
+  late Future<List<ReceiptCategory>> categoriesFutureBuilder;
 
   final columns = ["Items", "Sum"];
   late Future<List<ReceiptItem>> dataFutureItems;
@@ -407,15 +409,15 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                     isExpanded: true,
                     value: dropdownValueCategory,
                     onChanged: (value) {
-                      Category newCategory =
-                          Category.getCategoryByDesc(value!, categories);
+                      ReceiptCategory newCategory =
+                          ReceiptCategory.getCategoryByDesc(value!, categories);
                       setState(() {
                         dropdownValueCategory = value;
                         category['dialog'] = newCategory;
                       });
                     },
-                    items: categories
-                        .map<DropdownMenuItem<String>>((Category category) {
+                    items: categories.map<DropdownMenuItem<String>>(
+                        (ReceiptCategory category) {
                       return DropdownMenuItem<String>(
                         value: category.description,
                         child: Row(
@@ -582,7 +584,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                       sortingOrder: SortingOrder.ascending,
                       dataSource: rowsTotals,
                       xValueMapper: (Map<String, Object> object, _) =>
-                          (object['category'] as Category).description,
+                          (object['category'] as ReceiptCategory).description,
                       yValueMapper: (Map<String, Object> object, _) =>
                           object['totalSum'] as double,
                       name: '',

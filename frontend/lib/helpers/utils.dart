@@ -20,11 +20,11 @@ class Utils {
   static Color darkColor = Color.fromARGB(255, 68, 104, 107);
   static Color errorColor = Color(0xFFfe5f55);
 
-  static List<Category> categories = [
-    Category(description: "Groceries", color: Colors.blue),
-    Category(description: "Transportation", color: Colors.purple),
-    Category(description: "Stuff", color: Colors.green),
-    Category(
+  static List<ReceiptCategory> categories = [
+    ReceiptCategory(description: "Groceries", color: Colors.blue),
+    ReceiptCategory(description: "Transportation", color: Colors.purple),
+    ReceiptCategory(description: "Stuff", color: Colors.green),
+    ReceiptCategory(
         description: "My proud collection of teddy bears", color: Colors.brown),
   ];
 

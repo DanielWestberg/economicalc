@@ -455,11 +455,11 @@ class SQFLite {
     return obj![0]['description'] as String;
   }
 
-  Future<Category?> getCategoryFromID(int id) async {
+  Future<ReceiptCategory?> getCategoryFromID(int id) async {
     final db = await instance.database;
     List<Map<String, dynamic?>>? obj =
         await db?.rawQuery('SELECT * FROM categories WHERE id = "$id"');
-    return Category.fromJson(obj![0]);
+    return ReceiptCategory.fromJson(obj![0]);
   }
 
   Future<List<Map<String, Object>>> getFilteredCategoryTotals(
@@ -483,13 +483,13 @@ class SQFLite {
   }
 
   Future<void> insertDefaultCategories(Database db) async {
-    List<Category> categories = [
-      Category(description: "Uncategorized", color: Colors.grey),
-      Category(description: "Groceries", color: Colors.blue),
-      Category(description: "Hardware", color: Colors.black),
-      Category(description: "Transportation", color: Colors.purple),
-      Category(description: "Stuff", color: Colors.green),
-      Category(
+    List<ReceiptCategory> categories = [
+      ReceiptCategory(description: "Uncategorized", color: Colors.grey),
+      ReceiptCategory(description: "Groceries", color: Colors.blue),
+      ReceiptCategory(description: "Hardware", color: Colors.black),
+      ReceiptCategory(description: "Transportation", color: Colors.purple),
+      ReceiptCategory(description: "Stuff", color: Colors.green),
+      ReceiptCategory(
           description: "My proud collection of teddy bears",
           color: Colors.brown),
     ];
@@ -503,7 +503,7 @@ class SQFLite {
     }
   }
 
-  Future<void> insertCategory(Category category) async {
+  Future<void> insertCategory(ReceiptCategory category) async {
     // Get a reference to the database.
 
     final db = await instance.database;
@@ -514,7 +514,7 @@ class SQFLite {
     );
   }
 
-  Future<void> updateCategory(Category category) async {
+  Future<void> updateCategory(ReceiptCategory category) async {
     // Get a reference to the database.
     final db = await instance.database;
 
@@ -546,11 +546,11 @@ class SQFLite {
     );
   }
 
-  Future<List<Category>> getAllcategories() async {
+  Future<List<ReceiptCategory>> getAllcategories() async {
     final db = await instance.database;
     final List<Map<String, dynamic?>>? maps = await db?.query('categories');
     return List.generate(maps!.length, (i) {
-      return Category(
+      return ReceiptCategory(
           description: maps[i]['description'],
           color: Color(maps[i]['color']),
           id: maps[i]['id']);

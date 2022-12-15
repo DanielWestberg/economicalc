@@ -17,7 +17,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 class HistoryList extends StatefulWidget {
   final DateTime startDate;
   final DateTime endDate;
-  final Category category;
+  final ReceiptCategory category;
 
   HistoryList(Key? key, this.startDate, this.endDate, this.category)
       : super(key: key);
@@ -33,7 +33,7 @@ class HistoryListState extends State<HistoryList> {
   bool initialized = false;
   final SQFLite dbConnector = SQFLite.instance;
 
-  late List<Category> categories = [];
+  late List<ReceiptCategory> categories = [];
 
   @override
   void didUpdateWidget(covariant HistoryList oldWidget) {
@@ -162,7 +162,7 @@ class HistoryListState extends State<HistoryList> {
                                   style: ListTileStyle.list,
                                   shape: Border(
                                     left: BorderSide(
-                                        color: Category.getCategory(
+                                        color: ReceiptCategory.getCategory(
                                                 transactions[index].categoryID!,
                                                 categories)
                                             .color,
