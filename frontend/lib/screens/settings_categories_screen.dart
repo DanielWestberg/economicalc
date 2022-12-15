@@ -12,8 +12,8 @@ class CategoriesScreen extends StatefulWidget {
 }
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
-  late Future<List<Category>> categoryFuture;
-  late List<Category> categories;
+  late Future<List<ReceiptCategory>> categoryFuture;
+  late List<ReceiptCategory> categories;
   Color pickerColor = Utils.backgroundColor;
   String description = "";
   final SQFLite dbConnector = SQFLite.instance;
@@ -62,7 +62,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                   showDialog(
                                       context: context,
                                       builder: (BuildContext context) {
-                                        List<Category> categoriesPopUpCategory =
+                                        List<ReceiptCategory> categoriesPopUpCategory =
                                             categories;
                                         return popUpAddCategory(
                                             context, categoriesPopUpCategory);
@@ -140,8 +140,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           child: const Text('Save'),
           onPressed: () async {
             if (description.length > 0) {
-              Category newCategory =
-                  new Category(description: description, color: pickerColor);
+              ReceiptCategory newCategory =
+                  new ReceiptCategory(description: description, color: pickerColor);
               await dbConnector.insertCategory(newCategory);
               await updateCategories();
               Navigator.of(context).pop();

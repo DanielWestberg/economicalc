@@ -11,12 +11,44 @@ import 'dart:io';
 
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as http_parser;
 import 'dart:convert' as convert;
 
-const String apiServer = "api.economicalc.online";
+import '../models/LoginData.dart';
+
+/*
+ Change the last bool to false to switch to AWS server with HTTPS
+ kDebugMode is present because it will always be true by default when
+ compiling normally, but will be false when compiling into production. This
+ is useful in case anyone forgets to set this to false before attempting to
+ deploy.
+ */
+const testMode = kDebugMode && true;
+
+const apiServer = testMode ? "192.168.0.165:5000" : "api.economicalc.online";
+const String tinkReportEndpoint =
+    "https://link.tink.com/1.0/reports/create-report"
+    "?client_id=1a539460199a4e8bb374893752db14e6"
+    "&redirect_uri=https://console.tink.com/callback&market=SE"
+    "&report_types=TRANSACTION_REPORT,ACCOUNT_VERIFICATION_REPORT"
+    "&refreshable_items="
+    "IDENTITY_DATA"
+    ",CHECKING_ACCOUNTS"
+    ",SAVING_ACCOUNTS"
+    ",CHECKING_TRANSACTIONS"
+    ",SAVING_TRANSACTIONS"
+    "&account_dialog_type=SINGLE";
+
+Uri getUri(String path) {
+  if (testMode) {
+    return Uri.http(apiServer, path);
+  }
+
+  return Uri.https(apiServer, path);
+}
 
 Future<List<Receipt>> fetchMockedTransactions() async {
   final String response =
@@ -47,11 +79,36 @@ Future<List<ReceiptItem>> fetchMockedReceiptItems() async {
       .items;
 }
 
+Future<LoginData> fetchLoginData(
+    String account_report_id, String transaction_report_id, bool test) async {
+  var headers = {
+    'Content-type': 'application/json',
+  };
+
+  var data = {
+    "account_report_id": account_report_id,
+    "transaction_report_id": transaction_report_id
+  };
+
+  final testString = test ? "T" : "F";
+  String path = ('tink_user_data/$testString');
+  var uri = getUri(path);
+  var response =
+      await http.post(uri, headers: headers, body: json.encode(data));
+  //print(uri);
+  //print(response);
+  if (response.statusCode != 200) {
+    throw Exception('http.get error: statusCode= ${response.statusCode}');
+  }
+  //print(response.body);
+  return LoginData.fromResponse(response);
+}
+
 Future<List<BankTransaction>> fetchTransactions(String access_token) async {
   //print("INSIDE TRANSACTIOn");
   String path = '/tink_transaction_history/';
   path += access_token;
-  final response = await http.get(Uri.https(apiServer, path));
+  final response = await http.get(getUri(path));
   if (response.statusCode == 200) {
     List<dynamic> transactions =
         convert.jsonDecode(response.body)["transactions"];
@@ -79,8 +136,8 @@ Future<Response> CodeToAccessToken(String code, bool test) async {
   print("PATH: " + path);
   print("APISERVER: " + apiServer);
   print("URIU PÅATH");
-  print(Uri.https(apiServer, path));
-  final response = await http.get(Uri.https(apiServer, path));
+  print(getUri(path));
+  final response = await http.get(getUri(path));
   print("Hej");
   print("response: ${response.body}");
   Response accessToken = Response.fromJson(convert.jsonDecode(response.body));
@@ -150,9 +207,13 @@ processImageWithAsprise(File imageFile) async {
   return respJson;
 }
 
-fetchReceipts(String userId) async {
-  final String path = "/users/$userId/receipts";
-  final response = await http.get(Uri.https(apiServer, path));
+fetchReceipts(Cookie cookie) async {
+  const String path = "/receipts";
+  final Map<String, String> headers = {
+    "Cookie": cookie.toString(),
+  };
+
+  final response = await http.get(getUri(path), headers: headers);
   if (response.statusCode != 200) {
     throw Exception(
         "Unexpected status code ${response.statusCode}\n{response.body}");
@@ -166,10 +227,13 @@ fetchReceipts(String userId) async {
   return resultReceipts;
 }
 
-postReceipt(String userId, Receipt receipt) async {
-  final String path = "/users/$userId/receipts";
-  final Uri uri = Uri.https(apiServer, path);
-  final headers = {"Content-type": "application/json"};
+postReceipt(Cookie cookie, Receipt receipt) async {
+  const String path = "/receipts";
+  final Uri uri = getUri(path);
+  final headers = {
+    "Content-type": "application/json",
+    "Cookie": cookie.toString(),
+  };
   final body = convert.jsonEncode(receipt.toMap());
   final response = await http.post(uri, headers: headers, body: body);
   if (response.statusCode != 201) {
@@ -179,9 +243,12 @@ postReceipt(String userId, Receipt receipt) async {
   return Receipt.fromBackendJson(convert.jsonDecode(response.body)["data"]);
 }
 
-updateReceipt(String userId, String receiptId, Receipt receipt) async {
-  final uri = Uri.https(apiServer, "/users/$userId/receipts/$receiptId");
-  final headers = {"Content-type": "application/json"};
+updateReceipt(Cookie cookie, String receiptId, Receipt receipt) async {
+  final uri = getUri("/receipts/$receiptId");
+  final headers = {
+    "Content-type": "application/json",
+    "Cookie": cookie.toString(),
+  };
   final body = convert.jsonEncode(receipt.toMap());
   final response = await http.put(uri, headers: headers, body: body);
   if (response.statusCode != 200) {
@@ -190,22 +257,25 @@ updateReceipt(String userId, String receiptId, Receipt receipt) async {
   }
 }
 
-deleteReceipt(String userId, Receipt receipt) async {
-  final uri =
-      Uri.https(apiServer, "/users/$userId/receipts/${receipt.backendId}");
-  final response = await http.delete(uri);
+deleteReceipt(Cookie cookie, Receipt receipt) async {
+  final uri = getUri("/receipts/${receipt.backendId}");
+  final Map<String, String> headers = {
+    "Cookie": cookie.toString(),
+  };
+  final response = await http.delete(uri, headers: headers);
   if (response.statusCode != 204) {
     throw Exception(
         "Unexpected status code ${response.statusCode}\n${response.body}");
   }
 }
 
-updateImage(String userId, String receiptId, XFile image) async {
-  final uri = Uri.https(apiServer, "/users/$userId/receipts/$receiptId/image");
+updateImage(Cookie cookie, String receiptId, XFile image) async {
+  final uri = getUri("/receipts/$receiptId/image");
   final mimeType = image.mimeType ?? "application/octet-stream";
   final request = http.MultipartRequest("PUT", uri)
     ..files.add(await http.MultipartFile.fromPath("file", image.path,
         contentType: http_parser.MediaType.parse(mimeType)));
+  request.headers["Cookie"] = cookie.toString();
   final response = await request.send();
   if (response.statusCode != 204) {
     throw Exception(
@@ -213,9 +283,12 @@ updateImage(String userId, String receiptId, XFile image) async {
   }
 }
 
-fetchImage(String userId, String receiptId) async {
-  final uri = Uri.https(apiServer, "/users/$userId/receipts/$receiptId/image");
-  final response = await http.get(uri);
+fetchImage(Cookie cookie, String receiptId) async {
+  final uri = getUri("/receipts/$receiptId/image");
+  final Map<String, String> headers = {
+    "Cookie": cookie.toString(),
+  };
+  final response = await http.get(uri, headers: headers);
   if (response.statusCode != 200) {
     throw Exception(
         "Unexpected status code ${response.statusCode}\n${response.body}");
@@ -223,34 +296,39 @@ fetchImage(String userId, String receiptId) async {
   return XFile.fromData(response.bodyBytes);
 }
 
-deleteImage(String userId, String receiptId) async {
-  final uri = Uri.https(apiServer, "/users/$userId/receipts/$receiptId/image");
-  final response = await http.delete(uri);
+deleteImage(Cookie cookie, String receiptId) async {
+  final uri = getUri("/receipts/$receiptId/image");
+  final Map<String, String> headers = {
+    "Cookie": cookie.toString(),
+  };
+  final response = await http.delete(uri, headers: headers);
   if (response.statusCode != 204) {
     throw Exception(
         "Unexpected status code ${response.statusCode}\n${response.body}");
   }
 }
 
-registerUser(String userId) async {
-  await http.put(Uri.https(apiServer, "/users/$userId"));
-}
-
-fetchCategories(String userId) async {
-  final uri = Uri.https(apiServer, "/users/$userId/categories");
-  final response = await http.get(uri);
+fetchCategories(Cookie cookie) async {
+  final uri = getUri("/categories");
+  final Map<String, String> headers = {
+    "Cookie": cookie.toString(),
+  };
+  final response = await http.get(uri, headers: headers);
   if (response.statusCode != 200) {
     throw Exception(
         "Unexpected status code ${response.statusCode}\n${response.body}");
   }
 
   List<dynamic> categories = convert.jsonDecode(response.body)["data"];
-  return categories.map((e) => Category.fromJson(e)).toList();
+  return categories.map((e) => ReceiptCategory.fromJson(e)).toList();
 }
 
-postCategory(String userId, Category category) async {
-  final uri = Uri.https(apiServer, "/users/$userId/categories");
-  final headers = {"Content-type": "application/json"};
+postCategory(Cookie cookie, ReceiptCategory category) async {
+  final uri = getUri("/categories");
+  final headers = {
+    "Content-type": "application/json",
+    "Cookie": cookie.toString(),
+  };
   final body = convert.jsonEncode(category.toJson(true));
   final response = await http.post(uri, headers: headers, body: body);
   if (response.statusCode != 201) {
@@ -259,9 +337,12 @@ postCategory(String userId, Category category) async {
   }
 }
 
-updateCategory(String userId, Category category) async {
-  final uri = Uri.https(apiServer, "/users/$userId/categories/${category.id!}");
-  final headers = {"Content-type": "application/json"};
+updateCategory(Cookie cookie, ReceiptCategory category) async {
+  final uri = getUri("/categories/${category.id!}");
+  final headers = {
+    "Content-type": "application/json",
+    "Cookie": cookie.toString(),
+  };
   final body = convert.jsonEncode(category.toJson(true));
   final response = await http.put(uri, headers: headers, body: body);
   if (response.statusCode != 200 && response.statusCode != 201) {
@@ -270,5 +351,14 @@ updateCategory(String userId, Category category) async {
   }
 }
 
-deleteCategory(String userId, int categoryId) async => await http
-    .delete(Uri.https(apiServer, "/users/$userId/categories/$categoryId"));
+deleteCategory(Cookie cookie, int categoryId) async {
+  final uri = getUri("/categories/$categoryId");
+  final Map<String, String> headers = {
+    "Cookie": cookie.toString(),
+  };
+  final response = await http.delete(uri, headers: headers);
+  if (response.statusCode != 204) {
+    throw Exception(
+        "Unexpected status code ${response.statusCode}\n${response.body}");
+  }
+}

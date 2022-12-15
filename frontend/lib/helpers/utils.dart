@@ -15,11 +15,11 @@ class Utils {
   static Color chartBarColor = Color.fromARGB(255, 68, 104, 107);
   static Color snackBarError = Color(0xFFC72C41);
 
-  static List<Category> categories = [
-    Category(description: "Groceries", color: Colors.blue),
-    Category(description: "Transportation", color: Colors.purple),
-    Category(description: "Stuff", color: Colors.green),
-    Category(
+  static List<ReceiptCategory> categories = [
+    ReceiptCategory(description: "Groceries", color: Colors.blue),
+    ReceiptCategory(description: "Transportation", color: Colors.purple),
+    ReceiptCategory(description: "Stuff", color: Colors.green),
+    ReceiptCategory(
         description: "My proud collection of teddy bears", color: Colors.brown),
   ];
 
