@@ -10,6 +10,7 @@ import 'dart:io';
 
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as http_parser;
@@ -17,7 +18,16 @@ import 'dart:convert' as convert;
 
 import '../models/LoginData.dart';
 
-const String apiServer = "api.economicalc.online";
+/*
+ Change the last bool to false to switch to AWS server with HTTPS
+ kDebugMode is present because it will always be true by default when
+ compiling normally, but will be false when compiling into production. This
+ is useful in case anyone forgets to set this to false before attempting to
+ deploy.
+ */
+const testMode = kDebugMode && true;
+
+const apiServer = testMode ? "192.168.0.165:5000" : "api.economicalc.online";
 const String tinkReportEndpoint =
     "https://link.tink.com/1.0/reports/create-report"
     "?client_id=1a539460199a4e8bb374893752db14e6"
@@ -30,6 +40,14 @@ const String tinkReportEndpoint =
     ",CHECKING_TRANSACTIONS"
     ",SAVING_TRANSACTIONS"
     "&account_dialog_type=SINGLE";
+
+Uri getUri(String path) {
+  if (testMode) {
+    return Uri.http(apiServer, path);
+  }
+
+  return Uri.https(apiServer, path);
+}
 
 Future<List<Receipt>> fetchMockedTransactions() async {
   final String response =
@@ -73,7 +91,7 @@ Future<LoginData> fetchLoginData(
 
   final testString = test ? "T" : "F";
   String path = ('tink_user_data/$testString');
-  var uri = Uri.https(apiServer, path);
+  var uri = getUri(path);
   var response =
       await http.post(uri, headers: headers, body: json.encode(data));
   //print(uri);
@@ -89,7 +107,7 @@ Future<List<BankTransaction>> fetchTransactions(String access_token) async {
   //print("INSIDE TRANSACTIOn");
   String path = '/tink_transaction_history/';
   path += access_token;
-  final response = await http.get(Uri.https(apiServer, path));
+  final response = await http.get(getUri(path));
   if (response.statusCode == 200) {
     List<dynamic> transactions =
         convert.jsonDecode(response.body)["transactions"];
@@ -117,8 +135,8 @@ Future<Response> CodeToAccessToken(String code, bool test) async {
   print("PATH: " + path);
   print("APISERVER: " + apiServer);
   print("URIU PÅATH");
-  print(Uri.https(apiServer, path));
-  final response = await http.get(Uri.https(apiServer, path));
+  print(getUri(path));
+  final response = await http.get(getUri(path));
   print("Hej");
   print("response: ${response.body}");
   Response accessToken = Response.fromJson(convert.jsonDecode(response.body));
@@ -181,7 +199,7 @@ fetchReceipts(Cookie cookie) async {
     "Cookie": cookie.toString(),
   };
 
-  final response = await http.get(Uri.https(apiServer, path), headers: headers);
+  final response = await http.get(getUri(path), headers: headers);
   if (response.statusCode != 200) {
     throw Exception(
         "Unexpected status code ${response.statusCode}\n{response.body}");
@@ -197,7 +215,7 @@ fetchReceipts(Cookie cookie) async {
 
 postReceipt(Cookie cookie, Receipt receipt) async {
   const String path = "/receipts";
-  final Uri uri = Uri.https(apiServer, path);
+  final Uri uri = getUri(path);
   final headers = {
     "Content-type": "application/json",
     "Cookie": cookie.toString(),
@@ -212,7 +230,7 @@ postReceipt(Cookie cookie, Receipt receipt) async {
 }
 
 updateReceipt(Cookie cookie, String receiptId, Receipt receipt) async {
-  final uri = Uri.https(apiServer, "/receipts/$receiptId");
+  final uri = getUri("/receipts/$receiptId");
   final headers = {
     "Content-type": "application/json",
     "Cookie": cookie.toString(),
@@ -226,7 +244,7 @@ updateReceipt(Cookie cookie, String receiptId, Receipt receipt) async {
 }
 
 deleteReceipt(Cookie cookie, Receipt receipt) async {
-  final uri = Uri.https(apiServer, "/receipts/${receipt.backendId}");
+  final uri = getUri("/receipts/${receipt.backendId}");
   final Map<String, String> headers = {
     "Cookie": cookie.toString(),
   };
@@ -238,7 +256,7 @@ deleteReceipt(Cookie cookie, Receipt receipt) async {
 }
 
 updateImage(Cookie cookie, String receiptId, XFile image) async {
-  final uri = Uri.https(apiServer, "/receipts/$receiptId/image");
+  final uri = getUri("/receipts/$receiptId/image");
   final mimeType = image.mimeType ?? "application/octet-stream";
   final request = http.MultipartRequest("PUT", uri)
     ..files.add(await http.MultipartFile.fromPath("file", image.path,
@@ -252,7 +270,7 @@ updateImage(Cookie cookie, String receiptId, XFile image) async {
 }
 
 fetchImage(Cookie cookie, String receiptId) async {
-  final uri = Uri.https(apiServer, "/receipts/$receiptId/image");
+  final uri = getUri("/receipts/$receiptId/image");
   final Map<String, String> headers = {
     "Cookie": cookie.toString(),
   };
@@ -265,7 +283,7 @@ fetchImage(Cookie cookie, String receiptId) async {
 }
 
 deleteImage(Cookie cookie, String receiptId) async {
-  final uri = Uri.https(apiServer, "/receipts/$receiptId/image");
+  final uri = getUri("/receipts/$receiptId/image");
   final Map<String, String> headers = {
     "Cookie": cookie.toString(),
   };
@@ -277,7 +295,7 @@ deleteImage(Cookie cookie, String receiptId) async {
 }
 
 fetchCategories(Cookie cookie) async {
-  final uri = Uri.https(apiServer, "/categories");
+  final uri = getUri("/categories");
   final Map<String, String> headers = {
     "Cookie": cookie.toString(),
   };
@@ -292,7 +310,7 @@ fetchCategories(Cookie cookie) async {
 }
 
 postCategory(Cookie cookie, ReceiptCategory category) async {
-  final uri = Uri.https(apiServer, "/categories");
+  final uri = getUri("/categories");
   final headers = {
     "Content-type": "application/json",
     "Cookie": cookie.toString(),
@@ -306,7 +324,7 @@ postCategory(Cookie cookie, ReceiptCategory category) async {
 }
 
 updateCategory(Cookie cookie, ReceiptCategory category) async {
-  final uri = Uri.https(apiServer, "/categories/${category.id!}");
+  final uri = getUri("/categories/${category.id!}");
   final headers = {
     "Content-type": "application/json",
     "Cookie": cookie.toString(),
@@ -320,7 +338,7 @@ updateCategory(Cookie cookie, ReceiptCategory category) async {
 }
 
 deleteCategory(Cookie cookie, int categoryId) async {
-  final uri = Uri.https(apiServer, "/categories/$categoryId");
+  final uri = getUri("/categories/$categoryId");
   final Map<String, String> headers = {
     "Cookie": cookie.toString(),
   };
