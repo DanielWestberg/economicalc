@@ -1,4 +1,5 @@
 import 'package:economicalc_client/models/category.dart';
+import 'package:economicalc_client/models/transaction.dart';
 import 'package:flutter/material.dart';
 
 class Utils {
@@ -11,6 +12,8 @@ class Utils {
   static Color backgroundColor = Color(0xFFB8D8D8);
   static Color tileColor = Color(0xffD4E6F3);
   static Color drawerColor = Color(0xff69A3A7);
+  static Color chartBarColor = Color.fromARGB(255, 68, 104, 107);
+  static Color snackBarError = Color(0xFFC72C41);
 
   static List<ReceiptCategory> categories = [
     ReceiptCategory(description: "Groceries", color: Colors.blue),
@@ -19,4 +22,15 @@ class Utils {
     ReceiptCategory(
         description: "My proud collection of teddy bears", color: Colors.brown),
   ];
+
+  static double getSumOfTransactionsTotals(
+      List<Transaction> transactions, bool isExpenses) {
+    double sum = 0;
+    transactions.forEach((element) {
+      if ((element.totalAmount! < 0) == isExpenses) {
+        sum += element.totalAmount!;
+      }
+    });
+    return isExpenses ? -sum : sum;
+  }
 }

@@ -1,3 +1,4 @@
+import 'package:economicalc_client/helpers/quota_exception.dart';
 import 'package:economicalc_client/models/response.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
 import 'package:economicalc_client/models/category.dart';
@@ -187,9 +188,22 @@ processImageWithAsprise(File imageFile) async {
   request.files.add(multipartFile);
 
   var response = await request.send();
-  if (response.statusCode == 200) print('Success');
+  if (response.statusCode == 429) {
+    throw QuotaException("Too many requests in a short time period");
+  }
+  if (response.statusCode != 200) {
+    throw HttpException("Bad request");
+  }
   final respStr = await response.stream.bytesToString();
   final respJson = await json.decode(respStr);
+  if (respJson.containsKey("message")) {
+    if (respJson['message'] ==
+        'Hourly quota exceeded. Try again in a few hours or contact us to increase the quota: ocr@asprise.com') {
+      throw QuotaException(respJson['message']);
+    } else {
+      throw Exception(respJson['message']);
+    }
+  }
   return respJson;
 }
 
