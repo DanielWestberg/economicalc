@@ -275,6 +275,10 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                       initialDate: endDate['dialog'],
                       firstDate: DateTime(1900),
                       lastDate: DateTime(2100));
+                  if (newEndDate != null) {
+                    newEndDate =
+                        DateTime(newEndDate.year, newEndDate.month + 1, 0);
+                  }
                   setState(() {
                     endDate['dialog'] = newEndDate ?? endDate['dialog'];
                   });

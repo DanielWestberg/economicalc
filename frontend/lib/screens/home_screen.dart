@@ -80,7 +80,7 @@ class _HomeScreen extends State<HomeScreen> {
   Widget renderSearchField() {
     return Container(
         color: Utils.lightColor,
-        padding: EdgeInsets.all(25),
+        padding: EdgeInsets.only(top: 20, right: 20, left: 20),
         child: TextField(
           onChanged: (value) {
             historyListStateKey.currentState!.search(value);
@@ -104,6 +104,7 @@ class _HomeScreen extends State<HomeScreen> {
                 onPressed: (() {
                   setState(() {
                     showSearchBar = false;
+                    editingController.clear();
                   });
                 }),
               ),
@@ -230,8 +231,10 @@ class _HomeScreen extends State<HomeScreen> {
                       initialDate: endDate['dialog'],
                       firstDate: DateTime(1900),
                       lastDate: DateTime(2100));
-                  newEndDate =
-                      DateTime(newEndDate!.year, newEndDate.month + 1, 0);
+                  if (newEndDate != null) {
+                    newEndDate =
+                        DateTime(newEndDate.year, newEndDate.month + 1, 0);
+                  }
                   setState(() {
                     endDate['dialog'] = newEndDate ?? endDate['dialog'];
                   });
