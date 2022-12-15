@@ -48,14 +48,14 @@ class _HomeScreen extends State<HomeScreen> {
   };
 
   Map<String, dynamic> category = {
-    "selected": Category.noneCategory,
-    "previous": Category.noneCategory,
-    "dialog": Category.noneCategory,
+    "selected": ReceiptCategory.noneCategory,
+    "previous": ReceiptCategory.noneCategory,
+    "dialog": ReceiptCategory.noneCategory,
   };
 
   String dropdownValueCategory = 'None';
-  late List<Category> categories;
-  late Future<List<Category>> categoriesFutureBuilder;
+  late List<ReceiptCategory> categories;
+  late Future<List<ReceiptCategory>> categoriesFutureBuilder;
 
   @override
   void initState() {
@@ -349,8 +349,8 @@ class _HomeScreen extends State<HomeScreen> {
             return Text("${snapshot.error}");
           } else if (snapshot.hasData) {
             categories = snapshot.data!;
-            if (!categories.contains(Category.noneCategory)) {
-              categories.insert(0, Category.noneCategory);
+            if (!categories.contains(ReceiptCategory.noneCategory)) {
+              categories.insert(0, ReceiptCategory.noneCategory);
             }
             return SizedBox(
                 width: 130,
@@ -360,15 +360,15 @@ class _HomeScreen extends State<HomeScreen> {
                     isExpanded: true,
                     value: dropdownValueCategory,
                     onChanged: (value) {
-                      Category newCategory =
-                          Category.getCategoryByDesc(value!, categories);
+                      ReceiptCategory newCategory =
+                          ReceiptCategory.getCategoryByDesc(value!, categories);
                       setState(() {
                         dropdownValueCategory = value;
                         category['dialog'] = newCategory;
                       });
                     },
                     items: categories
-                        .map<DropdownMenuItem<String>>((Category category) {
+                        .map<DropdownMenuItem<String>>((ReceiptCategory category) {
                       return DropdownMenuItem<String>(
                         value: category.description,
                         child: Text(category.description,

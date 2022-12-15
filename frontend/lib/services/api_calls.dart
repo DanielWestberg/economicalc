@@ -288,10 +288,10 @@ fetchCategories(Cookie cookie) async {
   }
 
   List<dynamic> categories = convert.jsonDecode(response.body)["data"];
-  return categories.map((e) => Category.fromJson(e)).toList();
+  return categories.map((e) => ReceiptCategory.fromJson(e)).toList();
 }
 
-postCategory(Cookie cookie, Category category) async {
+postCategory(Cookie cookie, ReceiptCategory category) async {
   final uri = Uri.https(apiServer, "/categories");
   final headers = {
     "Content-type": "application/json",
@@ -305,7 +305,7 @@ postCategory(Cookie cookie, Category category) async {
   }
 }
 
-updateCategory(Cookie cookie, Category category) async {
+updateCategory(Cookie cookie, ReceiptCategory category) async {
   final uri = Uri.https(apiServer, "/categories/${category.id!}");
   final headers = {
     "Content-type": "application/json",

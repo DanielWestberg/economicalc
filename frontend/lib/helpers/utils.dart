@@ -12,11 +12,11 @@ class Utils {
   static Color tileColor = Color(0xffD4E6F3);
   static Color drawerColor = Color(0xff69A3A7);
 
-  static List<Category> categories = [
-    Category(description: "Groceries", color: Colors.blue),
-    Category(description: "Transportation", color: Colors.purple),
-    Category(description: "Stuff", color: Colors.green),
-    Category(
+  static List<ReceiptCategory> categories = [
+    ReceiptCategory(description: "Groceries", color: Colors.blue),
+    ReceiptCategory(description: "Transportation", color: Colors.purple),
+    ReceiptCategory(description: "Stuff", color: Colors.green),
+    ReceiptCategory(
         description: "My proud collection of teddy bears", color: Colors.brown),
   ];
 }

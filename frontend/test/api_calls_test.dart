@@ -104,7 +104,7 @@ main() async {
   });
 
   test ("Post category", () async {
-    final category = Category(
+    final category = ReceiptCategory(
         description: "Groceries",
         color: const Color(0xFFFF7733),
         id: categoryId,
@@ -112,7 +112,7 @@ main() async {
 
     await postCategory(cookie, category);
 
-    List<Category> fetchedCategories = await fetchCategories(cookie);
+    List<ReceiptCategory> fetchedCategories = await fetchCategories(cookie);
     expect(fetchedCategories, contains(category));
 
     await deleteCategory(cookie, categoryId);
@@ -121,7 +121,7 @@ main() async {
   test ("Update category", () async {
     final originalDescription = "Explosives";
 
-    final category = Category(
+    final category = ReceiptCategory(
       description: originalDescription,
       color: const Color(0xFFFF0000),
       id: categoryId,

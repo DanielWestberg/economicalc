@@ -27,8 +27,8 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   final columns = ["Items", "Sum"];
   final dbConnector = SQFLite.instance;
   late String? dropdownValue;
-  late Future<List<Category>> categoriesFutureBuilder;
-  late List<Category> categories;
+  late Future<List<ReceiptCategory>> categoriesFutureBuilder;
+  late List<ReceiptCategory> categories;
   late Receipt receipt;
   late Future<Receipt>? receiptFutureBuilder;
 
@@ -119,7 +119,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                       }
                     },
                     items: categories
-                        .map<DropdownMenuItem<String>>((Category category) {
+                        .map<DropdownMenuItem<String>>((ReceiptCategory category) {
                       return DropdownMenuItem<String>(
                         value: category.description,
                         child: Text(category.description,
@@ -286,7 +286,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     });
   }
 
-  Future<List<Category>> getCategories(SQFLite dbConnector) async {
+  Future<List<ReceiptCategory>> getCategories(SQFLite dbConnector) async {
     return await dbConnector.getAllcategories();
   }
 
