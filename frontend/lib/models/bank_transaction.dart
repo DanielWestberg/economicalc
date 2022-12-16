@@ -1,22 +1,22 @@
 class BankTransaction {
-  late String id;
-  late String accountId;
+  late String? id;
+  late String? accountId;
   late Amount amount;
   late Descriptions descriptions;
   late Dates dates;
-  late Types types;
-  late String status;
-  late String providerMutability;
+  late Types? types;
+  late String? status;
+  late String? providerMutability;
 
   BankTransaction(
-      {required this.id,
-      required this.accountId,
+      {this.id,
+      this.accountId,
       required this.amount,
       required this.descriptions,
       required this.dates,
-      required this.types,
-      required this.status,
-      required this.providerMutability});
+      this.types,
+      this.status,
+      this.providerMutability});
 
   BankTransaction.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -42,7 +42,7 @@ class BankTransaction {
     data['descriptionsoriginal'] = descriptions.original;
     data['descriptionsdisplay'] = descriptions.display;
     data['datesbooked'] = dates.booked;
-    data['typestype'] = types.type;
+    data['typestype'] = types!.type;
     data['status'] = status;
     data['providerMutability'] = providerMutability;
     return data;
@@ -62,7 +62,7 @@ class BankTransaction {
       data['dates'] = this.dates.toJson();
     }
     if (this.types != null) {
-      data['types'] = this.types.toJson();
+      data['types'] = this.types!.toJson();
     }
     data['status'] = this.status;
     data['providerMutability'] = this.providerMutability;

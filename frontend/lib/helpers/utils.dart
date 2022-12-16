@@ -1,6 +1,7 @@
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:flutter/material.dart';
+import 'package:string_similarity/string_similarity.dart';
 
 class Utils {
   static int compareString(bool ascending, String value1, String value2) =>
@@ -32,5 +33,18 @@ class Utils {
       }
     });
     return isExpenses ? -sum : sum;
+  }
+
+  static bool isSimilarDate(DateTime receiptDate, DateTime bankTransDate) {
+    return receiptDate.add(const Duration(days: 3)).compareTo(bankTransDate) >=
+        0;
+  }
+
+  static bool isSimilarStoreName(String name1, String name2) {
+    print(StringSimilarity.compareTwoStrings(
+        name1.toLowerCase(), name2.toLowerCase()));
+    return StringSimilarity.compareTwoStrings(
+            name1.toLowerCase().trim(), name2.toLowerCase().trim()) >
+        0.2;
   }
 }

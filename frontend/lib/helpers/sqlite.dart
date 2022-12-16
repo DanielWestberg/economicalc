@@ -7,6 +7,7 @@ import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:flutter/material.dart';
 import 'package:economicalc_client/models/receipt.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart';
@@ -212,28 +213,63 @@ class SQFLite {
     return transaction.toMap();
   }
 
-  Future<void> importMissingBankTransactions() async {
+  Future<void> generateTransactions() async {
     final db = await instance.database;
 
     List<Map<String, dynamic?>>? bankTransactions =
         await db?.rawQuery('SELECT * FROM bankTransactions');
 
-    for (var bankTransaction in bankTransactions!) {
-      var id = bankTransaction['id'];
-      List<Map<String, dynamic?>>? transaction = await db?.rawQuery(
-          'SELECT * FROM transactions WHERE bankTransactionID = "$id"');
+    List<bank_transaction.BankTransaction> banktrans = [];
 
-      if (transaction!.length == 0) {
-        Transaction newTransaction = Transaction(
-          store: bankTransaction['descriptionsoriginal'],
-          date: DateTime.parse(bankTransaction['datesbooked']),
-          totalAmount:
-              double.parse(bankTransaction['amountvalueunscaledValue']) / 10,
-          bankTransactionID: id,
-          categoryID: await getCategoryIDfromDescription("Uncategorized"),
-          categoryDesc: "Uncategorized",
-        );
-        insertTransaction(newTransaction);
+    bankTransactions?.forEach((transaction) {
+      banktrans.add(bank_transaction.BankTransaction.fromJson(transaction));
+    });
+
+    List<Receipt> receipts = await getAllReceipts();
+    String response =
+        await rootBundle.loadString('../assets/swedish_municipalities.json');
+    List<String> sweMuni = await json.decode(response);
+
+    for (bank_transaction.BankTransaction bankTransaction in banktrans) {
+      String? id = bankTransaction.id;
+      for (Receipt receipt in receipts) {
+        if (receipt.total == bankTransaction.amount &&
+            Utils.isSimilarDate(
+                receipt.date, DateTime.parse(bankTransaction.dates.booked))) {
+          String desc = bankTransaction.descriptions.display;
+          for (String municipality in sweMuni) {
+            desc.toLowerCase().replaceAll(municipality.toLowerCase(), "");
+          }
+          if (Utils.isSimilarStoreName(receipt.recipient, desc)) {
+            Transaction newTransaction = Transaction(
+                store: bankTransaction.descriptions.display,
+                date: DateTime.parse(bankTransaction.dates.booked),
+                totalAmount:
+                    double.parse(bankTransaction.amount.value.unscaledValue) /
+                        10,
+                bankTransactionID: id,
+                categoryID: await getCategoryIDfromDescription("Uncategorized"),
+                categoryDesc: "Uncategorized",
+                receiptID: receipt.id);
+            insertTransaction(newTransaction);
+          } else {
+            Transaction newReceipt = Transaction(
+                store: receipt.recipient,
+                date: receipt.date,
+                totalAmount: receipt.total,
+                categoryID: await getCategoryIDfromDescription("Uncategorized"),
+                categoryDesc: "Uncategorized");
+            insertTransaction(newReceipt);
+          }
+        } else {
+          Transaction newReceipt = Transaction(
+              store: receipt.recipient,
+              date: receipt.date,
+              totalAmount: receipt.total,
+              categoryID: await getCategoryIDfromDescription("Uncategorized"),
+              categoryDesc: "Uncategorized");
+          insertTransaction(newReceipt);
+        }
       }
     }
   }
@@ -275,6 +311,11 @@ class SQFLite {
       bankTransaction.toDbFormat(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+
+  Future<void> deleteAllBankTransactions() async {
+    final db = await instance.database;
+    await db?.rawQuery('DELETE FROM bankTransactions');
   }
 
   Future<bank_transaction.BankTransaction> getBankTransactionfromID(

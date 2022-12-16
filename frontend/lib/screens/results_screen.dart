@@ -103,7 +103,7 @@ class ResultsScreenState extends State<ResultsScreen> {
           onTap: () async {
             int receiptID =
                 await dbConnector.insertReceipt(receipt, dropdownValue);
-            Transaction transaction = Transaction(
+            /*Transaction transaction = Transaction(
               date: receipt.date,
               totalAmount: -receipt.total!,
               store: receipt.recipient,
@@ -118,6 +118,7 @@ class ResultsScreenState extends State<ResultsScreen> {
             if (n > 0) {
               showAlertDialog(context, n, transaction);
             }
+            */
           },
           child: Icon(Icons.check)),
     );
@@ -147,8 +148,8 @@ class ResultsScreenState extends State<ResultsScreen> {
                         receipt.categoryDesc = dropdownValue;
                       });
                     },
-                    items: categories
-                        .map<DropdownMenuItem<String>>((ReceiptCategory category) {
+                    items: categories.map<DropdownMenuItem<String>>(
+                        (ReceiptCategory category) {
                       return DropdownMenuItem<String>(
                         value: category.description,
                         child: Text(category.description,

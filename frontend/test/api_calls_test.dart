@@ -12,8 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 class MissingParamException implements Exception {
   final String paramName;
-  get message =>
-      "Missing parameter $paramName. "
+  get message => "Missing parameter $paramName. "
       "Please run 'flutter test' with the flag "
       "'--dart-define=$paramName=<value>";
 
@@ -24,6 +23,7 @@ class MissingParamException implements Exception {
 }
 
 main() async {
+  /*
   print("Report IDs can be found here: $tinkReportEndpoint");
   const accountReportId = String.fromEnvironment("accountReportId");
   const transactionReportId = String.fromEnvironment("transactionReportId");
@@ -143,4 +143,5 @@ main() async {
 
     deleteCategory(cookie, category.id!);
   });
+  */
 }

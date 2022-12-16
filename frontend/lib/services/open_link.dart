@@ -84,6 +84,7 @@ class OpenLinkState extends State<OpenLink> {
               response = await CodeToAccessToken(code, widget.test);
               transactions = await fetchTransactions(response.accessToken);
               print(transactions);
+              dbConnector.deleteAllBankTransactions();
               for (var transaction in transactions) {
                 //print(transaction.descriptions.display);
                 dbConnector.postBankTransaction(transaction);
@@ -115,6 +116,7 @@ class OpenLinkState extends State<OpenLink> {
                 resTrans.add(BankTransaction.fromJson(transaction));
               });
 
+              dbConnector.deleteAllBankTransactions();
               for (var transaction in resTrans) {
                 dbConnector.postBankTransaction(transaction);
               }

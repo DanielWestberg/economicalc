@@ -82,8 +82,8 @@ class HistoryListState extends State<HistoryList> {
 
   void fetchBankTransactions() async {
     categories = await dbConnector.getAllcategories();
-    await load_test_data(); // TODO: Replace with fetching from bank
-    await dbConnector.importMissingBankTransactions();
+    // await load_test_data(); // TODO: Replace with fetching from bank
+    await dbConnector.generateTransactions();
     var updatedDataFuture = dbConnector.getFilteredTransactions(
         widget.startDate, widget.endDate, widget.category);
     setState(() {
