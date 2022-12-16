@@ -294,7 +294,7 @@ updateImage(Cookie cookie, String receiptId, XFile image) async {
   request.headers["Cookie"] = cookie.toString();
   final response = await request.send();
   if (response.statusCode != 204) {
-    throw UnexpectedResponseException(response);
+    throw UnexpectedStatusCodeException(response.statusCode);
   }
 }
 
