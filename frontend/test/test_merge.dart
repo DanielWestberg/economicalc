@@ -7,7 +7,7 @@ import 'package:economicalc_client/models/bank_transaction.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:flutter/services.dart';
-import 'package:test/test.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void runTest(String sname1, String sname2, double amount1, double amount2,
     String date1, String date2, bool one, bool two, bool three) async {
@@ -28,29 +28,36 @@ void runTest(String sname1, String sname2, double amount1, double amount2,
       total: amount2);
 
   bool sameAmount = receipt.total == damount;
-  bool similarName = Utils.isSimilarStoreName(
-      transaction.descriptions.display, receipt.recipient);
+
   bool similarDate = Utils.isSimilarDate(
       DateTime.parse(transaction.dates.booked), receipt.date);
 
   String response =
       await rootBundle.loadString('assets/swedish_municipalities.json');
-  List<String> sweMuni = json.decode(response);
+  List<dynamic> sweMuni = json.decode(response);
 
   print("Checking if ${receipt.total} == ${damount}...");
   expect(sameAmount, one);
 
   String desc = transaction.descriptions.display;
   for (String municipality in sweMuni) {
-    desc.toLowerCase().replaceAll(municipality.toLowerCase(), "");
+    //print(municipality.toLowerCase().trim());
+    //print(desc.toLowerCase().trim());
+    desc = desc
+        .toLowerCase()
+        .trim()
+        .replaceAll(municipality.toLowerCase().trim(), "");
   }
+  bool similarName = Utils.isSimilarStoreName(desc, receipt.recipient);
   print("Checking if $desc == ${receipt.recipient}...");
-  expect(desc, two);
+  expect(similarName, two);
   print("Checking if ${transaction.dates.booked} == ${receipt.date}...");
   expect(similarDate, three);
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('String similarity', () {
     runTest("ICA Nära", "Ica Uppsala", 75, 75, "2022-10-11", "2022-10-11", true,
         true, true);
