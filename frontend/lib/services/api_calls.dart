@@ -108,7 +108,7 @@ Future<LoginData> fetchLoginData(
   //print(uri);
   //print(response);
   if (response.statusCode != 200) {
-    throw Exception('http.get error: statusCode= ${response.statusCode}');
+    throw UnexpectedResponseException(response);
   }
   //print(response.body);
   return LoginData.fromResponse(response);
@@ -132,7 +132,7 @@ Future<List<BankTransaction>> fetchTransactions(String access_token) async {
 
     return resTrans;
   } else {
-    throw Exception("No transactions associated with user");
+    throw UnexpectedResponseException(response);
   }
 }
 
@@ -225,8 +225,7 @@ fetchReceipts(Cookie cookie) async {
 
   final response = await http.get(getUri(path), headers: headers);
   if (response.statusCode != 200) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n{response.body}");
+    throw UnexpectedResponseException(response);
   }
   List<dynamic> receipts = convert.jsonDecode(response.body)["data"];
   List<Receipt> resultReceipts = [];
@@ -247,8 +246,7 @@ postReceipt(Cookie cookie, Receipt receipt) async {
   final body = convert.jsonEncode(receipt.toMap());
   final response = await http.post(uri, headers: headers, body: body);
   if (response.statusCode != 201) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${response.body}");
+    throw UnexpectedResponseException(response);
   }
   return Receipt.fromBackendJson(convert.jsonDecode(response.body)["data"]);
 }
@@ -262,8 +260,7 @@ updateReceipt(Cookie cookie, String receiptId, Receipt receipt) async {
   final body = convert.jsonEncode(receipt.toMap());
   final response = await http.put(uri, headers: headers, body: body);
   if (response.statusCode != 200) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${response.body}");
+    throw UnexpectedResponseException(response);
   }
 }
 
@@ -274,8 +271,7 @@ deleteReceipt(Cookie cookie, Receipt receipt) async {
   };
   final response = await http.delete(uri, headers: headers);
   if (response.statusCode != 204) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${response.body}");
+    throw UnexpectedResponseException(response);
   }
 }
 
@@ -288,8 +284,7 @@ updateImage(Cookie cookie, String receiptId, XFile image) async {
   request.headers["Cookie"] = cookie.toString();
   final response = await request.send();
   if (response.statusCode != 204) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${await response.stream.bytesToString()}");
+    throw UnexpectedResponseException(response);
   }
 }
 
@@ -300,8 +295,7 @@ fetchImage(Cookie cookie, String receiptId) async {
   };
   final response = await http.get(uri, headers: headers);
   if (response.statusCode != 200) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${response.body}");
+    throw UnexpectedResponseException(response);
   }
   return XFile.fromData(response.bodyBytes);
 }
@@ -313,8 +307,7 @@ deleteImage(Cookie cookie, String receiptId) async {
   };
   final response = await http.delete(uri, headers: headers);
   if (response.statusCode != 204) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${response.body}");
+    throw UnexpectedResponseException(response);
   }
 }
 
@@ -325,8 +318,7 @@ fetchCategories(Cookie cookie) async {
   };
   final response = await http.get(uri, headers: headers);
   if (response.statusCode != 200) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${response.body}");
+    throw UnexpectedResponseException(response);
   }
 
   List<dynamic> categories = convert.jsonDecode(response.body)["data"];
@@ -342,8 +334,7 @@ postCategory(Cookie cookie, TransactionCategory category) async {
   final body = convert.jsonEncode(category.toJson(true));
   final response = await http.post(uri, headers: headers, body: body);
   if (response.statusCode != 201) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${response.body}");
+    throw UnexpectedResponseException(response);
   }
 }
 
@@ -356,8 +347,7 @@ updateCategory(Cookie cookie, TransactionCategory category) async {
   final body = convert.jsonEncode(category.toJson(true));
   final response = await http.put(uri, headers: headers, body: body);
   if (response.statusCode != 200 && response.statusCode != 201) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${response.body}");
+    throw UnexpectedResponseException(response);
   }
 }
 
@@ -368,7 +358,6 @@ deleteCategory(Cookie cookie, int categoryId) async {
   };
   final response = await http.delete(uri, headers: headers);
   if (response.statusCode != 204) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${response.body}");
+    throw UnexpectedResponseException(response);
   }
 }
