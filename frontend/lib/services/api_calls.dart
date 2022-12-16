@@ -42,6 +42,16 @@ const String tinkReportEndpoint =
     ",SAVING_TRANSACTIONS"
     "&account_dialog_type=SINGLE";
 
+class UnexpectedResponseException implements Exception {
+  final http.Response response;
+  get message => "Unexpected ${response.statusCode} response\n${response.body}";
+
+  const UnexpectedResponseException(this.response);
+
+  @override
+  String toString() => "UnexpectedResponseException: $message";
+}
+
 Uri getUri(String path) {
   if (testMode) {
     return Uri.http(apiServer, path);
