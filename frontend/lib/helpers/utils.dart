@@ -40,11 +40,22 @@ class Utils {
         0;
   }
 
+  static String removeStopWords(String word, List<String> stopwords) {
+    for (String municipality in stopwords) {
+      //print(municipality.toLowerCase().trim().replaceAll(" ", ""));
+      //print(desc.toLowerCase().trim());
+      word = word.toLowerCase().trim().replaceAll(
+          municipality.toLowerCase().trim().replaceAll(" ", ""), "");
+    }
+    return word;
+  }
+
   static bool isSimilarStoreName(String name1, String name2) {
     print(StringSimilarity.compareTwoStrings(
         name1.toLowerCase(), name2.toLowerCase()));
+
     return StringSimilarity.compareTwoStrings(
             name1.toLowerCase().trim(), name2.toLowerCase().trim()) >
-        0.2;
+        0.4;
   }
 }

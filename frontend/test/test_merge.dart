@@ -36,20 +36,21 @@ void runTest(String sname1, String sname2, double amount1, double amount2,
       await rootBundle.loadString('assets/swedish_municipalities.json');
   List<dynamic> sweMuni = json.decode(response);
 
+  List<String> list = [];
+
+  sweMuni.forEach((element) {
+    list.add(element);
+  });
+
   print("Checking if ${receipt.total} == ${damount}...");
   expect(sameAmount, one);
-
   String desc = transaction.descriptions.display;
-  for (String municipality in sweMuni) {
-    //print(municipality.toLowerCase().trim());
-    //print(desc.toLowerCase().trim());
-    desc = desc
-        .toLowerCase()
-        .trim()
-        .replaceAll(municipality.toLowerCase().trim(), "");
-  }
-  bool similarName = Utils.isSimilarStoreName(desc, receipt.recipient);
-  print("Checking if $desc == ${receipt.recipient}...");
+  String desc1 = receipt.recipient;
+  list.sort((a, b) => b.length.compareTo(a.length));
+  String result = Utils.removeStopWords(desc, list);
+  String result1 = Utils.removeStopWords(desc1, list);
+  bool similarName = Utils.isSimilarStoreName(result, result1);
+  print("Checking if $result== $result1...");
   expect(similarName, two);
   print("Checking if ${transaction.dates.booked} == ${receipt.date}...");
   expect(similarDate, three);

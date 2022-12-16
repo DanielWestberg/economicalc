@@ -227,9 +227,14 @@ class SQFLite {
 
     List<Receipt> receipts = await getAllReceipts();
     String response =
-        await rootBundle.loadString('../assets/swedish_municipalities.json');
-    List<String> sweMuni = await json.decode(response);
+        await rootBundle.loadString('assets/swedish_municipalities.json');
+    List<dynamic> sweMuni = json.decode(response);
 
+    List<String> list = [];
+
+    sweMuni.forEach((element) {
+      list.add(element);
+    });
     for (bank_transaction.BankTransaction bankTransaction in banktrans) {
       String? id = bankTransaction.id;
       for (Receipt receipt in receipts) {
@@ -237,10 +242,12 @@ class SQFLite {
             Utils.isSimilarDate(
                 receipt.date, DateTime.parse(bankTransaction.dates.booked))) {
           String desc = bankTransaction.descriptions.display;
-          for (String municipality in sweMuni) {
-            desc.toLowerCase().replaceAll(municipality.toLowerCase(), "");
-          }
-          if (Utils.isSimilarStoreName(receipt.recipient, desc)) {
+          String desc1 = receipt.recipient;
+          list.sort((a, b) => b.length.compareTo(a.length));
+          String result = Utils.removeStopWords(desc, list);
+          String result1 = Utils.removeStopWords(desc1, list);
+
+          if (Utils.isSimilarStoreName(result, result1)) {
             Transaction newTransaction = Transaction(
                 store: bankTransaction.descriptions.display,
                 date: DateTime.parse(bankTransaction.dates.booked),
