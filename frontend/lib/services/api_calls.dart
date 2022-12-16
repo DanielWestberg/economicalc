@@ -52,6 +52,16 @@ class UnexpectedResponseException implements Exception {
   String toString() => "UnexpectedResponseException: $message";
 }
 
+class UnexpectedStatusCodeException implements Exception {
+  final int statusCode;
+  get message => "Unexpected status code $statusCode}";
+
+  const UnexpectedStatusCodeException(this.statusCode);
+
+  @override
+  String toString() => "UnexpectedStatusCodeException: $message";
+}
+
 Uri getUri(String path) {
   if (testMode) {
     return Uri.http(apiServer, path);
