@@ -204,6 +204,7 @@ processImageWithAsprise(File imageFile) async {
       throw Exception(respJson['message']);
     }
   }
+  print(respJson);
   return respJson;
 }
 
@@ -243,7 +244,7 @@ postReceipt(Cookie cookie, Receipt receipt) async {
   return Receipt.fromBackendJson(convert.jsonDecode(response.body)["data"]);
 }
 
-updateReceipt(Cookie cookie, String receiptId, Receipt receipt) async {
+updateReceipt(Cookie cookie, int receiptId, Receipt receipt) async {
   final uri = getUri("/receipts/$receiptId");
   final headers = {
     "Content-type": "application/json",
@@ -258,7 +259,7 @@ updateReceipt(Cookie cookie, String receiptId, Receipt receipt) async {
 }
 
 deleteReceipt(Cookie cookie, Receipt receipt) async {
-  final uri = getUri("/receipts/${receipt.backendId}");
+  final uri = getUri("/receipts/${receipt.id}");
   final Map<String, String> headers = {
     "Cookie": cookie.toString(),
   };
@@ -269,7 +270,7 @@ deleteReceipt(Cookie cookie, Receipt receipt) async {
   }
 }
 
-updateImage(Cookie cookie, String receiptId, XFile image) async {
+updateImage(Cookie cookie, int receiptId, XFile image) async {
   final uri = getUri("/receipts/$receiptId/image");
   final mimeType = image.mimeType ?? "application/octet-stream";
   final request = http.MultipartRequest("PUT", uri)
@@ -283,7 +284,7 @@ updateImage(Cookie cookie, String receiptId, XFile image) async {
   }
 }
 
-fetchImage(Cookie cookie, String receiptId) async {
+fetchImage(Cookie cookie, int receiptId) async {
   final uri = getUri("/receipts/$receiptId/image");
   final Map<String, String> headers = {
     "Cookie": cookie.toString(),
@@ -296,7 +297,7 @@ fetchImage(Cookie cookie, String receiptId) async {
   return XFile.fromData(response.bodyBytes);
 }
 
-deleteImage(Cookie cookie, String receiptId) async {
+deleteImage(Cookie cookie, int receiptId) async {
   final uri = getUri("/receipts/$receiptId/image");
   final Map<String, String> headers = {
     "Cookie": cookie.toString(),
