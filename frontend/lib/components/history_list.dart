@@ -11,14 +11,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class HistoryList extends StatefulWidget {
   final DateTime startDate;
   final DateTime endDate;
-  final ReceiptCategory category;
+  final TransactionCategory category;
+  final bool onlyReceipts;
 
-  HistoryList(Key? key, this.startDate, this.endDate, this.category)
+  HistoryList(
+      Key? key, this.startDate, this.endDate, this.category, this.onlyReceipts)
       : super(key: key);
 
   @override
@@ -32,22 +35,22 @@ class HistoryListState extends State<HistoryList> {
   bool initialized = false;
   final SQFLite dbConnector = SQFLite.instance;
 
-  late List<ReceiptCategory> categories = [];
+  late List<TransactionCategory> categories = [];
 
   @override
   void didUpdateWidget(covariant HistoryList oldWidget) {
     super.didUpdateWidget(oldWidget);
     dataFuture = dbConnector.getFilteredTransactions(
-        widget.startDate, widget.endDate, widget.category);
+        widget.startDate, widget.endDate, widget.category, widget.onlyReceipts);
   }
 
   @override
   void initState() {
     super.initState();
     initDB();
-    fetchBankTransactions();
+    updateData();
     dataFuture = dbConnector.getFilteredTransactions(
-        widget.startDate, widget.endDate, widget.category);
+        widget.startDate, widget.endDate, widget.category, widget.onlyReceipts);
   }
 
   void initDB() async {
@@ -80,12 +83,12 @@ class HistoryListState extends State<HistoryList> {
     });
   }
 
-  void fetchBankTransactions() async {
+  void updateData() async {
     categories = await dbConnector.getAllcategories();
-    await load_test_data(); // TODO: Replace with fetching from bank
+    // await load_test_data(); // TODO: Replace with fetching from bank
     await dbConnector.importMissingBankTransactions();
     var updatedDataFuture = dbConnector.getFilteredTransactions(
-        widget.startDate, widget.endDate, widget.category);
+        widget.startDate, widget.endDate, widget.category, widget.onlyReceipts);
     setState(() {
       dataFuture = updatedDataFuture;
     });
@@ -115,17 +118,26 @@ class HistoryListState extends State<HistoryList> {
 
   @override
   Widget build(BuildContext context) {
+    initializeDateFormatting('sv_SE');
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Container(
-        color: Utils.backgroundColor,
-        padding: const EdgeInsets.all(20),
-        child: const Text(
-          "History",
-          textAlign: TextAlign.left,
-          style: TextStyle(
-              color: Colors.black, fontSize: 32, fontWeight: FontWeight.bold),
-        ),
-      ),
+          color: Utils.lightColor,
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                "History",
+                style: TextStyle(color: Utils.textColor, fontSize: 32),
+              ),
+              Flexible(
+                  child: Text(
+                "${DateFormat.yMMMd('sv_SE').format(widget.startDate)} - ${DateFormat.yMMMd('sv_SE').format(widget.endDate)}",
+                style: TextStyle(color: Utils.textColor, fontSize: 18),
+              )),
+            ],
+          )),
       FutureBuilder(
           future: dataFuture,
           builder: (context, snapshot) {
@@ -140,33 +152,26 @@ class HistoryListState extends State<HistoryList> {
               sortByDate();
               return Expanded(
                   child: RefreshIndicator(
-                      onRefresh: () async => fetchBankTransactions(),
-                      backgroundColor: Color(0xFFB8D8D8),
-                      color: Colors.black,
+                      onRefresh: () async => updateData(),
+                      backgroundColor: Utils.mediumLightColor,
+                      color: Utils.textColor,
                       child: ListView.builder(
-                          padding: EdgeInsets.all(20.0),
                           itemCount: transactions.length,
                           itemBuilder: (BuildContext ctx, int index) {
                             return Padding(
-                                padding: EdgeInsets.only(top: 5.0),
+                                padding: EdgeInsets.only(top: 0.0),
                                 child: ListTile(
-                                  tileColor: Color(0xffD4E6F3),
-                                  shape: const ContinuousRectangleBorder(
-                                      side: BorderSide(
-                                    width: 1.0,
-                                    color: Colors.transparent,
-                                  )),
-                                  title: Text(
-                                    transactions[index].store!,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 18),
-                                  ),
-                                  subtitle: Text(
-                                    "${transactions[index].totalAmount} kr",
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16),
+                                  style: ListTileStyle.list,
+                                  shape: Border(
+                                    left: BorderSide(
+                                        color: TransactionCategory.getCategory(
+                                                transactions[index].categoryID!,
+                                                categories)
+                                            .color,
+                                        width: 20),
+                                    top: BorderSide(
+                                        color: Utils.mediumDarkColor,
+                                        width: 0.5),
                                   ),
                                   leading: Column(
                                       mainAxisAlignment:
@@ -175,22 +180,38 @@ class HistoryListState extends State<HistoryList> {
                                         Text(
                                           DateFormat('yyyy-MM-dd')
                                               .format(transactions[index].date),
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 16),
+                                          style: TextStyle(
+                                              color: Utils.textColor,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14),
                                         ),
-                                        Icon(
-                                          Icons.category,
-                                          color: ReceiptCategory.getCategory(
-                                                  transactions[index]
-                                                      .categoryID!,
-                                                  categories)
-                                              .color,
-                                        )
+                                        transactions[index].receiptID != null
+                                            ? Icon(
+                                                Icons.receipt_long_rounded,
+                                                size: 15,
+                                              )
+                                            : Text("")
                                       ]),
-                                  trailing: const Icon(
-                                    Icons.arrow_right_alt_sharp,
-                                    size: 50,
+                                  title: Text(
+                                    transactions[index].store!,
+                                    style: TextStyle(
+                                        color: Utils.textColor,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 14),
+                                  ),
+                                  subtitle: Text(
+                                    NumberFormat.currency(
+                                      locale: 'sv_SE',
+                                    ).format(transactions[index].totalAmount),
+                                    style: TextStyle(
+                                        color: Utils.textColor,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12),
+                                  ),
+                                  trailing: Icon(
+                                    Icons.arrow_right_rounded,
+                                    size: 40,
+                                    color: Utils.textColor,
                                   ),
                                   onTap: () {
                                     Navigator.of(context)
@@ -199,13 +220,14 @@ class HistoryListState extends State<HistoryList> {
                                                 TransactionDetailsScreen(
                                                     null, transactions[index])))
                                         .then((value) {
-                                      Phoenix.rebirth(context);
+                                      updateData();
                                     });
                                   },
                                 ));
                           })));
             } else {
               return Center(
+                  heightFactor: 10,
                   child: LoadingAnimationWidget.threeArchedCircle(
                       color: Colors.black, size: 40));
             }

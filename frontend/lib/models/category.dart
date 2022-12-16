@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
-class ReceiptCategory {
+class TransactionCategory {
   String description;
   Color color;
   int? id;
 
-  ReceiptCategory({required this.description, required this.color, this.id});
+  TransactionCategory(
+      {required this.description, required this.color, this.id});
 
   @override
-  operator ==(Object? other) => (other is ReceiptCategory &&
+  operator ==(Object? other) => (other is TransactionCategory &&
       description == other.description &&
       color == other.color &&
       id == other.id);
@@ -29,25 +30,26 @@ class ReceiptCategory {
     return res;
   }
 
-  factory ReceiptCategory.fromJson(Map<String, dynamic> json) {
-    return ReceiptCategory(
+  factory TransactionCategory.fromJson(Map<String, dynamic> json) {
+    return TransactionCategory(
         description: json['description'],
         color: Color(json['color']).withOpacity(1),
         id: json['id']);
   }
 
-  static String getCategoryDescription(ReceiptCategory category) {
+  static String getCategoryDescription(TransactionCategory category) {
     return category.description;
   }
 
-  static ReceiptCategory getCategory(int categoryID, categories) {
+  static TransactionCategory getCategory(int categoryID, categories) {
     return categories.firstWhere((item) => item.id == categoryID);
   }
 
-  static ReceiptCategory getCategoryByDesc(String categoryDesc, categories) {
+  static TransactionCategory getCategoryByDesc(
+      String categoryDesc, categories) {
     return categories.firstWhere((item) => item.description == categoryDesc);
   }
 
-  static ReceiptCategory noneCategory =
-      ReceiptCategory(description: "None", color: Colors.black);
+  static TransactionCategory noneCategory =
+      TransactionCategory(description: "None", color: Colors.black);
 }

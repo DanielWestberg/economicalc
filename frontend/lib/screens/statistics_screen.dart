@@ -1,3 +1,4 @@
+import 'package:economicalc_client/components/drawer.dart';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:month_year_picker/month_year_picker.dart';
 
 const List<String> dropdownList = <String>['Table', 'Chart'];
 
@@ -35,13 +37,16 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   };
 
   Map<String, dynamic> category = {
-    "selected": ReceiptCategory(description: "None", color: Colors.black, id: 0),
-    "previous": ReceiptCategory(description: "None", color: Colors.black, id: 0),
-    "dialog": ReceiptCategory(description: "None", color: Colors.black, id: 0),
+    "selected":
+        TransactionCategory(description: "None", color: Colors.black, id: 0),
+    "previous":
+        TransactionCategory(description: "None", color: Colors.black, id: 0),
+    "dialog":
+        TransactionCategory(description: "None", color: Colors.black, id: 0),
   };
 
-  ReceiptCategory noneCategory =
-      ReceiptCategory(description: "None", color: Colors.black, id: 0);
+  TransactionCategory noneCategory =
+      TransactionCategory(description: "None", color: Colors.black, id: 0);
   Map<String, dynamic> contentSelection = {
     "selected": [true, false],
     "previous": [true, false],
@@ -58,8 +63,8 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   String dropdownValueCategory = 'None';
 
   final SQFLite dbConnector = SQFLite.instance;
-  late List<ReceiptCategory> categories;
-  late Future<List<ReceiptCategory>> categoriesFutureBuilder;
+  late List<TransactionCategory> categories;
+  late Future<List<TransactionCategory>> categoriesFutureBuilder;
 
   final columns = ["Items", "Sum"];
   late Future<List<ReceiptItem>> dataFutureItems;
@@ -106,114 +111,122 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-        child: Scaffold(
-            appBar: AppBar(
-              toolbarHeight: 180,
-              backgroundColor: Utils.backgroundColor,
-              foregroundColor: Colors.black,
-              title: Column(children: [
-                const Text("Statistics",
-                    style: TextStyle(
-                        color: Color(0xff000000),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 25.0)),
-                headerInfo(context)
-              ]),
-              leading: IconButton(
-                  alignment: Alignment.topCenter,
-                  padding: EdgeInsets.only(left: 10, top: 50),
-                  onPressed: (() {
-                    Navigator.pop(context);
-                  }),
-                  icon: Icon(Icons.arrow_back)),
-              centerTitle: true,
-              elevation: 0,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.filter_alt),
-                  alignment: Alignment.topCenter,
-                  padding: const EdgeInsets.only(right: 20, top: 50),
-                  onPressed: () {
-                    startDate['previous'] =
-                        startDate['dialog'] = startDate['selected'];
-                    endDate['previous'] =
-                        endDate['dialog'] = endDate['selected'];
-                    category['previous'] =
-                        category['dialog'] = category['selected'];
-                    dropdownValueCategory = category['selected'].description;
-                    contentSelection['previous'] = contentSelection['dialog'] =
-                        contentSelection['selected'];
-                    expIncSelection['previous'] =
-                        expIncSelection['dialog'] = expIncSelection['selected'];
-                    showDialog(
-                        context: context,
-                        builder: (context) {
-                          return StatefulBuilder(builder: (context, setState) {
-                            return filterPopup(context, setState);
-                          });
-                        });
-                  },
-                )
-              ],
-            ),
-            body: displayStats(dropdownValue)));
-  }
-
-  Widget displayStats(String dropdownValue) {
-    if (contentSelection['selected'][1]) {
-      return totalsChart();
-    }
-    if (dropdownValue == "Table") {
-      return ListView(children: [buildDataTable()]);
-    } else if (dropdownValue == "Chart") {
-      return itemsChart();
-    }
-    return Text("Invalid input");
+        child: DefaultTabController(
+            length: contentSelection['selected'][0] ? 2 : 1,
+            child: Scaffold(
+                // drawer: DrawerMenu(1),
+                appBar: AppBar(
+                  leading: IconButton(
+                      onPressed: (() {
+                        Navigator.pop(context);
+                      }),
+                      icon: Icon(Icons.arrow_back)),
+                  toolbarHeight: 100,
+                  backgroundColor: Utils.mediumLightColor,
+                  foregroundColor: Colors.black,
+                  title: Column(children: [
+                    Container(
+                        padding: EdgeInsets.all(5),
+                        child: Text("Statistics",
+                            style: TextStyle(
+                                color: Utils.textColor, fontSize: 25.0))),
+                    headerInfo(context)
+                  ]),
+                  centerTitle: true,
+                  elevation: 0,
+                  actions: [
+                    IconButton(
+                      icon: Icon(
+                        Icons.filter_alt,
+                        color: Utils.textColor,
+                      ),
+                      alignment: Alignment.center,
+                      onPressed: () {
+                        startDate['previous'] =
+                            startDate['dialog'] = startDate['selected'];
+                        endDate['previous'] =
+                            endDate['dialog'] = endDate['selected'];
+                        category['previous'] =
+                            category['dialog'] = category['selected'];
+                        dropdownValueCategory =
+                            category['selected'].description;
+                        contentSelection['previous'] =
+                            contentSelection['dialog'] =
+                                contentSelection['selected'];
+                        expIncSelection['previous'] =
+                            expIncSelection['dialog'] =
+                                expIncSelection['selected'];
+                        showDialog(
+                            context: context,
+                            builder: (context) {
+                              return StatefulBuilder(
+                                  builder: (context, setState) {
+                                return filterPopup(context, setState);
+                              });
+                            });
+                      },
+                    )
+                  ],
+                  bottom: TabBar(
+                    labelColor: Utils.darkColor,
+                    indicatorColor: Utils.mediumDarkColor,
+                    tabs: contentSelection['selected'][0]
+                        ? [
+                            Tab(
+                              text: "Table",
+                            ),
+                            Tab(
+                              text: "Chart",
+                            ),
+                          ]
+                        : [
+                            Tab(
+                              text: "Chart",
+                            ),
+                          ],
+                  ),
+                ),
+                body: contentSelection['selected'][0]
+                    ? TabBarView(children: [
+                        ListView(children: [buildDataTable()]),
+                        itemsChart(),
+                      ])
+                    : TabBarView(children: [
+                        totalsChart(),
+                      ]))));
   }
 
   Widget headerInfo(context) {
     return Container(
-        padding: EdgeInsets.only(top: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
+        child: Container(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.date_range),
             Container(
-                child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Icon(Icons.date_range),
+              padding: EdgeInsets.only(left: 5),
+              child: Flexible(
+                  child: Text(
+                "${DateFormat.yMMMd('sv_SE').format(startDate['selected'])} - ${DateFormat.yMMMd('sv_SE').format(endDate['selected'])}",
+                style: TextStyle(color: Utils.textColor, fontSize: 14),
+              )),
+            ),
+          ]),
+          contentSelection['selected'][0]
+              ? Row(mainAxisAlignment: MainAxisAlignment.start, children: [
                   Container(
-                    padding: EdgeInsets.only(left: 5),
-                    child: Flexible(
-                        child: Text(
-                      "${DateFormat('yyyy/MM/dd').format(startDate['selected'])}-${DateFormat('yyyy/MM/dd').format(endDate['selected'])}",
-                      style: TextStyle(fontSize: 12),
-                    )),
-                  ),
-                ]),
-                contentSelection['selected'][0]
-                    ? Row(
-                        children: [
-                          Icon(Icons.category),
-                          Padding(
-                              padding: EdgeInsets.only(left: 5),
-                              child: Text(category['selected'].description,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                      color: category['selected'].color))),
-                        ],
-                      )
-                    : Text(""),
-              ],
-            )),
-            Padding(
-                padding: EdgeInsets.only(right: 20),
-                child: contentSelection['selected'][0] ? dropDown() : Text("")),
-          ],
-        ));
+                      padding: EdgeInsets.only(right: 10),
+                      child: Icon(Icons.label_rounded,
+                          color: category['selected'].color)),
+                  Text(category['selected'].description,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 14, color: Utils.textColor))
+                ])
+              : Text(""),
+        ],
+      ),
+    ));
   }
 
   Widget filterPopup(context, setState) {
@@ -226,13 +239,14 @@ class StatisticsScreenState extends State<StatisticsScreen> {
             Text("Start date:"),
             TextButton(
               style: ButtonStyle(
-                foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                foregroundColor:
+                    MaterialStateProperty.all<Color>(Utils.textColor),
                 backgroundColor:
-                    MaterialStateProperty.all<Color>(Utils.backgroundColor),
+                    MaterialStateProperty.all<Color>(Utils.mediumLightColor),
               ),
-              child: Text(DateFormat('yyyy-MM-dd').format(startDate['dialog'])),
+              child: Text(DateFormat.yMMM().format(startDate['dialog'])),
               onPressed: () async {
-                DateTime? newStartDate = await showDatePicker(
+                DateTime? newStartDate = await showMonthYearPicker(
                     context: context,
                     initialDate: startDate['dialog'],
                     firstDate: DateTime(1900),
@@ -250,17 +264,21 @@ class StatisticsScreenState extends State<StatisticsScreen> {
               TextButton(
                 style: ButtonStyle(
                   foregroundColor:
-                      MaterialStateProperty.all<Color>(Colors.white),
+                      MaterialStateProperty.all<Color>(Utils.textColor),
                   backgroundColor:
-                      MaterialStateProperty.all<Color>(Utils.backgroundColor),
+                      MaterialStateProperty.all<Color>(Utils.mediumLightColor),
                 ),
-                child: Text(DateFormat('yyyy-MM-dd').format(endDate['dialog'])),
+                child: Text(DateFormat.yMMM().format(endDate['dialog'])),
                 onPressed: () async {
-                  DateTime? newEndDate = await showDatePicker(
+                  DateTime? newEndDate = await showMonthYearPicker(
                       context: context,
                       initialDate: endDate['dialog'],
                       firstDate: DateTime(1900),
                       lastDate: DateTime(2100));
+                  if (newEndDate != null) {
+                    newEndDate =
+                        DateTime(newEndDate.year, newEndDate.month + 1, 0);
+                  }
                   setState(() {
                     endDate['dialog'] = newEndDate ?? endDate['dialog'];
                   });
@@ -275,9 +293,9 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                 children: [
                   Text("Content:"),
                   ToggleButtons(
-                    color: Colors.black,
-                    selectedColor: Colors.white,
-                    fillColor: Utils.backgroundColor,
+                    color: Utils.textColor,
+                    selectedColor: Utils.textColor,
+                    fillColor: Utils.mediumLightColor,
                     children: [Text("Items"), Text("Totals")],
                     onPressed: (int index) {
                       List<bool> contentSelectionTemp = [];
@@ -311,9 +329,9 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                     children: [
                       Text("Exp/Inc:"),
                       ToggleButtons(
-                        color: Colors.black,
-                        selectedColor: Colors.white,
-                        fillColor: Utils.backgroundColor,
+                        color: Utils.textColor,
+                        selectedColor: Utils.textColor,
+                        fillColor: Utils.mediumLightColor,
                         children: [Text("Expenses"), Text("Income")],
                         onPressed: (int index) {
                           setState(() {
@@ -333,8 +351,10 @@ class StatisticsScreenState extends State<StatisticsScreen> {
       actions: [
         ElevatedButton(
           style: ButtonStyle(
-              backgroundColor:
-                  MaterialStateProperty.all<Color>(Utils.backgroundColor)),
+            foregroundColor: MaterialStateProperty.all<Color>(Utils.textColor),
+            backgroundColor:
+                MaterialStateProperty.all<Color>(Utils.mediumLightColor),
+          ),
           child: const Text('Apply'),
           onPressed: () async {
             setState(() {
@@ -350,8 +370,10 @@ class StatisticsScreenState extends State<StatisticsScreen> {
         ),
         ElevatedButton(
           style: ButtonStyle(
-              backgroundColor:
-                  MaterialStateProperty.all<Color>(Utils.backgroundColor)),
+            foregroundColor: MaterialStateProperty.all<Color>(Utils.textColor),
+            backgroundColor:
+                MaterialStateProperty.all<Color>(Utils.mediumLightColor),
+          ),
           child: const Text('Cancel'),
           onPressed: () async {
             setState(() {
@@ -369,28 +391,6 @@ class StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
-  Widget dropDown() {
-    return DropdownButton<String>(
-      value: dropdownValue,
-      elevation: 16,
-      underline: Container(
-        height: 2,
-        color: Colors.black,
-      ),
-      onChanged: (String? value) {
-        setState(() {
-          dropdownValue = value!;
-        });
-      },
-      items: dropdownList.map<DropdownMenuItem<String>>((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: Text(value),
-        );
-      }).toList(),
-    );
-  }
-
   Widget dropDownCategory(context, setState) {
     return FutureBuilder(
         future: categoriesFutureBuilder,
@@ -403,29 +403,35 @@ class StatisticsScreenState extends State<StatisticsScreen> {
               categories.insert(0, noneCategory);
             }
             return SizedBox(
-                width: 130,
+                width: 140,
                 height: 30,
                 child: DropdownButton<String>(
                     isDense: true,
                     isExpanded: true,
                     value: dropdownValueCategory,
                     onChanged: (value) {
-                      ReceiptCategory newCategory =
-                          ReceiptCategory.getCategoryByDesc(value!, categories);
+                      TransactionCategory newCategory =
+                          TransactionCategory.getCategoryByDesc(
+                              value!, categories);
                       setState(() {
                         dropdownValueCategory = value;
                         category['dialog'] = newCategory;
                       });
                     },
-                    items: categories
-                        .map<DropdownMenuItem<String>>((ReceiptCategory category) {
+                    items: categories.map<DropdownMenuItem<String>>(
+                        (TransactionCategory category) {
                       return DropdownMenuItem<String>(
                         value: category.description,
-                        child: Text(category.description,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: category.color)),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Container(
+                                  padding: EdgeInsets.only(right: 10),
+                                  child: Icon(Icons.label_rounded,
+                                      color: category.color)),
+                              Text(category.description,
+                                  overflow: TextOverflow.ellipsis)
+                            ]),
                       );
                     }).toList()));
           } else {
@@ -518,10 +524,10 @@ class StatisticsScreenState extends State<StatisticsScreen> {
             rowsItems
                 .sort((a, b) => Utils.compareNumber(true, a.amount, b.amount));
             return Container(
-                padding: EdgeInsets.all(5),
                 child: SfCartesianChart(
-                    backgroundColor: Utils.backgroundColor,
-                    primaryXAxis: CategoryAxis(),
+                    backgroundColor: Utils.lightColor,
+                    primaryXAxis: CategoryAxis(
+                        labelsExtent: 100, labelStyle: TextStyle(fontSize: 10)),
                     primaryYAxis: NumericAxis(
                         minimum: 0,
                         maximum: getMaxItemsSum(rowsItems),
@@ -530,16 +536,16 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                         decimalPlaces: 2),
                     tooltipBehavior: TooltipBehavior(enable: true),
                     series: <ChartSeries<ReceiptItem, String>>[
-                      BarSeries<ReceiptItem, String>(
-                          dataSource: rowsItems,
-                          xValueMapper: (ReceiptItem rowsItems, _) =>
-                              rowsItems.itemName,
-                          yValueMapper: (ReceiptItem rowsItems, _) =>
-                              rowsItems.amount,
-                          name: '',
-                          dataLabelSettings: DataLabelSettings(isVisible: true),
-                          color: Utils.chartBarColor)
-                    ]));
+                  BarSeries<ReceiptItem, String>(
+                      dataSource: rowsItems,
+                      xValueMapper: (ReceiptItem rowsItems, _) =>
+                          rowsItems.itemName,
+                      yValueMapper: (ReceiptItem rowsItems, _) =>
+                          rowsItems.amount,
+                      name: '',
+                      dataLabelSettings: DataLabelSettings(isVisible: true),
+                      color: Utils.darkColor)
+                ]));
           } else {
             return Center(
                 child: LoadingAnimationWidget.threeArchedCircle(
@@ -560,14 +566,12 @@ class StatisticsScreenState extends State<StatisticsScreen> {
             rowsTotals.sort((a, b) => Utils.compareNumber(
                 true, a['totalSum'] as double, b['totalSum'] as double));
             return Container(
-                padding: EdgeInsets.all(5),
                 child: SfCartesianChart(
-                    plotAreaBackgroundColor: Utils.backgroundColor,
-                    plotAreaBorderColor: Utils.backgroundColor,
-                    backgroundColor: Utils.backgroundColor,
+                    plotAreaBackgroundColor: Utils.lightColor,
                     primaryXAxis: CategoryAxis(
                         labelPosition: ChartDataLabelPosition.outside,
-                        labelsExtent: 80),
+                        labelsExtent: 80,
+                        labelStyle: TextStyle(fontSize: 14)),
                     primaryYAxis: NumericAxis(
                         labelPosition: ChartDataLabelPosition.outside,
                         minimum: 0,
@@ -578,17 +582,18 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                         decimalPlaces: 2),
                     tooltipBehavior: TooltipBehavior(enable: true),
                     series: [
-                      BarSeries(
-                          sortingOrder: SortingOrder.ascending,
-                          dataSource: rowsTotals,
-                          xValueMapper: (Map<String, Object> object, _) =>
-                              (object['category'] as ReceiptCategory).description,
-                          yValueMapper: (Map<String, Object> object, _) =>
-                              object['totalSum'] as double,
-                          name: '',
-                          dataLabelSettings: DataLabelSettings(isVisible: true),
-                          color: Utils.chartBarColor)
-                    ]));
+                  BarSeries(
+                      sortingOrder: SortingOrder.ascending,
+                      dataSource: rowsTotals,
+                      xValueMapper: (Map<String, Object> object, _) =>
+                          (object['category'] as TransactionCategory)
+                              .description,
+                      yValueMapper: (Map<String, Object> object, _) =>
+                          object['totalSum'] as double,
+                      name: '',
+                      dataLabelSettings: DataLabelSettings(isVisible: true),
+                      color: Utils.darkColor)
+                ]));
           } else {
             return Center(
                 child: LoadingAnimationWidget.threeArchedCircle(
