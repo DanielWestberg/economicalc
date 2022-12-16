@@ -44,7 +44,8 @@ const String tinkReportEndpoint =
 
 class UnexpectedResponseException implements Exception {
   final http.Response response;
-  get message => "Unexpected ${response.statusCode} response\n${response.body}";
+  get statusCode => response.statusCode;
+  get message => "Unexpected $statusCode response\n${response.body}";
 
   const UnexpectedResponseException(this.response);
 
