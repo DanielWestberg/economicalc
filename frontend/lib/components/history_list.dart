@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
+import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
 import 'package:economicalc_client/screens/transaction_details_screen.dart';
@@ -83,6 +84,9 @@ class HistoryListState extends State<HistoryList> {
   void fetchBankTransactions() async {
     categories = await dbConnector.getAllcategories();
     // await load_test_data(); // TODO: Replace with fetching from bank
+    Receipt receipt = await fetchOneMockedTransaction();
+    // await dbConnector.insertReceipt(receipt, "Uncategorized");
+    await dbConnector.deleteAllTransactions();
     await dbConnector.generateTransactions();
     var updatedDataFuture = dbConnector.getFilteredTransactions(
         widget.startDate, widget.endDate, widget.category);

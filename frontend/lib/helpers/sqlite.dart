@@ -209,21 +209,18 @@ class SQFLite {
     );
   }
 
+  Future<void> deleteAllTransactions() async {
+    final db = await instance.database;
+    await db?.rawQuery('DELETE FROM transactions');
+  }
+
   Map<String, dynamic> encodeTransaction(Transaction transaction) {
     return transaction.toMap();
   }
 
   Future<void> generateTransactions() async {
-    final db = await instance.database;
-
-    List<Map<String, dynamic?>>? bankTransactions =
-        await db?.rawQuery('SELECT * FROM bankTransactions');
-
-    List<bank_transaction.BankTransaction> banktrans = [];
-
-    bankTransactions?.forEach((transaction) {
-      banktrans.add(bank_transaction.BankTransaction.fromJson(transaction));
-    });
+    List<bank_transaction.BankTransaction> bankTransactions =
+        await getBankTransactions();
 
     List<Receipt> receipts = await getAllReceipts();
     String response =
@@ -235,47 +232,46 @@ class SQFLite {
     sweMuni.forEach((element) {
       list.add(element);
     });
-    for (bank_transaction.BankTransaction bankTransaction in banktrans) {
-      String? id = bankTransaction.id;
-      for (Receipt receipt in receipts) {
-        if (receipt.total == bankTransaction.amount &&
-            Utils.isSimilarDate(
-                receipt.date, DateTime.parse(bankTransaction.dates.booked))) {
-          String desc = bankTransaction.descriptions.display;
-          String desc1 = receipt.recipient;
-          list.sort((a, b) => b.length.compareTo(a.length));
-          String result = Utils.removeStopWords(desc, list);
-          String result1 = Utils.removeStopWords(desc1, list);
 
-          if (Utils.isSimilarStoreName(result, result1)) {
-            Transaction newTransaction = Transaction(
-                store: bankTransaction.descriptions.display,
-                date: DateTime.parse(bankTransaction.dates.booked),
-                totalAmount:
-                    double.parse(bankTransaction.amount.value.unscaledValue) /
-                        10,
-                bankTransactionID: id,
-                categoryID: await getCategoryIDfromDescription("Uncategorized"),
-                categoryDesc: "Uncategorized",
-                receiptID: receipt.id);
-            insertTransaction(newTransaction);
-          } else {
-            Transaction newReceipt = Transaction(
-                store: receipt.recipient,
-                date: receipt.date,
-                totalAmount: receipt.total,
-                categoryID: await getCategoryIDfromDescription("Uncategorized"),
-                categoryDesc: "Uncategorized");
-            insertTransaction(newReceipt);
+    for (bank_transaction.BankTransaction bankTransaction in bankTransactions) {
+      Transaction newTransaction = Transaction(
+          store: bankTransaction.descriptions.display,
+          date: DateTime.parse(bankTransaction.dates.booked),
+          totalAmount:
+              double.parse(bankTransaction.amount.value.unscaledValue) / 10,
+          bankTransactionID: bankTransaction.id,
+          receiptID: null,
+          categoryID: await getCategoryIDfromDescription("Uncategorized"),
+          categoryDesc: "Uncategorized");
+      insertTransaction(newTransaction);
+    }
+
+    List<Transaction> transactions = await getAllTransactions();
+
+    for (Receipt receipt in receipts) {
+      if (transactions.isEmpty) {
+        Transaction newTransaction = Transaction(
+            store: receipt.recipient,
+            date: receipt.date,
+            totalAmount: receipt.total,
+            receiptID: receipt.id,
+            categoryID: await getCategoryIDfromDescription("Uncategorized"),
+            categoryDesc: "Uncategorized");
+        insertTransaction(newTransaction);
+      } else {
+        for (Transaction transaction in transactions) {
+          if (receipt.total!.abs() == transaction.totalAmount!.abs() &&
+              Utils.isSimilarDate(receipt.date, transaction.date)) {
+            String desc = transaction.store!;
+            String desc1 = receipt.recipient;
+            list.sort((a, b) => b.length.compareTo(a.length));
+            String result = Utils.removeStopWords(desc, list);
+            String result1 = Utils.removeStopWords(desc1, list);
+
+            if (Utils.isSimilarStoreName(result, result1)) {
+              transaction.receiptID = receipt.id;
+            }
           }
-        } else {
-          Transaction newReceipt = Transaction(
-              store: receipt.recipient,
-              date: receipt.date,
-              totalAmount: receipt.total,
-              categoryID: await getCategoryIDfromDescription("Uncategorized"),
-              categoryDesc: "Uncategorized");
-          insertTransaction(newReceipt);
         }
       }
     }
