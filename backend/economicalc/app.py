@@ -62,9 +62,10 @@ def create_app(config):
         transaction_report = get_transaction_data(transaction_report_id, access_token)
         print(account_report.status_code, flush=True);
         print(transaction_report.status_code, flush=True);
-        if account_report.status_code != 200 or transaction_report.status_code != 200:
-            return make_response("Dumbass", bad_request)
-        #HELLOSDSADS
+        if account_report.status_code != 200:
+            return make_response(f"Could not get account report, Tink returned status code {account_report.status_code}", bad_request)
+        if transaction_report.status_code != 200:
+            return make_response(f"Could not get transaction report, Tink returned status code {transaction_report.status_code}", bad_request)
 
         account_report = account_report.json()
         transaction_report = transaction_report.json()
