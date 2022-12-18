@@ -53,6 +53,7 @@ dependencies:
   url_launcher: ^6.1.7
   android_intent: ^2.0.2
   string_similarity: ^2.0.0
+  month_year_picker: ^0.2.0+2
 
 dev_dependencies:
   flutter_test:

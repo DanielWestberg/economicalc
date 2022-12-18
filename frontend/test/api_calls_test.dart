@@ -23,7 +23,6 @@ class MissingParamException implements Exception {
 }
 
 main() async {
-  /*
   print("Report IDs can be found here: $tinkReportEndpoint");
   const accountReportId = String.fromEnvironment("accountReportId");
   const transactionReportId = String.fromEnvironment("transactionReportId");
@@ -36,14 +35,12 @@ main() async {
     throw const MissingParamException("transactionReportId");
   }
 
-  final loginData = await fetchLoginData(
-      accountReportId, transactionReportId, true
-  );
+  final loginData =
+      await fetchLoginData(accountReportId, transactionReportId, true);
   final cookie = loginData.cookie;
   const int categoryId = 1234;
 
-  setUpAll(() {
-  });
+  setUpAll(() {});
 
   tearDownAll(() async {
     await deleteCategory(cookie, categoryId);
@@ -78,7 +75,7 @@ main() async {
     expect(fetchedReceipts, contains(postedReceipt));
   });
 
-  test ("Update image", () async {
+  test("Update image", () async {
     final image = XFile("../backend/tests/res/tsu.jpg");
 
     final receipts = await fetchReceipts(cookie);
@@ -95,7 +92,7 @@ main() async {
     deleteImage(cookie, backendId);
   });
 
-  test ("Update receipt", () async {
+  test("Update receipt", () async {
     final receipt = (await fetchReceipts(cookie))[0];
     receipt.items[0].itemName = "Snus";
     await updateReceipt(cookie, receipt.backendId, receipt);
@@ -103,25 +100,25 @@ main() async {
     expect(responseReceipts, contains(receipt));
   });
 
-  test ("Post category", () async {
-    final category = ReceiptCategory(
-        description: "Groceries",
-        color: const Color(0xFFFF7733),
-        id: categoryId,
+  test("Post category", () async {
+    final category = TransactionCategory(
+      description: "Groceries",
+      color: const Color(0xFFFF7733),
+      id: categoryId,
     );
 
     await postCategory(cookie, category);
 
-    List<ReceiptCategory> fetchedCategories = await fetchCategories(cookie);
+    List<TransactionCategory> fetchedCategories = await fetchCategories(cookie);
     expect(fetchedCategories, contains(category));
 
     await deleteCategory(cookie, categoryId);
   });
 
-  test ("Update category", () async {
+  test("Update category", () async {
     final originalDescription = "Explosives";
 
-    final category = ReceiptCategory(
+    final category = TransactionCategory(
       description: originalDescription,
       color: const Color(0xFFFF0000),
       id: categoryId,
@@ -143,5 +140,4 @@ main() async {
 
     deleteCategory(cookie, category.id!);
   });
-  */
 }

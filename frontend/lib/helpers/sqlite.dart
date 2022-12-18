@@ -153,27 +153,24 @@ class SQFLite {
   }
 
   Future<List<Transaction>> getFilteredTransactions(
-      startDate, endDate, category) async {
+      startDate, endDate, category, onlyReceipts) async {
     final transactions = await getAllTransactions();
     List<Transaction> filteredTransactions = [];
 
-    if (category.description == 'None') {
-      for (var transaction in transactions) {
-        if (transaction.date.compareTo(startDate) >= 0 &&
-            transaction.date.compareTo(endDate) <= 0) {
-          filteredTransactions.add(transaction);
-        }
-      }
-    } else {
-      for (var transaction in transactions) {
-        if (transaction.date.compareTo(startDate) >= 0 &&
-            transaction.date.compareTo(endDate) <= 0 &&
-            transaction.categoryID == category.id) {
-          filteredTransactions.add(transaction);
-        }
+    for (var transaction in transactions) {
+      bool dateCondition = transaction.date.compareTo(startDate) >= 0 &&
+          transaction.date.compareTo(endDate) <= 0;
+      bool onlyReceiptsCondition =
+          ((onlyReceipts == true) && (transaction.receiptID != null)) ||
+              (onlyReceipts == false);
+      bool isNone = category.description == 'None';
+
+      if (dateCondition &&
+          onlyReceiptsCondition &&
+          (isNone || !isNone && transaction.categoryID == category.id)) {
+        filteredTransactions.add(transaction);
       }
     }
-
     return filteredTransactions;
   }
 
@@ -499,11 +496,11 @@ class SQFLite {
     return obj![0]['description'] as String;
   }
 
-  Future<ReceiptCategory?> getCategoryFromID(int id) async {
+  Future<TransactionCategory?> getCategoryFromID(int id) async {
     final db = await instance.database;
     List<Map<String, dynamic?>>? obj =
         await db?.rawQuery('SELECT * FROM categories WHERE id = "$id"');
-    return ReceiptCategory.fromJson(obj![0]);
+    return TransactionCategory.fromJson(obj![0]);
   }
 
   Future<List<Map<String, Object>>> getFilteredCategoryTotals(
@@ -514,7 +511,7 @@ class SQFLite {
 
     for (var category in categories) {
       var filteredTransactions =
-          await getFilteredTransactions(startDate, endDate, category);
+          await getFilteredTransactions(startDate, endDate, category, false);
       var categoryTotal = {
         "category": category,
         "totalSum":
@@ -527,13 +524,13 @@ class SQFLite {
   }
 
   Future<void> insertDefaultCategories(Database db) async {
-    List<ReceiptCategory> categories = [
-      ReceiptCategory(description: "Uncategorized", color: Colors.grey),
-      ReceiptCategory(description: "Groceries", color: Colors.blue),
-      ReceiptCategory(description: "Hardware", color: Colors.black),
-      ReceiptCategory(description: "Transportation", color: Colors.purple),
-      ReceiptCategory(description: "Stuff", color: Colors.green),
-      ReceiptCategory(
+    List<TransactionCategory> categories = [
+      TransactionCategory(description: "Uncategorized", color: Colors.grey),
+      TransactionCategory(description: "Groceries", color: Colors.blue),
+      TransactionCategory(description: "Hardware", color: Colors.black),
+      TransactionCategory(description: "Transportation", color: Colors.purple),
+      TransactionCategory(description: "Stuff", color: Colors.green),
+      TransactionCategory(
           description: "My proud collection of teddy bears",
           color: Colors.brown),
     ];
@@ -547,7 +544,7 @@ class SQFLite {
     }
   }
 
-  Future<void> insertCategory(ReceiptCategory category) async {
+  Future<void> insertCategory(TransactionCategory category) async {
     // Get a reference to the database.
 
     final db = await instance.database;
@@ -558,7 +555,7 @@ class SQFLite {
     );
   }
 
-  Future<void> updateCategory(ReceiptCategory category) async {
+  Future<void> updateCategory(TransactionCategory category) async {
     // Get a reference to the database.
     final db = await instance.database;
 
@@ -590,11 +587,11 @@ class SQFLite {
     );
   }
 
-  Future<List<ReceiptCategory>> getAllcategories() async {
+  Future<List<TransactionCategory>> getAllcategories() async {
     final db = await instance.database;
     final List<Map<String, dynamic?>>? maps = await db?.query('categories');
     return List.generate(maps!.length, (i) {
-      return ReceiptCategory(
+      return TransactionCategory(
           description: maps[i]['description'],
           color: Color(maps[i]['color']),
           id: maps[i]['id']);
