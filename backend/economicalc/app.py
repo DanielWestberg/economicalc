@@ -20,6 +20,7 @@ def create_app(config):
     db = create_db(app)
     fs = GridFS(db)
 
+
     def make_unauthorized_response(message="Authentication required"):
         return make_response(message, unauthorized)
 
@@ -196,8 +197,10 @@ def create_app(config):
         ssn = session["ssn"]
         if request.method == "GET":
             return get_receipts(ssn, request)
+        if type(request.json) == list:
+            return post_many_receipts(ssn, request)
         
-        return post_receipts(ssn, request)
+        return post_one_receipt(ssn, request)
 
 
     def get_receipts(bankId, request):
@@ -221,10 +224,11 @@ def create_app(config):
         return receipt
 
 
-    def post_receipts(bankId, request):
+    def post_one_receipt(bankId, request):
         required_type = "application/json"
         if request.content_type[:len(required_type)] != "application/json":
             return make_response(f"Expected content type application/json, not {request.content_type}", unsupported_media_type)
+
         receipt_dict = request.json
         receipt_dict.pop("imageId", None)
 
@@ -240,6 +244,37 @@ def create_app(config):
         db.users.update_one({"_id": user["_id"]}, update_action)
 
         return make_response(jsonify(data=receipt.to_dict(True)), created)
+
+
+    def post_many_receipts(bankId, request):
+        required_type = "application/json"
+        if request.content_type[:len(required_type)] != "application/json":
+            return make_response(f"Expected content type application/json, not {request.content_type}", unsupported_media_type)
+
+        receipt_dicts = request.json
+
+        receipts = []
+        for receipt_dict in receipt_dicts:
+            receipt_dict.pop("imageId", None)
+
+            receipt = parse_receipt_or_make_response(receipt_dict)
+            if type(receipt) != Receipt:
+                return receipt
+
+            if len(receipt.items) == 0:
+                return make_response("Field \"items\" may not be an empty list", unprocessable_entity)
+
+            receipts.append(receipt)
+
+        receipt_dicts = [r.to_dict() for r in receipts]
+        user = db.users.find_one_or_404({"bankId": bankId})
+        update_action = {"$push": {"receipts": {"$each": receipt_dicts}}}
+        db.users.update_one({"_id": user["_id"]}, update_action)
+
+        for receipt_dict in receipt_dicts:
+            Receipt.make_json_serializable(receipt_dict)
+
+        return make_response(jsonify(data=receipt_dicts), created)
 
 
     @app.route("/receipts/<int:receiptId>", methods=["PUT", "DELETE"])

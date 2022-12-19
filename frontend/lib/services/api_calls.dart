@@ -263,6 +263,21 @@ postReceipt(Cookie cookie, Receipt receipt) async {
   return Receipt.fromBackendJson(convert.jsonDecode(response.body)["data"]);
 }
 
+postManyReceipts(Cookie cookie, List<Receipt> receipts) async {
+  final uri = Uri.http(apiServer, "/receipts");
+  final headers = {
+    "Content-type": "application/json",
+    "Cookie": cookie.toString(),
+  };
+  final receiptMaps = receipts.map((r) => r.toMap()).toList();
+  final body = convert.jsonEncode(receiptMaps);
+  final response = await http.post(uri, headers: headers, body: body);
+  if (response.statusCode != 201) {
+    throw UnexpectedResponseException(response);
+  }
+  return Receipt.fromBackendJsonList(convert.jsonDecode(response.body)["data"]);
+}
+
 updateReceipt(Cookie cookie, int receiptId, Receipt receipt) async {
   final uri = getUri("/receipts/$receiptId");
   final headers = {
