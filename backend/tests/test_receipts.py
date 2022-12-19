@@ -40,7 +40,7 @@ def items() -> List[Item]:
 def receipts(items, images) -> List[Receipt]:
     return [
         Receipt(
-            None,
+            1,
             "Ica",
             [items[0], items[1], items[3]],
             datetime(2022, 6, 30),
@@ -48,14 +48,14 @@ def receipts(items, images) -> List[Receipt]:
             1,
             images[1][1]
         ), Receipt(
-            None,
+            2,
             "Coop",
             [items[2], items[3], items[4], items[5]],
             datetime(2022, 7, 1),
             141.3,
             2,
         ), Receipt(
-            None,
+            3,
             "Willy's",
             [items[1], items[5]],
             datetime(2021, 12, 13),
@@ -121,14 +121,14 @@ def image_to_put() -> Path:
 def receipts_to_post(users, users_to_post) -> List[Tuple[User, Receipt]]:
     return [
         (users[1], Receipt(
-            None,
+            4,
             "Specsavers",
             [Item("Glasögon", 1.)],
             datetime(2022, 2, 24),
             1337.5,
             1,
         )), (users_to_post[0], Receipt(
-            None,
+            5,
             "Yes",
             [Item("Dood", 1.)],
             datetime(1970, 1, 1),
@@ -221,7 +221,6 @@ class TestReceipt():
     def test_post_user_receipt(self, db, receipts_to_post, client):
         for (user, receipt) in receipts_to_post:
             receipt_dict = receipt.to_dict(True)
-            receipt_dict.pop("_id", None)
 
             self.create_session_for_user(client, user)
             client.put("/")
@@ -229,9 +228,6 @@ class TestReceipt():
             assert response.status == constants.created
 
             response_dict = response.json["data"]
-            assert "_id" in response_dict
-
-            receipt.id = ObjectId(response_dict["_id"])
             response_receipt = Receipt.from_dict(response_dict)
             assert receipt == response_receipt
 
@@ -242,8 +238,7 @@ class TestReceipt():
             response_receipts = [Receipt.from_dict(d) for d in response_receipt_dicts]
 
             db_receipt_dicts = db.users.find_one({"bankId": user.bankId})["receipts"]
-            db_receipt_ids = [d["_id"] for d in db_receipt_dicts]
-            assert all([type(id) == ObjectId for id in db_receipt_ids])
+            db_receipt_ids = [d["id"] for d in db_receipt_dicts]
             assert receipt.id in db_receipt_ids
 
             assert receipt in response_receipts

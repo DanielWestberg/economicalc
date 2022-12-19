@@ -9,8 +9,8 @@ from .type_check import check_type
 
 
 class Receipt:
-    def __init__(self, id: Optional[Union[str, ObjectId]], recipient: str, items: List[Item], date: datetime, total: float, category_id: int, image_id: Optional[ObjectId] = None) -> None:
-        check_type(id, [type(None), str, ObjectId], "receipt._id")
+    def __init__(self, id: int, recipient: str, items: List[Item], date: datetime, total: float, category_id: int, image_id: Optional[ObjectId] = None) -> None:
+        check_type(id, int, "receipt._id")
         check_type(recipient, str, "receipt.recipient")
         check_type(items, list, "receipt.items")
         check_type(date, datetime, "receipt.date")
@@ -18,7 +18,7 @@ class Receipt:
         check_type(category_id, int, "receipt.categoryID")
         check_type(image_id, [type(None), ObjectId], "receipt.imageId")
 
-        self.id = ObjectId(id)
+        self.id = id
         self.recipient = recipient
         self.items = items
         self.total = total
@@ -41,6 +41,7 @@ class Receipt:
 
     def to_dict(self, json_serializable=False) -> Dict[str, Any]:
         res = {
+            "id": self.id,
             "recipient": self.recipient,
             "items": [item.to_dict() for item in self.items],
             "date": self.date,
@@ -50,8 +51,6 @@ class Receipt:
 
         if self.image_id is not None:
             res["imageId"] = str(self.image_id) if json_serializable else self.image_id
-
-        res["_id"] = str(self.id) if json_serializable else self.id
 
         return res
 
@@ -66,12 +65,11 @@ class Receipt:
         total = d["total"]
         category_id = d["categoryID"]
         image_id = ObjectId(d["imageId"]) if "imageId" in d else None
-        id = ObjectId(d["_id"]) if "_id" in d else None
+        id = d["id"]
 
         return Receipt(id, recipient, items, date, total, category_id, image_id)
 
     @staticmethod
     def make_json_serializable(receipt_dict: Dict[str, Any]):
-        receipt_dict["_id"] = str(receipt_dict["_id"])
         if "imageId" in receipt_dict:
             receipt_dict["imageId"] = str(receipt_dict["imageId"])
