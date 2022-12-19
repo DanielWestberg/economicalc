@@ -95,6 +95,12 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                       setState(() {
                         dropdownValue = value;
                       });
+                      if (widget.transaction.receiptID != null) {
+                        Receipt receipt = await dbConnector
+                            .getReceiptfromID(widget.transaction.receiptID!);
+                        receipt.categoryDesc = dropdownValue;
+                        await dbConnector.updateReceipt(receipt);
+                      }
                       widget.transaction.categoryDesc = dropdownValue;
                       widget.transaction.categoryID =
                           await SQFLite.getCategoryIDfromDescription(

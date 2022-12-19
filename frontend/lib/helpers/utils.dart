@@ -1,6 +1,11 @@
+import 'dart:convert';
+
+import 'package:economicalc_client/models/bank_transaction.dart';
 import 'package:economicalc_client/models/category.dart';
+import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:string_similarity/string_similarity.dart';
 
 class Utils {
@@ -62,5 +67,56 @@ class Utils {
     return StringSimilarity.compareTwoStrings(
             name1.toLowerCase().trim(), name2.toLowerCase().trim()) >
         0.4;
+  }
+
+  static Future<bool> isReceiptAndTransactionEqual(
+      Receipt receipt, Transaction transaction) async {
+    String response =
+        await rootBundle.loadString('assets/swedish_municipalities.json');
+    List<dynamic> sweMuni = json.decode(response);
+
+    List<String> list = [];
+
+    sweMuni.forEach((element) {
+      list.add(element);
+    });
+
+    if (transaction.receiptID == null &&
+        receipt.total!.abs() == transaction.totalAmount!.abs() &&
+        Utils.isSimilarDate(receipt.date, transaction.date)) {
+      String desc = transaction.store!;
+      String desc1 = receipt.recipient;
+      list.sort((a, b) => b.length.compareTo(a.length));
+      String result = Utils.removeStopWords(desc, list);
+      String result1 = Utils.removeStopWords(desc1, list);
+
+      if (Utils.isSimilarStoreName(result, result1)) return true;
+    }
+    return false;
+  }
+
+  static Future<bool> areTransactionsEqual(
+      Transaction trans1, Transaction trans2) async {
+    String response =
+        await rootBundle.loadString('assets/swedish_municipalities.json');
+    List<dynamic> sweMuni = json.decode(response);
+
+    List<String> list = [];
+
+    sweMuni.forEach((element) {
+      list.add(element);
+    });
+
+    if (trans1.totalAmount!.abs() == trans2.totalAmount!.abs() &&
+        Utils.isSimilarDate(trans1.date, trans2.date)) {
+      String desc = trans1.store!;
+      String desc1 = trans2.store!;
+      list.sort((a, b) => b.length.compareTo(a.length));
+      String result = Utils.removeStopWords(desc, list);
+      String result1 = Utils.removeStopWords(desc1, list);
+
+      if (Utils.isSimilarStoreName(result, result1)) return true;
+    }
+    return false;
   }
 }

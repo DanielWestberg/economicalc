@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:economicalc_client/helpers/utils.dart';
-import 'package:economicalc_client/models/bank_transaction.dart'
-    as bank_transaction;
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/transaction.dart';
+import 'package:economicalc_client/models/bank_transaction.dart';
 import 'package:flutter/material.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:flutter/services.dart';
@@ -174,6 +173,14 @@ class SQFLite {
     return filteredTransactions;
   }
 
+  Future<Transaction?> getTransactionByReceiptID(int receiptID) async {
+    final db = await instance.database;
+    List<Map<String, dynamic?>>? maps = await db
+        ?.rawQuery('SELECT * FROM transactions WHERE receiptID = $receiptID');
+
+    return maps != null ? Transaction.fromJson(maps[0]) : null;
+  }
+
   Future<void> updateTransaction(Transaction transaction) async {
     // Get a reference to the database.
     final db = await instance.database;
@@ -215,34 +222,83 @@ class SQFLite {
     return transaction.toMap();
   }
 
-  Future<void> generateTransactions() async {
-    List<bank_transaction.BankTransaction> bankTransactions =
-        await getBankTransactions();
-
+  Future<Receipt?> checkForExistingReceipt(Transaction transaction) async {
     List<Receipt> receipts = await getAllReceipts();
-    String response =
-        await rootBundle.loadString('assets/swedish_municipalities.json');
-    List<dynamic> sweMuni = json.decode(response);
+    for (Receipt receipt in receipts) {
+      bool equality =
+          await Utils.isReceiptAndTransactionEqual(receipt, transaction);
+      if (equality) return receipt;
+    }
+    return null;
+  }
 
-    List<String> list = [];
+  Future<Transaction?> checkForExistingTransaction(
+      Transaction transaction) async {
+    List<Transaction> transactions = await getAllTransactions();
+    for (Transaction trans in transactions) {
+      bool equality = await Utils.areTransactionsEqual(trans, transaction);
+      if (equality) return trans;
+    }
+    return null;
+  }
 
-    sweMuni.forEach((element) {
-      list.add(element);
-    });
+  Future<List<int>> importMissingBankTransactions() async {
+    final db = await instance.database;
 
-    for (bank_transaction.BankTransaction bankTransaction in bankTransactions) {
-      Transaction newTransaction = Transaction(
+    List<BankTransaction> bankTransactions = await getAllBankTransactions();
+    int updated = 0;
+    int added = 0;
+
+    for (var bankTransaction in bankTransactions) {
+      List<Map<String, dynamic?>>? transaction = await db?.rawQuery(
+          'SELECT * FROM transactions WHERE bankTransactionID = "$bankTransaction.id"');
+
+      if (transaction!.isEmpty) {
+        Transaction newTransaction = Transaction(
           store: bankTransaction.descriptions.display,
           date: DateTime.parse(bankTransaction.dates.booked),
           totalAmount:
               double.parse(bankTransaction.amount.value.unscaledValue) / 10,
           bankTransactionID: bankTransaction.id,
-          receiptID: null,
           categoryID: await getCategoryIDfromDescription("Uncategorized"),
-          categoryDesc: "Uncategorized");
-      insertTransaction(newTransaction);
+          categoryDesc: "Uncategorized",
+        );
+        Receipt? existingReceipt =
+            await checkForExistingReceipt(newTransaction);
+        Transaction? existingTransaction =
+            await checkForExistingTransaction(newTransaction);
+        if (existingReceipt != null) {
+          existingTransaction =
+              await getTransactionByReceiptID(existingReceipt.id!);
+          if (existingTransaction == null) {
+            newTransaction.receiptID = existingReceipt.id;
+            await insertTransaction(newTransaction);
+            added++;
+          } else {
+            existingTransaction.bankTransactionID = bankTransaction.id;
+            await updateTransaction(existingTransaction);
+            updated++;
+          }
+        } else if (existingTransaction != null) {
+          existingTransaction.bankTransactionID = bankTransaction.id;
+          existingTransaction.date =
+              DateTime.parse(bankTransaction.dates.booked);
+          await updateTransaction(existingTransaction);
+          updated++;
+        } else {
+          await insertTransaction(newTransaction);
+          added++;
+        }
+      }
     }
+    return [added, updated];
+  }
 
+  Future<List<int>> mergeReceiptsWithTransactions() async {
+    int updated = 0;
+    int added = 0;
+
+    List<Receipt> receipts = await getAllReceipts();
     List<Transaction> transactions = await getAllTransactions();
 
     for (Receipt receipt in receipts) {
@@ -252,31 +308,30 @@ class SQFLite {
             date: receipt.date,
             totalAmount: receipt.total,
             receiptID: receipt.id,
-            categoryID: await getCategoryIDfromDescription("Uncategorized"),
-            categoryDesc: "Uncategorized");
+            categoryID: receipt.categoryID,
+            categoryDesc: receipt.categoryDesc);
         insertTransaction(newTransaction);
+        added++;
       } else {
         for (Transaction transaction in transactions) {
-          if (receipt.total!.abs() == transaction.totalAmount!.abs() &&
-              Utils.isSimilarDate(receipt.date, transaction.date)) {
-            String desc = transaction.store!;
-            String desc1 = receipt.recipient;
-            list.sort((a, b) => b.length.compareTo(a.length));
-            String result = Utils.removeStopWords(desc, list);
-            String result1 = Utils.removeStopWords(desc1, list);
-
-            if (Utils.isSimilarStoreName(result, result1)) {
-              transaction.receiptID = receipt.id;
-            }
+          bool equality =
+              await Utils.isReceiptAndTransactionEqual(receipt, transaction);
+          if (equality) {
+            transaction.receiptID = receipt.id;
+            transaction.categoryDesc = receipt.categoryDesc;
+            transaction.categoryID = receipt.categoryID;
+            await updateTransaction(transaction);
+            updated++;
           }
         }
       }
     }
+    return [added, updated];
   }
 
   /*************************** BANKTRANSACTIONS *******************************/
 
-  Future<List<bank_transaction.BankTransaction>> getBankTransactions() async {
+  Future<List<BankTransaction>> getAllBankTransactions() async {
     final db = await instance.database;
 
     final List<Map<String, dynamic>>? maps =
@@ -284,26 +339,25 @@ class SQFLite {
 
     // Convert the List<Map<String, dynamic> into a List<transaction>.
     return List.generate(maps!.length, (i) {
-      return bank_transaction.BankTransaction(
+      return BankTransaction(
           id: maps[i]['id'],
           accountId: maps[i]['accountId'],
-          amount: bank_transaction.Amount(
-              value: bank_transaction.Value(
+          amount: Amount(
+              value: Value(
                   unscaledValue: maps[i]['amountvalueunscaledValue'],
                   scale: maps[i]['amountvaluescale']),
               currencyCode: maps[i]['amountcurrencyCode']),
-          descriptions: bank_transaction.Descriptions(
+          descriptions: Descriptions(
               original: maps[i]['descriptionsoriginal'],
               display: maps[i]['descriptionsdisplay']),
-          dates: bank_transaction.Dates(booked: maps[i]['datesbooked']),
-          types: bank_transaction.Types(type: maps[i]['typestype']),
+          dates: Dates(booked: maps[i]['datesbooked']),
+          types: Types(type: maps[i]['typestype']),
           status: maps[i]['status'],
           providerMutability: maps[i]['providerMutability']);
     });
   }
 
-  Future<void> postBankTransaction(
-      bank_transaction.BankTransaction bankTransaction) async {
+  Future<void> postBankTransaction(BankTransaction bankTransaction) async {
     final db = await instance.database;
 
     await db?.insert(
@@ -318,27 +372,26 @@ class SQFLite {
     await db?.rawQuery('DELETE FROM bankTransactions');
   }
 
-  Future<bank_transaction.BankTransaction> getBankTransactionfromID(
-      int id) async {
+  Future<BankTransaction> getBankTransactionfromID(int id) async {
     final db = await instance.database;
 
     List<Map<String, dynamic?>>? maps =
         await db?.rawQuery('SELECT * FROM bankTransactions WHERE id = "${id}"');
 
     // Convert the List<Map<String, dynamic> into a BankTransaction.
-    return bank_transaction.BankTransaction(
+    return BankTransaction(
         id: maps![0]['id'],
         accountId: maps[0]['accountId'],
-        amount: bank_transaction.Amount(
-            value: bank_transaction.Value(
+        amount: Amount(
+            value: Value(
                 unscaledValue: maps[0]['amountvalueunscaledValue'],
                 scale: maps[0]['amountvaluescale']),
             currencyCode: maps[0]['amountcurrencyCode']),
-        descriptions: bank_transaction.Descriptions(
+        descriptions: Descriptions(
             original: maps[0]['descriptionsoriginal'],
             display: maps[0]['descriptionsdisplay']),
-        dates: bank_transaction.Dates(booked: maps[0]['datesbooked']),
-        types: bank_transaction.Types(type: maps[0]['typestype']),
+        dates: Dates(booked: maps[0]['datesbooked']),
+        types: Types(type: maps[0]['typestype']),
         status: maps[0]['status'],
         providerMutability: maps[0]['providerMutability']);
   }
@@ -431,22 +484,22 @@ class SQFLite {
     );
   }
 
-  Future<void> updateReceipt(Receipt transaction) async {
+  Future<void> updateReceipt(Receipt receipt) async {
     // Get a reference to the database.
     final db = await instance.database;
 
-    int? categoryID =
-        await getCategoryIDfromDescription(transaction.categoryDesc!);
-    transaction.categoryID = categoryID;
+    int? categoryID = await getCategoryIDfromDescription(receipt.categoryDesc!);
+    receipt.categoryID = categoryID;
+    int receiptID = receipt.id!;
 
     // Update the given receipt.
     await db?.update(
       'receipts',
-      transaction.toMap(),
+      encodeReceipt(receipt),
       // Ensure that the receipt has a matching id.
       where: 'id = ?',
       // Pass the receipt's id as a whereArg to prevent SQL injection.
-      whereArgs: [transaction.id],
+      whereArgs: [receiptID],
     );
   }
 
@@ -461,6 +514,11 @@ class SQFLite {
       // Pass the receipt's id as a whereArg to prevent SQL injection.
       whereArgs: [id],
     );
+  }
+
+  Future<void> deleteAllReceipts() async {
+    final db = await instance.database;
+    await db?.rawQuery('DELETE FROM receipts');
   }
 
   Map<String, dynamic> encodeReceipt(Receipt receipt) {
