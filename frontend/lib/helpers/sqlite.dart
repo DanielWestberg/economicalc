@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/bank_transaction.dart'
     as bank_transaction;
@@ -16,6 +17,7 @@ class SQFLite {
   static Database? _database;
   static final _databaseName = "transactions_database.db";
   static final _databaseVersion = 1;
+  static const cookieId = 0;
 
   SQFLite._privateConstructor();
   static final SQFLite instance = SQFLite._privateConstructor();
@@ -90,6 +92,14 @@ class SQFLite {
     );
 
     await insertDefaultCategories(db);
+
+    await db.execute('''CREATE TABLE cookies(
+      id INTEGER PRIMARY KEY CHECK (id = $cookieId)
+      ,cookie VARCHAR(128)
+      );'''
+    );
+
+    await setCookie(null);
   }
 
   /*************************** TRANSACTIONS *******************************/
@@ -552,5 +562,31 @@ class SQFLite {
           color: Color(maps[i]['color']),
           id: maps[i]['id']);
     });
+  }
+
+  /*************************** COOKIES *******************************/
+
+  Future<Cookie?> getCookie() async {
+    final db = await instance.database;
+    List<Map<String, dynamic>>? result = await db?.query(
+      'cookies',
+      where: 'id = $cookieId',
+    );
+
+    return Cookie.fromSetCookieValue(result?[0]["cookie"]);
+  }
+
+  Future<void> setCookie(Cookie? cookie) async {
+    final value = {
+      'id': cookieId,
+      'cookie': cookie.toString()
+    };
+
+    final db = await instance.database;
+    await db?.insert(
+      'cookies',
+      value,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 }
