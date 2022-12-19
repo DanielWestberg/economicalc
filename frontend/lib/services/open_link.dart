@@ -47,6 +47,7 @@ class OpenLinkState extends State<OpenLink> {
   late final Response response;
   late final List<BankTransaction> transactions;
   final SQFLite dbConnector = SQFLite.instance;
+  final apiCaller = ApiCaller();
 
   @override
   void initState() {
@@ -81,8 +82,8 @@ class OpenLinkState extends State<OpenLink> {
               code = code.split("=")[1];
               credential_id = credential_id.split("=")[1];
 
-              response = await CodeToAccessToken(code, widget.test);
-              transactions = await fetchTransactions(response.accessToken);
+              response = await apiCaller.CodeToAccessToken(code, widget.test);
+              transactions = await apiCaller.fetchTransactions(response.accessToken);
               print(transactions);
               for (var transaction in transactions) {
                 //print(transaction.descriptions.display);
@@ -101,7 +102,7 @@ class OpenLinkState extends State<OpenLink> {
               String transaction_report_id = params["transaction_report_id"]!;
               String account_report_id = params[
                   "https://console.tink.com/callback?account_verification_report_id"]!;
-              LoginData data = await fetchLoginData(
+              LoginData data = await apiCaller.fetchLoginData(
                   account_report_id, transaction_report_id, widget.test);
 
               print(data.transactionReport["transactions"]);

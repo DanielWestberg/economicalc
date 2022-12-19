@@ -34,6 +34,7 @@ class ResultsScreenState extends State<ResultsScreen> {
   late Future<List<TransactionCategory>> categoriesFutureBuilder;
   late List<TransactionCategory> categories;
   final dbConnector = SQFLite.instance;
+  final apiCaller = ApiCaller();
   int? categoryID;
   String dropdownValue =
       "Uncategorized"; // TODO: replace with suggested category
@@ -356,7 +357,7 @@ class ResultsScreenState extends State<ResultsScreen> {
   Future<Receipt> getTransactionFromImage(image) async {
     final imageFile = File(image.path);
     try {
-      var response = await processImageWithAsprise(imageFile);
+      var response = await apiCaller.processImageWithAsprise(imageFile);
       Receipt receipt = Receipt.fromJson(response);
 
       setState(() {
