@@ -19,6 +19,16 @@ import 'dart:convert' as convert;
 
 import '../models/LoginData.dart';
 
+class UnauthorizedException implements Exception {
+  final String message;
+  const UnauthorizedException([
+    this.message = "Login via bank required"
+  ]);
+
+  @override
+  String toString() => "UnauthorizedException: $message";
+}
+
 class ApiCaller {
   final bool testMode;
   final String apiServer;
@@ -216,7 +226,14 @@ class ApiCaller {
     return respJson;
   }
 
+  void _assertCookieNotNull() {
+    if (_cookie == null) {
+      throw const UnauthorizedException();
+    }
+  }
+
   fetchReceipts() async {
+    _assertCookieNotNull();
     const String path = "/receipts";
     final Map<String, String> headers = {
       "Cookie": _cookie.toString(),
@@ -237,6 +254,7 @@ class ApiCaller {
   }
 
   postReceipt(Receipt receipt) async {
+    _assertCookieNotNull();
     const String path = "/receipts";
     final Uri uri = getUri(path);
     final headers = {
@@ -253,6 +271,7 @@ class ApiCaller {
   }
 
   updateReceipt(int receiptId, Receipt receipt) async {
+    _assertCookieNotNull();
     final uri = getUri("/receipts/$receiptId");
     final headers = {
       "Content-type": "application/json",
@@ -267,6 +286,7 @@ class ApiCaller {
   }
 
   deleteReceipt(Receipt receipt) async {
+    _assertCookieNotNull();
     final uri = getUri("/receipts/${receipt.id}");
     final Map<String, String> headers = {
       "Cookie": _cookie.toString(),
@@ -279,6 +299,7 @@ class ApiCaller {
   }
 
   updateImage(int receiptId, XFile image) async {
+    _assertCookieNotNull();
     final uri = getUri("/receipts/$receiptId/image");
     final mimeType = image.mimeType ?? "application/octet-stream";
     final request = http.MultipartRequest("PUT", uri)
@@ -293,6 +314,7 @@ class ApiCaller {
   }
 
   fetchImage(int receiptId) async {
+    _assertCookieNotNull();
     final uri = getUri("/receipts/$receiptId/image");
     final Map<String, String> headers = {
       "Cookie": _cookie.toString(),
@@ -306,6 +328,7 @@ class ApiCaller {
   }
 
   deleteImage(int receiptId) async {
+    _assertCookieNotNull();
     final uri = getUri("/receipts/$receiptId/image");
     final Map<String, String> headers = {
       "Cookie": _cookie.toString(),
@@ -318,6 +341,7 @@ class ApiCaller {
   }
 
   fetchCategories() async {
+    _assertCookieNotNull();
     final uri = getUri("/categories");
     final Map<String, String> headers = {
       "Cookie": _cookie.toString(),
@@ -333,6 +357,7 @@ class ApiCaller {
   }
 
   postCategory(TransactionCategory category) async {
+    _assertCookieNotNull();
     final uri = getUri("/categories");
     final headers = {
       "Content-type": "application/json",
@@ -347,6 +372,7 @@ class ApiCaller {
   }
 
   updateCategory(TransactionCategory category) async {
+    _assertCookieNotNull();
     final uri = getUri("/categories/${category.id!}");
     final headers = {
       "Content-type": "application/json",
@@ -361,6 +387,7 @@ class ApiCaller {
   }
 
   deleteCategory(int categoryId) async {
+    _assertCookieNotNull();
     final uri = getUri("/categories/$categoryId");
     final Map<String, String> headers = {
       "Cookie": _cookie.toString(),
