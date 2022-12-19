@@ -240,6 +240,10 @@ class ApiCaller {
     };
 
     final response = await http.get(getUri(path), headers: headers);
+    if (response.statusCode == 401) {
+      throw const UnauthorizedException();
+    }
+
     if (response.statusCode != 200) {
       throw Exception(
           "Unexpected status code ${response.statusCode}\n{response.body}");
@@ -263,6 +267,10 @@ class ApiCaller {
     };
     final body = convert.jsonEncode(receipt.toMap());
     final response = await http.post(uri, headers: headers, body: body);
+    if (response.statusCode == 401) {
+      throw const UnauthorizedException();
+    }
+
     if (response.statusCode != 201) {
       throw Exception(
           "Unexpected status code ${response.statusCode}\n${response.body}");
@@ -279,6 +287,10 @@ class ApiCaller {
     };
     final body = convert.jsonEncode(receipt.toMap());
     final response = await http.put(uri, headers: headers, body: body);
+    if (response.statusCode == 401) {
+      throw const UnauthorizedException();
+    }
+
     if (response.statusCode != 200) {
       throw Exception(
           "Unexpected status code ${response.statusCode}\n${response.body}");
@@ -292,6 +304,10 @@ class ApiCaller {
       "Cookie": _cookie.toString(),
     };
     final response = await http.delete(uri, headers: headers);
+    if (response.statusCode == 401) {
+      throw const UnauthorizedException();
+    }
+
     if (response.statusCode != 204) {
       throw Exception(
           "Unexpected status code ${response.statusCode}\n${response.body}");
@@ -307,6 +323,10 @@ class ApiCaller {
           contentType: http_parser.MediaType.parse(mimeType)));
     request.headers["Cookie"] = _cookie.toString();
     final response = await request.send();
+    if (response.statusCode == 401) {
+      throw const UnauthorizedException();
+    }
+
     if (response.statusCode != 204) {
       throw Exception(
           "Unexpected status code ${response.statusCode}\n${await response.stream.bytesToString()}");
@@ -320,6 +340,10 @@ class ApiCaller {
       "Cookie": _cookie.toString(),
     };
     final response = await http.get(uri, headers: headers);
+    if (response.statusCode == 401) {
+      throw const UnauthorizedException();
+    }
+
     if (response.statusCode != 200) {
       throw Exception(
           "Unexpected status code ${response.statusCode}\n${response.body}");
@@ -334,6 +358,10 @@ class ApiCaller {
       "Cookie": _cookie.toString(),
     };
     final response = await http.delete(uri, headers: headers);
+    if (response.statusCode == 401) {
+      throw const UnauthorizedException();
+    }
+
     if (response.statusCode != 204) {
       throw Exception(
           "Unexpected status code ${response.statusCode}\n${response.body}");
@@ -347,6 +375,10 @@ class ApiCaller {
       "Cookie": _cookie.toString(),
     };
     final response = await http.get(uri, headers: headers);
+    if (response.statusCode == 401) {
+      throw const UnauthorizedException();
+    }
+
     if (response.statusCode != 200) {
       throw Exception(
           "Unexpected status code ${response.statusCode}\n${response.body}");
@@ -365,6 +397,10 @@ class ApiCaller {
     };
     final body = convert.jsonEncode(category.toJson(true));
     final response = await http.post(uri, headers: headers, body: body);
+    if (response.statusCode == 401) {
+      throw const UnauthorizedException();
+    }
+
     if (response.statusCode != 201) {
       throw Exception(
           "Unexpected status code ${response.statusCode}\n${response.body}");
@@ -380,6 +416,10 @@ class ApiCaller {
     };
     final body = convert.jsonEncode(category.toJson(true));
     final response = await http.put(uri, headers: headers, body: body);
+    if (response.statusCode == 401) {
+      throw const UnauthorizedException();
+    }
+
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception(
           "Unexpected status code ${response.statusCode}\n${response.body}");
@@ -393,6 +433,10 @@ class ApiCaller {
       "Cookie": _cookie.toString(),
     };
     final response = await http.delete(uri, headers: headers);
+    if (response.statusCode == 401) {
+      throw const UnauthorizedException();
+    }
+
     if (response.statusCode != 204) {
       throw Exception(
           "Unexpected status code ${response.statusCode}\n${response.body}");
