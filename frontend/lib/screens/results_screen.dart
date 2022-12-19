@@ -357,7 +357,8 @@ class ResultsScreenState extends State<ResultsScreen> {
     final imageFile = File(image.path);
     try {
       var response = await processImageWithAsprise(imageFile);
-      Receipt receipt = Receipt.fromJson(response);
+      Map<String, dynamic> filteredJson = removeJitter(response);
+      Receipt receipt = Receipt.fromJson(filteredJson);
 
       setState(() {
         isLoading = false;
@@ -388,6 +389,39 @@ class ResultsScreenState extends State<ResultsScreen> {
       rethrow;
     }
   }
+
+  Map<String, dynamic> removeJitter(Map<String, dynamic> respJson) {
+   
+    var items = respJson['receipts'][0]['items'];
+    
+    for(var i = 0; i < items.length; i++) {
+      var item = items[i];
+      bool containsDiscount = 
+        item['description'].toLowerCase().contains("rabatt") ||
+        item['description'].toLowerCase().contains("discount");
+
+
+      if(item['description'].toLowerCase().contains("öresavrunding")) {
+        items.remove(item);
+      }
+
+      if(item['description'].toLowerCase().contains("pant")) {
+        items[i-1]['amount'] += item['amount'];
+        items.remove(item);
+      }
+      if(containsDiscount) {
+        if(item['amount'] > 0) {
+          items[i-1]['amount'] -= item['amount'];
+        } else if(item['amount'] < 0) {
+          items[i-1]['amount'] += item['amount'];
+        }
+        items.remove(item);
+      }
+    }
+
+    respJson['receipts'][0]['items'] = items;
+    return respJson;
+  } 
 
   Future<List<TransactionCategory>> getCategories(SQFLite dbConnector) async {
     return await dbConnector.getAllcategories();
