@@ -70,16 +70,9 @@ class SQFLite {
 
     await db.execute('''CREATE TABLE bankTransactions(
        id                       VARCHAR(32) NOT NULL UNIQUE PRIMARY KEY
-      ,accountId                VARCHAR(32) NOT NULL
       ,amountvalueunscaledValue VARCHAR(32) NOT NULL
-      ,amountvaluescale         VARCHAR(32) NOT NULL
-      ,amountcurrencyCode       VARCHAR(32) NOT NULL
-      ,descriptionsoriginal     VARCHAR(32) NOT NULL
       ,descriptionsdisplay      VARCHAR(32) NOT NULL
       ,datesbooked              DATE  NOT NULL
-      ,typestype                VARCHAR(32) NOT NULL
-      ,status                   VARCHAR(32) NOT NULL
-      ,providerMutability       VARCHAR(32) NOT NULL
         ); ''');
 
     await db.execute(
@@ -255,10 +248,9 @@ class SQFLite {
 
       if (transaction!.isEmpty) {
         Transaction newTransaction = Transaction(
-          store: bankTransaction.descriptions.display,
-          date: DateTime.parse(bankTransaction.dates.booked),
-          totalAmount:
-              double.parse(bankTransaction.amount.value.unscaledValue) / 10,
+          store: bankTransaction.description,
+          date: bankTransaction.date,
+          totalAmount: bankTransaction.amount,
           bankTransactionID: bankTransaction.id,
           categoryID: await getCategoryIDfromDescription("Uncategorized"),
           categoryDesc: "Uncategorized",
@@ -281,8 +273,7 @@ class SQFLite {
           }
         } else if (existingTransaction != null) {
           existingTransaction.bankTransactionID = bankTransaction.id;
-          existingTransaction.date =
-              DateTime.parse(bankTransaction.dates.booked);
+          existingTransaction.date = bankTransaction.date;
           await updateTransaction(existingTransaction);
           updated++;
         } else {
@@ -339,21 +330,7 @@ class SQFLite {
 
     // Convert the List<Map<String, dynamic> into a List<transaction>.
     return List.generate(maps!.length, (i) {
-      return BankTransaction(
-          id: maps[i]['id'],
-          accountId: maps[i]['accountId'],
-          amount: Amount(
-              value: Value(
-                  unscaledValue: maps[i]['amountvalueunscaledValue'],
-                  scale: maps[i]['amountvaluescale']),
-              currencyCode: maps[i]['amountcurrencyCode']),
-          descriptions: Descriptions(
-              original: maps[i]['descriptionsoriginal'],
-              display: maps[i]['descriptionsdisplay']),
-          dates: Dates(booked: maps[i]['datesbooked']),
-          types: Types(type: maps[i]['typestype']),
-          status: maps[i]['status'],
-          providerMutability: maps[i]['providerMutability']);
+      return BankTransaction.fromDB(maps[i]);
     });
   }
 
@@ -378,22 +355,7 @@ class SQFLite {
     List<Map<String, dynamic?>>? maps =
         await db?.rawQuery('SELECT * FROM bankTransactions WHERE id = "${id}"');
 
-    // Convert the List<Map<String, dynamic> into a BankTransaction.
-    return BankTransaction(
-        id: maps![0]['id'],
-        accountId: maps[0]['accountId'],
-        amount: Amount(
-            value: Value(
-                unscaledValue: maps[0]['amountvalueunscaledValue'],
-                scale: maps[0]['amountvaluescale']),
-            currencyCode: maps[0]['amountcurrencyCode']),
-        descriptions: Descriptions(
-            original: maps[0]['descriptionsoriginal'],
-            display: maps[0]['descriptionsdisplay']),
-        dates: Dates(booked: maps[0]['datesbooked']),
-        types: Types(type: maps[0]['typestype']),
-        status: maps[0]['status'],
-        providerMutability: maps[0]['providerMutability']);
+    return BankTransaction.fromDB(maps![0]);
   }
 
   /*************************** RECEIPTS *******************************/

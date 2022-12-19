@@ -11,15 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 void runTest(String sname1, String sname2, double amount1, double amount2,
     String date1, String date2, bool one, bool two, bool three) async {
-  String unscaledVal = (-amount1 * 10).toString();
-  Value value = Value(unscaledValue: unscaledVal, scale: "1");
-  Amount amount = Amount(value: value, currencyCode: "SEK");
-  Descriptions descriptions = Descriptions(original: "ICA", display: sname1);
-  Dates dates = Dates(booked: date2);
-  BankTransaction transaction =
-      BankTransaction(amount: amount, descriptions: descriptions, dates: dates);
-  double damount =
-      (double.parse(transaction.amount.value.unscaledValue) / 10).abs();
+  BankTransaction bankTransaction = BankTransaction(
+      amount: -amount1, description: sname1, date: DateTime.parse(date2));
 
   Receipt receipt = Receipt(
       recipient: sname2,
@@ -27,10 +20,9 @@ void runTest(String sname1, String sname2, double amount1, double amount2,
       items: [],
       total: amount2);
 
-  bool sameAmount = receipt.total == damount;
+  bool sameAmount = receipt.total == bankTransaction.amount!.abs();
 
-  bool similarDate = Utils.isSimilarDate(
-      DateTime.parse(transaction.dates.booked), receipt.date);
+  bool similarDate = Utils.isSimilarDate(bankTransaction.date, receipt.date);
 
   String response =
       await rootBundle.loadString('assets/swedish_municipalities.json');
@@ -42,9 +34,9 @@ void runTest(String sname1, String sname2, double amount1, double amount2,
     list.add(element);
   });
 
-  print("Checking if ${receipt.total} == ${damount}...");
+  print("Checking if ${receipt.total} == ${bankTransaction.amount!.abs()}...");
   expect(sameAmount, one);
-  String desc = transaction.descriptions.display;
+  String desc = bankTransaction.description!;
   String desc1 = receipt.recipient;
   list.sort((a, b) => b.length.compareTo(a.length));
   String result = Utils.removeStopWords(desc, list);
@@ -52,7 +44,7 @@ void runTest(String sname1, String sname2, double amount1, double amount2,
   bool similarName = Utils.isSimilarStoreName(result, result1);
   print("Checking if $result== $result1...");
   expect(similarName, two);
-  print("Checking if ${transaction.dates.booked} == ${receipt.date}...");
+  print("Checking if ${bankTransaction.date} == ${receipt.date}...");
   expect(similarDate, three);
 }
 

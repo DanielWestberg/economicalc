@@ -118,9 +118,7 @@ class OpenLinkState extends State<OpenLink> {
                     await dbConnector.getAllTransactions();
                 Transaction latestTransaction = transactions[0];
                 for (var newBankTrans in resTrans) {
-                  if (DateTime.parse(newBankTrans.dates.booked)
-                          .compareTo(latestTransaction.date) >
-                      0) {
+                  if (newBankTrans.date.compareTo(latestTransaction.date) > 0) {
                     await dbConnector.postBankTransaction(newBankTrans);
                   }
                 }
