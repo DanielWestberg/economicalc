@@ -23,6 +23,7 @@ class MissingParamException implements Exception {
 }
 
 main() async {
+  TestWidgetsFlutterBinding.ensureInitialized();
   final apiCaller = ApiCaller();
   print("Report IDs can be found here: ${apiCaller.tinkReportEndpoint}");
   const accountReportId = String.fromEnvironment("accountReportId");
