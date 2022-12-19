@@ -15,7 +15,7 @@ def create_app(config):
     app = Flask(__name__)
     app.config["MONGO_URI"] = config.MONGO_URI
     app.secret_key= os.environ.get('TINK_CLIENT_SECRET')
-    app.permanent_session_lifetime=timedelta(minutes=15)
+    app.permanent_session_lifetime=timedelta(days=3650)
 
     db = create_db(app)
     fs = GridFS(db)
