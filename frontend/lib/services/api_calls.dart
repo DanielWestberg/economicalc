@@ -3,7 +3,7 @@ import 'package:economicalc_client/models/response.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
-import 'package:flutter/material.dart';
+import 'package:economicalc_client/helpers/sqlite.dart';
 
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart';
@@ -32,7 +32,14 @@ class UnauthorizedException implements Exception {
 class ApiCaller {
   final bool testMode;
   final String apiServer;
+  final SQFLite _dbConnector = SQFLite.instance;
   Cookie? _cookie;
+
+  Cookie? get cookie => _cookie;
+  set cookie(Cookie? cookie) {
+    _cookie = cookie;
+    _dbConnector.setCookie(cookie);
+  }
 
   static const String _tinkReportEndpoint =
       "https://link.tink.com/1.0/reports/create-report"
@@ -49,7 +56,9 @@ class ApiCaller {
   String get tinkReportEndpoint => _tinkReportEndpoint;
 
   ApiCaller._privateConstructor(this.testMode):
-      apiServer = testMode ? "192.168.0.165:5000" : "api.economicalc.online";
+      apiServer = testMode ? "192.168.0.165:5000" : "api.economicalc.online" {
+    _dbConnector.getCookie().then((c) => _cookie = c);
+  }
 
   static ApiCaller nonTestInstance =
       ApiCaller._privateConstructor(false);
@@ -118,7 +127,7 @@ class ApiCaller {
       throw Exception('http.get error: statusCode= ${response.statusCode}');
     }
     //print(response.body);
-    _cookie = Cookie.fromSetCookieValue(response.headers["set-cookie"] ?? "");
+    cookie = Cookie.fromSetCookieValue(response.headers["set-cookie"] ?? "");
     return LoginData.fromResponse(response);
   }
 
@@ -227,7 +236,7 @@ class ApiCaller {
   }
 
   void _assertCookieNotNull() {
-    if (_cookie == null) {
+    if (cookie == null) {
       throw const UnauthorizedException();
     }
   }
@@ -236,7 +245,7 @@ class ApiCaller {
     _assertCookieNotNull();
     const String path = "/receipts";
     final Map<String, String> headers = {
-      "Cookie": _cookie.toString(),
+      "Cookie": cookie.toString(),
     };
 
     final response = await http.get(getUri(path), headers: headers);
@@ -263,7 +272,7 @@ class ApiCaller {
     final Uri uri = getUri(path);
     final headers = {
       "Content-type": "application/json",
-      "Cookie": _cookie.toString(),
+      "Cookie": cookie.toString(),
     };
     final body = convert.jsonEncode(receipt.toMap());
     final response = await http.post(uri, headers: headers, body: body);
@@ -283,7 +292,7 @@ class ApiCaller {
     final uri = getUri("/receipts/$receiptId");
     final headers = {
       "Content-type": "application/json",
-      "Cookie": _cookie.toString(),
+      "Cookie": cookie.toString(),
     };
     final body = convert.jsonEncode(receipt.toMap());
     final response = await http.put(uri, headers: headers, body: body);
@@ -301,7 +310,7 @@ class ApiCaller {
     _assertCookieNotNull();
     final uri = getUri("/receipts/${receipt.id}");
     final Map<String, String> headers = {
-      "Cookie": _cookie.toString(),
+      "Cookie": cookie.toString(),
     };
     final response = await http.delete(uri, headers: headers);
     if (response.statusCode == 401) {
@@ -321,7 +330,7 @@ class ApiCaller {
     final request = http.MultipartRequest("PUT", uri)
       ..files.add(await http.MultipartFile.fromPath("file", image.path,
           contentType: http_parser.MediaType.parse(mimeType)));
-    request.headers["Cookie"] = _cookie.toString();
+    request.headers["Cookie"] = cookie.toString();
     final response = await request.send();
     if (response.statusCode == 401) {
       throw const UnauthorizedException();
@@ -337,7 +346,7 @@ class ApiCaller {
     _assertCookieNotNull();
     final uri = getUri("/receipts/$receiptId/image");
     final Map<String, String> headers = {
-      "Cookie": _cookie.toString(),
+      "Cookie": cookie.toString(),
     };
     final response = await http.get(uri, headers: headers);
     if (response.statusCode == 401) {
@@ -355,7 +364,7 @@ class ApiCaller {
     _assertCookieNotNull();
     final uri = getUri("/receipts/$receiptId/image");
     final Map<String, String> headers = {
-      "Cookie": _cookie.toString(),
+      "Cookie": cookie.toString(),
     };
     final response = await http.delete(uri, headers: headers);
     if (response.statusCode == 401) {
@@ -372,7 +381,7 @@ class ApiCaller {
     _assertCookieNotNull();
     final uri = getUri("/categories");
     final Map<String, String> headers = {
-      "Cookie": _cookie.toString(),
+      "Cookie": cookie.toString(),
     };
     final response = await http.get(uri, headers: headers);
     if (response.statusCode == 401) {
@@ -393,7 +402,7 @@ class ApiCaller {
     final uri = getUri("/categories");
     final headers = {
       "Content-type": "application/json",
-      "Cookie": _cookie.toString(),
+      "Cookie": cookie.toString(),
     };
     final body = convert.jsonEncode(category.toJson(true));
     final response = await http.post(uri, headers: headers, body: body);
@@ -412,7 +421,7 @@ class ApiCaller {
     final uri = getUri("/categories/${category.id!}");
     final headers = {
       "Content-type": "application/json",
-      "Cookie": _cookie.toString(),
+      "Cookie": cookie.toString(),
     };
     final body = convert.jsonEncode(category.toJson(true));
     final response = await http.put(uri, headers: headers, body: body);
@@ -430,7 +439,7 @@ class ApiCaller {
     _assertCookieNotNull();
     final uri = getUri("/categories/$categoryId");
     final Map<String, String> headers = {
-      "Cookie": _cookie.toString(),
+      "Cookie": cookie.toString(),
     };
     final response = await http.delete(uri, headers: headers);
     if (response.statusCode == 401) {
