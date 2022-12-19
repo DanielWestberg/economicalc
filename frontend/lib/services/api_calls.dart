@@ -22,6 +22,7 @@ import '../models/LoginData.dart';
 class ApiCaller {
   final bool testMode;
   final String apiServer;
+  Cookie? _cookie;
 
   static const String _tinkReportEndpoint =
       "https://link.tink.com/1.0/reports/create-report"
@@ -107,6 +108,7 @@ class ApiCaller {
       throw Exception('http.get error: statusCode= ${response.statusCode}');
     }
     //print(response.body);
+    _cookie = Cookie.fromSetCookieValue(response.headers["set-cookie"] ?? "");
     return LoginData.fromResponse(response);
   }
 
@@ -214,10 +216,10 @@ class ApiCaller {
     return respJson;
   }
 
-  fetchReceipts(Cookie cookie) async {
+  fetchReceipts() async {
     const String path = "/receipts";
     final Map<String, String> headers = {
-      "Cookie": cookie.toString(),
+      "Cookie": _cookie.toString(),
     };
 
     final response = await http.get(getUri(path), headers: headers);
@@ -234,12 +236,12 @@ class ApiCaller {
     return resultReceipts;
   }
 
-  postReceipt(Cookie cookie, Receipt receipt) async {
+  postReceipt(Receipt receipt) async {
     const String path = "/receipts";
     final Uri uri = getUri(path);
     final headers = {
       "Content-type": "application/json",
-      "Cookie": cookie.toString(),
+      "Cookie": _cookie.toString(),
     };
     final body = convert.jsonEncode(receipt.toMap());
     final response = await http.post(uri, headers: headers, body: body);
@@ -250,11 +252,11 @@ class ApiCaller {
     return Receipt.fromBackendJson(convert.jsonDecode(response.body)["data"]);
   }
 
-  updateReceipt(Cookie cookie, int receiptId, Receipt receipt) async {
+  updateReceipt(int receiptId, Receipt receipt) async {
     final uri = getUri("/receipts/$receiptId");
     final headers = {
       "Content-type": "application/json",
-      "Cookie": cookie.toString(),
+      "Cookie": _cookie.toString(),
     };
     final body = convert.jsonEncode(receipt.toMap());
     final response = await http.put(uri, headers: headers, body: body);
@@ -264,10 +266,10 @@ class ApiCaller {
     }
   }
 
-  deleteReceipt(Cookie cookie, Receipt receipt) async {
+  deleteReceipt(Receipt receipt) async {
     final uri = getUri("/receipts/${receipt.id}");
     final Map<String, String> headers = {
-      "Cookie": cookie.toString(),
+      "Cookie": _cookie.toString(),
     };
     final response = await http.delete(uri, headers: headers);
     if (response.statusCode != 204) {
@@ -276,13 +278,13 @@ class ApiCaller {
     }
   }
 
-  updateImage(Cookie cookie, int receiptId, XFile image) async {
+  updateImage(int receiptId, XFile image) async {
     final uri = getUri("/receipts/$receiptId/image");
     final mimeType = image.mimeType ?? "application/octet-stream";
     final request = http.MultipartRequest("PUT", uri)
       ..files.add(await http.MultipartFile.fromPath("file", image.path,
           contentType: http_parser.MediaType.parse(mimeType)));
-    request.headers["Cookie"] = cookie.toString();
+    request.headers["Cookie"] = _cookie.toString();
     final response = await request.send();
     if (response.statusCode != 204) {
       throw Exception(
@@ -290,10 +292,10 @@ class ApiCaller {
     }
   }
 
-  fetchImage(Cookie cookie, int receiptId) async {
+  fetchImage(int receiptId) async {
     final uri = getUri("/receipts/$receiptId/image");
     final Map<String, String> headers = {
-      "Cookie": cookie.toString(),
+      "Cookie": _cookie.toString(),
     };
     final response = await http.get(uri, headers: headers);
     if (response.statusCode != 200) {
@@ -303,10 +305,10 @@ class ApiCaller {
     return XFile.fromData(response.bodyBytes);
   }
 
-  deleteImage(Cookie cookie, int receiptId) async {
+  deleteImage(int receiptId) async {
     final uri = getUri("/receipts/$receiptId/image");
     final Map<String, String> headers = {
-      "Cookie": cookie.toString(),
+      "Cookie": _cookie.toString(),
     };
     final response = await http.delete(uri, headers: headers);
     if (response.statusCode != 204) {
@@ -315,10 +317,10 @@ class ApiCaller {
     }
   }
 
-  fetchCategories(Cookie cookie) async {
+  fetchCategories() async {
     final uri = getUri("/categories");
     final Map<String, String> headers = {
-      "Cookie": cookie.toString(),
+      "Cookie": _cookie.toString(),
     };
     final response = await http.get(uri, headers: headers);
     if (response.statusCode != 200) {
@@ -330,11 +332,11 @@ class ApiCaller {
     return categories.map((e) => TransactionCategory.fromJson(e)).toList();
   }
 
-  postCategory(Cookie cookie, TransactionCategory category) async {
+  postCategory(TransactionCategory category) async {
     final uri = getUri("/categories");
     final headers = {
       "Content-type": "application/json",
-      "Cookie": cookie.toString(),
+      "Cookie": _cookie.toString(),
     };
     final body = convert.jsonEncode(category.toJson(true));
     final response = await http.post(uri, headers: headers, body: body);
@@ -344,11 +346,11 @@ class ApiCaller {
     }
   }
 
-  updateCategory(Cookie cookie, TransactionCategory category) async {
+  updateCategory(TransactionCategory category) async {
     final uri = getUri("/categories/${category.id!}");
     final headers = {
       "Content-type": "application/json",
-      "Cookie": cookie.toString(),
+      "Cookie": _cookie.toString(),
     };
     final body = convert.jsonEncode(category.toJson(true));
     final response = await http.put(uri, headers: headers, body: body);
@@ -358,10 +360,10 @@ class ApiCaller {
     }
   }
 
-  deleteCategory(Cookie cookie, int categoryId) async {
+  deleteCategory(int categoryId) async {
     final uri = getUri("/categories/$categoryId");
     final Map<String, String> headers = {
-      "Cookie": cookie.toString(),
+      "Cookie": _cookie.toString(),
     };
     final response = await http.delete(uri, headers: headers);
     if (response.statusCode != 204) {

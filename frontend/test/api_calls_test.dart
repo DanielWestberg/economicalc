@@ -36,22 +36,20 @@ main() async {
     throw const MissingParamException("transactionReportId");
   }
 
-  final loginData = await
-      apiCaller.fetchLoginData(accountReportId, transactionReportId, true);
-  final cookie = loginData.cookie;
+  await apiCaller.fetchLoginData(accountReportId, transactionReportId, true);
   const int categoryId = 1234;
 
   setUpAll(() {});
 
   tearDownAll(() async {
-    await apiCaller.deleteCategory(cookie, categoryId);
+    await apiCaller.deleteCategory(categoryId);
 
-    List<Receipt> receipts = await apiCaller.fetchReceipts(cookie);
+    List<Receipt> receipts = await apiCaller.fetchReceipts();
     for (Receipt receipt in receipts) {
-      await apiCaller.deleteReceipt(cookie, receipt);
+      await apiCaller.deleteReceipt(receipt);
     }
 
-    receipts = await apiCaller.fetchReceipts(cookie);
+    receipts = await apiCaller.fetchReceipts();
     expect(receipts.length, 0);
   });
 
@@ -71,8 +69,8 @@ main() async {
       categoryID: 1,
     );
 
-    final postedReceipt = await apiCaller.postReceipt(cookie, receipt);
-    List<Receipt> fetchedReceipts = await apiCaller.fetchReceipts(cookie);
+    final postedReceipt = await apiCaller.postReceipt(receipt);
+    List<Receipt> fetchedReceipts = await apiCaller.fetchReceipts();
 
     expect(fetchedReceipts, contains(postedReceipt));
   });
@@ -80,25 +78,25 @@ main() async {
   test("Update image", () async {
     final image = XFile("../backend/tests/res/tsu.jpg");
 
-    final receipts = await apiCaller.fetchReceipts(cookie);
+    final receipts = await apiCaller.fetchReceipts();
     final id = receipts[0].id!;
-    await apiCaller.updateImage(cookie, id, image);
+    await apiCaller.updateImage(id, image);
 
-    final responseImage = await apiCaller.fetchImage(cookie, id);
+    final responseImage = await apiCaller.fetchImage(id);
     final expectedBytes = await image.readAsBytes();
     final responseBytes = await responseImage.readAsBytes();
 
     final equals = const ListEquality().equals;
     expect(equals(expectedBytes, responseBytes), true);
 
-    apiCaller.deleteImage(cookie, id);
+    apiCaller.deleteImage(id);
   });
 
   test("Update receipt", () async {
-    final receipt = (await apiCaller.fetchReceipts(cookie))[0];
+    final receipt = (await apiCaller.fetchReceipts())[0];
     receipt.items[0].itemName = "Snus";
-    await apiCaller.updateReceipt(cookie, receipt.id, receipt);
-    final responseReceipts = await apiCaller.fetchReceipts(cookie);
+    await apiCaller.updateReceipt(receipt.id, receipt);
+    final responseReceipts = await apiCaller.fetchReceipts();
     expect(responseReceipts, contains(receipt));
   });
 
@@ -109,12 +107,12 @@ main() async {
       id: categoryId,
     );
 
-    await apiCaller.postCategory(cookie, category);
+    await apiCaller.postCategory(category);
 
-    List<TransactionCategory> fetchedCategories = await apiCaller.fetchCategories(cookie);
+    List<TransactionCategory> fetchedCategories = await apiCaller.fetchCategories();
     expect(fetchedCategories, contains(category));
 
-    await apiCaller.deleteCategory(cookie, categoryId);
+    await apiCaller.deleteCategory(categoryId);
   });
 
   test("Update category", () async {
@@ -126,20 +124,20 @@ main() async {
       id: categoryId,
     );
 
-    await apiCaller.updateCategory(cookie, category);
+    await apiCaller.updateCategory(category);
 
-    var fetchedCategories = await apiCaller.fetchCategories(cookie);
+    var fetchedCategories = await apiCaller.fetchCategories();
     expect(fetchedCategories, contains(category));
 
     category.description = "Nothing illegal";
-    await apiCaller.updateCategory(cookie, category);
+    await apiCaller.updateCategory(category);
 
-    fetchedCategories = await apiCaller.fetchCategories(cookie);
+    fetchedCategories = await apiCaller.fetchCategories();
     expect(fetchedCategories, contains(category));
 
     category.description = originalDescription;
     expect(fetchedCategories, isNot(contains(category)));
 
-    apiCaller.deleteCategory(cookie, category.id!);
+    apiCaller.deleteCategory(category.id!);
   });
 }
