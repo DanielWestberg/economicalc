@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:collection/collection.dart';
@@ -9,23 +10,47 @@ import 'package:economicalc_client/models/receipt.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 
-main() {
-  String userId = "testUser";
-  int categoryId = 1234;
+class MissingParamException implements Exception {
+  final String paramName;
+  get message => "Missing parameter $paramName. "
+      "Please run 'flutter test' with the flag "
+      "'--dart-define=$paramName=<value>";
 
-  setUpAll(() async {
-    await registerUser(userId);
-  });
+  const MissingParamException(this.paramName);
+
+  @override
+  String toString() => "MissingParamException: $message";
+}
+
+main() async {
+  print("Report IDs can be found here: $tinkReportEndpoint");
+  const accountReportId = String.fromEnvironment("accountReportId");
+  const transactionReportId = String.fromEnvironment("transactionReportId");
+
+  if (accountReportId == "") {
+    throw const MissingParamException("accountReportId");
+  }
+
+  if (transactionReportId == "") {
+    throw const MissingParamException("transactionReportId");
+  }
+
+  final loginData =
+      await fetchLoginData(accountReportId, transactionReportId, true);
+  final cookie = loginData.cookie;
+  const int categoryId = 1234;
+
+  setUpAll(() {});
 
   tearDownAll(() async {
-    await deleteCategory(userId, categoryId);
+    await deleteCategory(cookie, categoryId);
 
-    List<Receipt> receipts = await fetchReceipts(userId);
+    List<Receipt> receipts = await fetchReceipts(cookie);
     for (Receipt receipt in receipts) {
-      await deleteReceipt(userId, receipt);
+      await deleteReceipt(cookie, receipt);
     }
 
-    receipts = await fetchReceipts(userId);
+    receipts = await fetchReceipts(cookie);
     expect(receipts.length, 0);
   });
 
@@ -37,6 +62,7 @@ main() {
       ),
     ];
     Receipt receipt = Receipt(
+      id: 1,
       recipient: "ica",
       date: DateTime.utc(1970, 1, 1),
       items: items,
@@ -44,79 +70,79 @@ main() {
       categoryID: 1,
     );
 
-    final postedReceipt = await postReceipt(userId, receipt);
-    List<Receipt> fetchedReceipts = await fetchReceipts(userId);
+    final postedReceipt = await postReceipt(cookie, receipt);
+    List<Receipt> fetchedReceipts = await fetchReceipts(cookie);
 
     expect(fetchedReceipts, contains(postedReceipt));
   });
 
-  test ("Update image", () async {
+  test("Update image", () async {
     final image = XFile("../backend/tests/res/tsu.jpg");
 
-    final receipts = await fetchReceipts(userId);
-    final backendId = receipts[0].backendId!;
-    await updateImage(userId, backendId, image);
+    final receipts = await fetchReceipts(cookie);
+    final id = receipts[0].id!;
+    await updateImage(cookie, id, image);
 
-    final responseImage = await fetchImage(userId, backendId);
+    final responseImage = await fetchImage(cookie, id);
     final expectedBytes = await image.readAsBytes();
     final responseBytes = await responseImage.readAsBytes();
 
     final equals = const ListEquality().equals;
     expect(equals(expectedBytes, responseBytes), true);
 
-    deleteImage(userId, backendId);
+    deleteImage(cookie, id);
   });
 
-  test ("Update receipt", () async {
-    final receipt = (await fetchReceipts(userId))[0];
+  test("Update receipt", () async {
+    final receipt = (await fetchReceipts(cookie))[0];
     receipt.items[0].itemName = "Snus";
-    await updateReceipt(userId, receipt.backendId, receipt);
-    final responseReceipts = await fetchReceipts(userId);
+    await updateReceipt(cookie, receipt.id, receipt);
+    final responseReceipts = await fetchReceipts(cookie);
     expect(responseReceipts, contains(receipt));
   });
 
-  test ("Post category", () async {
-    final category = Category(
-        description: "Groceries",
-        color: const Color(0xFFFF7733),
-        id: categoryId,
+  test("Post category", () async {
+    final category = TransactionCategory(
+      description: "Groceries",
+      color: const Color(0xFFFF7733),
+      id: categoryId,
     );
 
-    await postCategory(userId, category);
+    await postCategory(cookie, category);
 
-    List<Category> fetchedCategories = await fetchCategories(userId);
+    List<TransactionCategory> fetchedCategories = await fetchCategories(cookie);
     expect(fetchedCategories, contains(category));
 
-    await deleteCategory(userId, categoryId);
+    await deleteCategory(cookie, categoryId);
   });
 
-  test ("Update category", () async {
+  test("Update category", () async {
     final originalDescription = "Explosives";
 
-    final category = Category(
+    final category = TransactionCategory(
       description: originalDescription,
       color: const Color(0xFFFF0000),
       id: categoryId,
     );
 
-    await updateCategory(userId, category);
+    await updateCategory(cookie, category);
 
-    var fetchedCategories = await fetchCategories(userId);
+    var fetchedCategories = await fetchCategories(cookie);
     expect(fetchedCategories, contains(category));
 
     category.description = "Nothing illegal";
-    await updateCategory(userId, category);
+    await updateCategory(cookie, category);
 
-    fetchedCategories = await fetchCategories(userId);
+    fetchedCategories = await fetchCategories(cookie);
     expect(fetchedCategories, contains(category));
 
     category.description = originalDescription;
     expect(fetchedCategories, isNot(contains(category)));
 
-    deleteCategory(userId, category.id!);
+    deleteCategory(cookie, category.id!);
   });
 
-  test ("Post multiple receipts", () async {
+  test("Post multiple receipts", () async {
     List<Receipt> receipts = [
       Receipt(
         recipient: "ica",
@@ -152,8 +178,8 @@ main() {
       ),
     ];
 
-    final responseReceipts = await postManyReceipts(userId, receipts);
-    final fetchedReceipts = await fetchReceipts(userId);
+    final responseReceipts = await postManyReceipts(cookie, receipts);
+    final fetchedReceipts = await fetchReceipts(cookie);
     for (Receipt receipt in responseReceipts) {
       expect(fetchedReceipts, contains(receipt));
     }

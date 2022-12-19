@@ -12,9 +12,9 @@ class CategoriesScreen extends StatefulWidget {
 }
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
-  late Future<List<Category>> categoryFuture;
-  late List<Category> categories;
-  Color pickerColor = Utils.backgroundColor;
+  late Future<List<TransactionCategory>> categoryFuture;
+  late List<TransactionCategory> categories;
+  Color pickerColor = Utils.mediumLightColor;
   String description = "";
   final SQFLite dbConnector = SQFLite.instance;
 
@@ -45,7 +45,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             return Scaffold(
                 appBar: AppBar(
                   foregroundColor: Colors.black,
-                  backgroundColor: Utils.backgroundColor,
+                  backgroundColor: Utils.mediumLightColor,
                   title: Text("Categories", style: TextStyle(fontSize: 30)),
                   centerTitle: true,
                 ),
@@ -62,7 +62,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                   showDialog(
                                       context: context,
                                       builder: (BuildContext context) {
-                                        List<Category> categoriesPopUpCategory =
+                                        List<TransactionCategory>
+                                            categoriesPopUpCategory =
                                             categories;
                                         return popUpAddCategory(
                                             context, categoriesPopUpCategory);
@@ -93,16 +94,27 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                 trailing: categories[index].description !=
                                         'Uncategorized'
                                     ? PopupMenuButton(
-                                        icon: Icon(Icons.remove_circle,
-                                            color: Colors.red),
+                                        icon: Icon(Icons.delete),
                                         itemBuilder: (context) => [
                                               PopupMenuItem(
-                                                child: Text("Remove"),
+                                                child: Text("Delete"),
                                                 onTap: () async {
                                                   await dbConnector
                                                       .deleteCategoryByID(
                                                           categories[index]
                                                               .id!);
+                                                  final snackBar = SnackBar(
+                                                    backgroundColor:
+                                                        Utils.mediumDarkColor,
+                                                    content: Text(
+                                                      "Category '${categories[index].description}' was deleted",
+                                                      style: TextStyle(
+                                                          color:
+                                                              Utils.lightColor),
+                                                    ),
+                                                  );
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(snackBar);
                                                   await updateCategories();
                                                 },
                                               )
@@ -140,8 +152,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           child: const Text('Save'),
           onPressed: () async {
             if (description.length > 0) {
-              Category newCategory =
-                  new Category(description: description, color: pickerColor);
+              TransactionCategory newCategory = new TransactionCategory(
+                  description: description, color: pickerColor);
               await dbConnector.insertCategory(newCategory);
               await updateCategories();
               Navigator.of(context).pop();

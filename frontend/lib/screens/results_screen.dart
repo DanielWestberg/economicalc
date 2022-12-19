@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
+import 'package:economicalc_client/helpers/quota_exception.dart';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
@@ -30,8 +31,8 @@ class ResultsScreenState extends State<ResultsScreen> {
   bool isLoading = false;
   late Future<Receipt> dataFuture;
   late Receipt receipt;
-  late Future<List<Category>> categoriesFutureBuilder;
-  late List<Category> categories;
+  late Future<List<TransactionCategory>> categoriesFutureBuilder;
+  late List<TransactionCategory> categories;
   final dbConnector = SQFLite.instance;
   int? categoryID;
   String dropdownValue =
@@ -51,34 +52,23 @@ class ResultsScreenState extends State<ResultsScreen> {
     return SafeArea(
         child: isLoading
             ? Scaffold(
-                backgroundColor: Utils.backgroundColor,
+                backgroundColor: Utils.mediumLightColor,
                 body: Center(
                     child: LoadingAnimationWidget.threeArchedCircle(
                         color: Colors.black, size: 40)))
             : Scaffold(
                 appBar: AppBar(
-                  toolbarHeight: 180,
-                  backgroundColor: Utils.backgroundColor,
+                  backgroundColor: Utils.mediumLightColor,
                   foregroundColor: Colors.black,
-                  title: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                            padding: EdgeInsets.only(left: 10),
-                            child: Text("EconomiCalc",
-                                style: TextStyle(
-                                    color: Color(0xff000000),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 36.0))),
-                      ]),
-                  centerTitle: false,
+                  title: Text('Scan result'),
+                  centerTitle: true,
                   elevation: 0,
                 ),
                 body: ListView(children: [
                   photoArea(),
-                  buttonArea(),
                   headerInfo(),
-                  buildDataTable()
+                  buildDataTable(),
+                  confirmButton(),
                 ])));
   }
 
@@ -95,14 +85,14 @@ class ResultsScreenState extends State<ResultsScreen> {
         ));
   }
 
-  Widget buttonArea() {
+  Widget confirmButton() {
     return Container(
-      padding: EdgeInsets.only(bottom: 30),
+      padding: EdgeInsets.all(40),
       child: GestureDetector(
           onTap: () async {
             int receiptID =
                 await dbConnector.insertReceipt(receipt, dropdownValue);
-            Transaction transaction = new Transaction(
+            Transaction transaction = Transaction(
               date: receipt.date,
               totalAmount: -receipt.total!,
               store: receipt.recipient,
@@ -113,9 +103,14 @@ class ResultsScreenState extends State<ResultsScreen> {
               categoryDesc: dropdownValue,
             );
             await dbConnector.insertTransaction(transaction);
-            Navigator.pop(context);
+            int? n = await dbConnector.numOfCategoriesWithSameName(transaction);
+            if (n > 0) {
+              showAlertDialog(context, n, transaction);
+            }
           },
-          child: Icon(Icons.check)),
+          child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [Text("Confirm "), Icon(Icons.check)])),
     );
   }
 
@@ -143,22 +138,70 @@ class ResultsScreenState extends State<ResultsScreen> {
                         receipt.categoryDesc = dropdownValue;
                       });
                     },
-                    items: categories
-                        .map<DropdownMenuItem<String>>((Category category) {
+                    items: categories.map<DropdownMenuItem<String>>(
+                        (TransactionCategory category) {
                       return DropdownMenuItem<String>(
                         value: category.description,
-                        child: Text(category.description,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                fontSize: fontSize,
-                                fontWeight: FontWeight.w600,
-                                color: category.color)),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Container(
+                                  padding: EdgeInsets.only(right: 5),
+                                  child: Icon(Icons.label_rounded,
+                                      color: category.color)),
+                              Text(
+                                category.description,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: fontSize),
+                              )
+                            ]),
                       );
                     }).toList()));
           } else {
             return Text("Unexpected error");
           }
         });
+  }
+
+  showAlertDialog(BuildContext context, int n, transaction) {
+    // set up the buttons
+    Widget cancelButton = TextButton(
+      child: Text("No"),
+      onPressed: () {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      },
+    );
+    Widget continueButton = TextButton(
+      child: Text("Yes"),
+      onPressed: () {
+        dbConnector.assignCategories(transaction);
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: n == 1
+          ? Text("$n transaction with the same store name found")
+          : Text("$n transactions with the same store name found"),
+      content: n == 1
+          ? Text(
+              "Would you like to update the category for that transaction as well?")
+          : Text(
+              "Would you like to update the category for those transactions as well?"),
+      actions: [
+        cancelButton,
+        continueButton,
+      ],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
   }
 
   Widget headerInfo() {
@@ -178,13 +221,7 @@ class ResultsScreenState extends State<ResultsScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(children: [
-                          Icon(Icons.category),
-                          Padding(
-                            padding: EdgeInsets.only(left: 5),
-                            child: dropDown(),
-                          ),
-                        ]),
+                        dropDown(),
                         Row(
                           children: [
                             Icon(Icons.store),
@@ -268,8 +305,38 @@ class ResultsScreenState extends State<ResultsScreen> {
         return DataRow(cells: getCells(cells));
       }).toList();
 
-  List<DataCell> getCells(List<dynamic> cells) =>
-      cells.map((data) => DataCell(Text('$data'))).toList();
+  List<DataCell> getCells(List<dynamic> cells) => cells
+      .map((data) => DataCell(
+            TextFormField(
+              initialValue: '$data',
+              onChanged: (value) {
+                print(receipt);
+                if (data == cells[0]) {
+                  int index = receipt.items
+                      .indexWhere((element) => element.itemName == data);
+                  setState(() {
+                    receipt.items[index].itemName = value;
+                  });
+                } else {
+                  int index = receipt.items.indexWhere((element) =>
+                      element.amount == data && element.itemName == cells[0]);
+                  double newValue = 0;
+                  double.tryParse(value) == null
+                      ? newValue = 0
+                      : newValue = double.parse(value);
+
+                  setState(() {
+                    receipt.items[index].amount = newValue;
+                    receipt.total = receipt.total! - data;
+                    receipt.total = receipt.total! + newValue;
+                    receipt.total =
+                        double.parse((receipt.total)!.toStringAsFixed(2));
+                  });
+                }
+              },
+            ),
+          ))
+      .toList();
 
   void onSort(int columnIndex, bool ascending) {
     if (columnIndex == 0) {
@@ -288,17 +355,41 @@ class ResultsScreenState extends State<ResultsScreen> {
 
   Future<Receipt> getTransactionFromImage(image) async {
     final imageFile = File(image.path);
-    var response = await processImageWithAsprise(imageFile);
-    Receipt receipt = Receipt.fromJson(response);
+    try {
+      var response = await processImageWithAsprise(imageFile);
+      Receipt receipt = Receipt.fromJson(response);
 
-    setState(() {
-      isLoading = false;
-    });
+      setState(() {
+        isLoading = false;
+      });
 
-    return receipt;
+      return receipt;
+    } on QuotaException catch (e) {
+      Navigator.of(context).pop(false);
+      final snackBar = SnackBar(
+        backgroundColor: Utils.errorColor,
+        content: Text(
+          'ERROR: Hourly quota exceeded. Try again in a few hours or use a VPN.',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      rethrow;
+    } catch (e) {
+      Navigator.of(context).pop(false);
+      final snackBar = SnackBar(
+        backgroundColor: Utils.errorColor,
+        content: Text(
+          'ERROR: Image could not be processed.',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      rethrow;
+    }
   }
 
-  Future<List<Category>> getCategories(SQFLite dbConnector) async {
+  Future<List<TransactionCategory>> getCategories(SQFLite dbConnector) async {
     return await dbConnector.getAllcategories();
   }
 }

@@ -1,5 +1,6 @@
+from datetime import timedelta
 import os
-from flask import Flask, request, jsonify, make_response, send_file
+from flask import Flask, request, jsonify, make_response, send_file, session
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
 from gridfs import GridFS
@@ -13,19 +14,106 @@ from .constants import *
 def create_app(config):
     app = Flask(__name__)
     app.config["MONGO_URI"] = config.MONGO_URI
+    app.secret_key= os.environ.get('TINK_CLIENT_SECRET')
+    app.permanent_session_lifetime=timedelta(minutes=15)
 
     db = create_db(app)
     fs = GridFS(db)
 
-    @app.route("/users/<bankId>/receipts", methods=["GET", "POST"])
-    def user_receipts(bankId):
-        if request.method == "GET":
-            return get_receipts(bankId, request)
-        if type(request.json) == list:
-            return post_many_receipts(bankId, request)
-        
-        return post_one_receipt(bankId, request)
 
+    def make_unauthorized_response(message="Authentication required"):
+        return make_response(message, unauthorized)
+
+
+    def register_user(ssn):
+        if db.users.find_one({"bankId": ssn}) is None:
+            db.users.insert_one({"bankId": ssn, "receipts": [], "categories": []})
+
+
+    def initiate_session(access_token, ssn):
+        session["access_token"] = access_token
+        session["ssn"] = ssn
+
+        register_user(ssn)
+
+
+    def session_is_valid():
+        return "ssn" in session
+        
+
+    def terminate_session():
+        pass
+
+
+    @app.route("/tink_user_data/<test>", methods=["POST"])
+    def tink_user_data(test):
+        if test == "T": test = True
+        if test == "F": test = False
+        account_report_id = request.json["account_report_id"]
+        transaction_report_id = request.json["transaction_report_id"]
+        print(account_report_id, flush=True);
+        print(transaction_report_id, flush= True);
+        print("Tokens recieved");
+        cred_respose = post_credentials_token(test)
+        print(cred_respose, flush=True)
+        access_token = cred_respose['access_token']
+
+
+        account_report = get_account_info(account_report_id, access_token)
+        transaction_report = get_transaction_data(transaction_report_id, access_token)
+        print(account_report.status_code, flush=True);
+        print(transaction_report.status_code, flush=True);
+        if account_report.status_code != 200:
+            return make_response(f"Could not get account report, Tink returned status code {account_report.status_code}", bad_request)
+        if transaction_report.status_code != 200:
+            return make_response(f"Could not get transaction report, Tink returned status code {transaction_report.status_code}", bad_request)
+
+        account_report = account_report.json()
+        transaction_report = transaction_report.json()
+        #print(account_report["userDataByProvider"][0])
+        ssn = account_report["userDataByProvider"][0]["identity"]["ssn"]
+        print(ssn)
+
+        #CREATE NEW SESSION
+        initiate_session(access_token, ssn)
+
+        res_json = {
+            "account_report": account_report,
+            "transaction_report": transaction_report,
+        }
+
+        return jsonify(data=res_json)
+
+        
+    def get_account_info(account_report_id, access_token):
+        headers = {'Authorization': f'Bearer {access_token}',}
+        response = requests.get(
+        f'https://api.tink.com/api/v1/account-verification-reports/{account_report_id}', headers=headers,)
+        return response
+
+
+    def get_transaction_data(transaction_report_id, access_token):
+        headers = {'Authorization': f'Bearer {access_token}',}
+        response = requests.get(f'https://api.tink.com/data/v2/transaction-reports/{transaction_report_id}', headers=headers,)
+        return response
+
+    
+    def post_credentials_token(test : bool):
+        if test:
+            ENVIRONMENT_TINK_CLIENT_ID = os.environ.get('TINK_CLIENT_ID')
+            ENVIRONMENT_TINK_CLIENT_SECRET = os.environ.get('TINK_CLIENT_SECRET')
+        else:
+            ENVIRONMENT_TINK_CLIENT_ID = os.environ.get('PROD_TINK_CLIENT_ID')
+            ENVIRONMENT_TINK_CLIENT_SECRET = os.environ.get('PROD_TINK_CLIENT_SECRET')
+
+        headers = { 'Content-Type': 'application/x-www-form-urlencoded', }
+
+        data = f'client_id={ENVIRONMENT_TINK_CLIENT_ID}&client_secret={ENVIRONMENT_TINK_CLIENT_SECRET}&grant_type=client_credentials&scope=account-verification-reports:read,transaction-reports:readonly'
+
+        response = requests.post('https://api.tink.com/api/v1/oauth/token', headers=headers, data=data)
+
+        return response.json()
+        
 
     @app.route('/initiate_bank_session/')
     def initiate_bank_session():
@@ -47,17 +135,21 @@ def create_app(config):
         #request = requests.post()
         return ""
 
-    @app.route('/tink_access_token/<code>')
-    def tink_access_token(code):
 
-        ENVIRONMENT_TINK_CLIENT_ID = os.environ.get('TINK_CLIENT_ID')
-        ENVIRONMENT_TINK_CLIENT_SECRET = os.environ.get('TINK_CLIENT_SECRET')
+    @app.route('/tink_access_token/<code>/<test>')
+    def tink_access_token(code, test):
+        if test == 'T':
+            ENVIRONMENT_TINK_CLIENT_ID = os.environ.get('TINK_CLIENT_ID')
+            ENVIRONMENT_TINK_CLIENT_SECRET = os.environ.get('TINK_CLIENT_SECRET')
+        else:
+            ENVIRONMENT_TINK_CLIENT_ID = os.environ.get('PROD_TINK_CLIENT_ID')
+            ENVIRONMENT_TINK_CLIENT_SECRET = os.environ.get('PROD_TINK_CLIENT_SECRET')
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded',
         }
         print(ENVIRONMENT_TINK_CLIENT_ID)
         print(ENVIRONMENT_TINK_CLIENT_SECRET)
-        data = f'code={code}&client_id={ENVIRONMENT_TINK_CLIENT_ID}&client_secret={ENVIRONMENT_TINK_CLIENT_SECRET}&grant_type=authorization_code'
+        data = f'code={code}&client_id={ENVIRONMENT_TINK_CLIENT_ID}&client_secret={ENVIRONMENT_TINK_CLIENT_SECRET}&grant_type=authorization_code&scope=transactions:read,user:read,account:read'
         print(data)
         response = requests.post('https://api.tink.com/api/v1/oauth/token', headers=headers, data=data)
         print(response.text, flush=True)
@@ -69,7 +161,6 @@ def create_app(config):
 
     def session_token_get(session_token):
         return ""
-        
         
 
     @app.route('/tink_transaction_history/<access_token>')
@@ -83,6 +174,7 @@ def create_app(config):
 
         return response.text
 
+
     @app.route('/tink_transaction_history/<access_token>')
     def tink_account_info(access_token):
 
@@ -95,6 +187,20 @@ def create_app(config):
         print(response.text)
 
         return response.text
+
+
+    @app.route("/receipts", methods=["GET", "POST"])
+    def user_receipts():
+        if not session_is_valid():
+            return make_unauthorized_response()
+
+        ssn = session["ssn"]
+        if request.method == "GET":
+            return get_receipts(ssn, request)
+        if type(request.json) == list:
+            return post_many_receipts(ssn, request)
+        
+        return post_one_receipt(ssn, request)
 
 
     def get_receipts(bankId, request):
@@ -124,7 +230,6 @@ def create_app(config):
             return make_response(f"Expected content type application/json, not {request.content_type}", unsupported_media_type)
 
         receipt_dict = request.json
-        receipt_dict.pop("_id", None)
         receipt_dict.pop("imageId", None)
 
         receipt = parse_receipt_or_make_response(receipt_dict)
@@ -150,7 +255,6 @@ def create_app(config):
 
         receipts = []
         for receipt_dict in receipt_dicts:
-            receipt_dict.pop("_id", None)
             receipt_dict.pop("imageId", None)
 
             receipt = parse_receipt_or_make_response(receipt_dict)
@@ -173,13 +277,16 @@ def create_app(config):
         return make_response(jsonify(data=receipt_dicts), created)
 
 
-    @app.route("/users/<bankId>/receipts/<ObjectId:receiptId>", methods=["PUT", "DELETE"])
-    def user_receipt_by_id(bankId, receiptId):
-        # When more methods are added for this URL, check request.method to determine the appropriate method to call
-        if request.method == "PUT":
-            return put_receipt(bankId, receiptId, request)
+    @app.route("/receipts/<int:receiptId>", methods=["PUT", "DELETE"])
+    def user_receipt_by_id(receiptId):
+        if not session_is_valid():
+            return make_unauthorized_response()
 
-        return delete_receipt(bankId, receiptId, request)
+        ssn = session["ssn"]
+        if request.method == "PUT":
+            return put_receipt(ssn, receiptId, request)
+
+        return delete_receipt(ssn, receiptId, request)
 
 
     def put_receipt(bankId, receiptId, request):
@@ -193,34 +300,38 @@ def create_app(config):
         if type(new_receipt) != Receipt:
             return new_receipt
 
-        user = db.users.find_one_or_404({"bankId": bankId, "receipts._id": receiptId}, {"_id": 0, "receipts.$": 1})
+        user = db.users.find_one_or_404({"bankId": bankId, "receipts.id": receiptId}, {"_id": 0, "receipts.$": 1})
         old_receipt = user["receipts"][0]
-        new_receipt.id = old_receipt["_id"]
+        new_receipt.id = old_receipt["id"]
 
         new_receipt.image_id = old_receipt["imageId"] if "imageId" in old_receipt else None
 
-        db.users.find_one_and_update({"bankId": bankId, "receipts._id": receiptId}, {"$set": {"receipts.$": new_receipt.to_dict()}})
+        db.users.find_one_and_update({"bankId": bankId, "receipts.id": receiptId}, {"$set": {"receipts.$": new_receipt.to_dict()}})
         return jsonify(data=new_receipt.to_dict(True))
 
 
     def delete_receipt(bankId, receiptId, request):
         delete_image(bankId, receiptId, request)
-        db.users.find_one_and_update({"bankId": bankId, "receipts._id": receiptId}, {"$pull": {"receipts": {"_id": receiptId}}})
+        db.users.find_one_and_update({"bankId": bankId, "receipts.id": receiptId}, {"$pull": {"receipts": {"id": receiptId}}})
         return make_response("", no_content)
 
 
-    @app.route("/users/<bankId>/receipts/<ObjectId:receiptId>/image", methods=["GET", "PUT", "DELETE"])
-    def user_receipt_image(bankId, receiptId):
-        if request.method == "GET":
-            return get_image(bankId, receiptId, request)
-        elif request.method == "PUT":
-            return put_image(bankId, receiptId, request)
+    @app.route("/receipts/<int:receiptId>/image", methods=["GET", "PUT", "DELETE"])
+    def user_receipt_image(receiptId):
+        if not session_is_valid():
+            return make_unauthorized_response()
 
-        return delete_image(bankId, receiptId, request)
+        ssn = session["ssn"]
+        if request.method == "GET":
+            return get_image(ssn, receiptId, request)
+        elif request.method == "PUT":
+            return put_image(ssn, receiptId, request)
+
+        return delete_image(ssn, receiptId, request)
 
 
     def get_image(bankId, receiptId, request):
-        user = db.users.find_one_or_404({"bankId": bankId, "receipts._id": receiptId}, {"_id": 0, "receipts.$": 1})
+        user = db.users.find_one_or_404({"bankId": bankId, "receipts.id": receiptId}, {"_id": 0, "receipts.$": 1})
         receipt = user["receipts"][0]
         image_id = receipt["imageId"] if "imageId" in receipt else None
         image = fs.find_one(ObjectId(image_id)) if image_id is not None else None
@@ -234,13 +345,13 @@ def create_app(config):
         if len(request.files) == 0:
             return make_response("No file found in request", bad_request)
 
-        user = db.users.find_one_or_404({"bankId": bankId, "receipts._id": receiptId}, {"_id": 0, "receipts.$": 1})
+        user = db.users.find_one_or_404({"bankId": bankId, "receipts.id": receiptId}, {"_id": 0, "receipts.$": 1})
         receipt = user["receipts"][0]
         image_id = receipt["imageId"] if "imageId" in receipt else None
         image_id = ObjectId(image_id)
 
         if not "imageId" in receipt:
-            db.users.update_one({"bankId": bankId, "receipts._id": receiptId}, {"$set": {"receipts.$.imageId": image_id}})
+            db.users.update_one({"bankId": bankId, "receipts.id": receiptId}, {"$set": {"receipts.$.imageId": image_id}})
         else:
             fs.delete(image_id)
 
@@ -251,7 +362,7 @@ def create_app(config):
 
 
     def delete_image(bankId, receiptId, request):
-        user = db.users.find_one({"bankId": bankId, "receipts._id": receiptId}, {"_id": 0, "receipts.$": 1})
+        user = db.users.find_one({"bankId": bankId, "receipts.id": receiptId}, {"_id": 0, "receipts.$": 1})
         receipt = user["receipts"][0] if user is not None else None
         image_id = ObjectId(receipt["imageId"]) if receipt is not None and "imageId" in receipt else None
         if image_id is not None:
@@ -260,12 +371,16 @@ def create_app(config):
         return make_response("", no_content)
 
 
-    @app.route("/users/<bankId>/categories", methods=["GET", "POST"])
-    def user_categories(bankId):
-        if request.method == "GET":
-            return get_categories(bankId, request)
+    @app.route("/categories", methods=["GET", "POST"])
+    def user_categories():
+        if not session_is_valid():
+            return make_unauthorized_response()
 
-        return post_category(bankId, request)
+        ssn = session["ssn"]
+        if request.method == "GET":
+            return get_categories(ssn, request)
+
+        return post_category(ssn, request)
 
 
     def get_categories(bankId, request):
@@ -302,12 +417,16 @@ def create_app(config):
         return make_response(jsonify(data=category.to_dict(True)), created)
 
 
-    @app.route("/users/<bankId>/categories/<int:categoryId>", methods=["PUT", "DELETE"])
-    def user_category_by_id(bankId, categoryId):
-        if request.method == "PUT":
-            return put_category(bankId, categoryId, request)
+    @app.route("/categories/<int:categoryId>", methods=["PUT", "DELETE"])
+    def user_category_by_id(categoryId):
+        if not session_is_valid():
+            return make_unauthorized_response()
 
-        return delete_category(bankId, categoryId, request)
+        ssn = session["ssn"]
+        if request.method == "PUT":
+            return put_category(ssn, categoryId, request)
+
+        return delete_category(ssn, categoryId, request)
 
 
     def put_category(bankId, categoryId, request):
@@ -335,12 +454,13 @@ def create_app(config):
         return make_response("", no_content)
 
 
-    # TODO: Add authentication with BankID
-    @app.route("/users/<bankId>", methods=["PUT"])
-    def create_user(bankId):
-        if db.users.find_one({"bankId": bankId}) is None:
-            db.users.insert_one({"bankId": bankId, "receipts": [], "categories": []})
+    # Primarliy exists for testing
+    @app.route("/", methods=["PUT"])
+    def create_user():
+        if not session_is_valid():
+            return make_unauthorized_response()
 
+        register_user(session["ssn"])
         return make_response("", no_content)
         
 

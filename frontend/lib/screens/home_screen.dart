@@ -1,8 +1,8 @@
+import 'package:economicalc_client/components/drawer.dart';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/screens/results_screen.dart';
 import 'package:economicalc_client/screens/settings_screen.dart';
-import 'dart:io';
 
 import 'package:economicalc_client/screens/statistics_screen.dart';
 import 'package:economicalc_client/components/history_list.dart';
@@ -13,9 +13,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import '../models/category.dart';
+import 'package:intl/intl.dart';
+import 'package:economicalc_client/models/category.dart';
+import 'package:economicalc_client/models/receipt.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
-import '../models/receipt.dart';
+import 'package:month_year_picker/month_year_picker.dart';
 
 late BuildContext _context;
 
@@ -34,58 +36,96 @@ class _HomeScreen extends State<HomeScreen> {
   final SQFLite dbConnector = SQFLite.instance;
   bool showSearchBar = false;
   TextEditingController editingController = TextEditingController();
+  bool onlyReceipts = false;
+
+  Map<String, dynamic> startDate = {
+    "selected": DateTime(2022, 01, 01),
+    "previous": DateTime(2022, 01, 01),
+    "dialog": DateTime(2022, 01, 01),
+  };
+
+  Map<String, dynamic> endDate = {
+    "selected": DateTime(2022, 12, 31),
+    "previous": DateTime(2022, 12, 31),
+    "dialog": DateTime(2022, 12, 31),
+  };
+
+  Map<String, dynamic> category = {
+    "selected": TransactionCategory.noneCategory,
+    "previous": TransactionCategory.noneCategory,
+    "dialog": TransactionCategory.noneCategory,
+  };
+
+  String dropdownValueCategory = 'None';
+  late List<TransactionCategory> categories;
+  late Future<List<TransactionCategory>> categoriesFutureBuilder;
+
+  @override
+  void initState() {
+    super.initState();
+    categoriesFutureBuilder = dbConnector.getAllcategories();
+  }
 
   static void goToResults(XFile? image) {
-    //process stuff
-
     Navigator.of(_context)
         .push(MaterialPageRoute(
             builder: (context) => ResultsScreen(image: image)))
         .then((value) {
-      Phoenix.rebirth(_context);
+      if (value != false) {
+        Phoenix.rebirth(_context);
+      }
     });
-
-    /*Navigator.push(_context,
-        MaterialPageRoute(builder: (_context) => ResultsScreen(image: image))
-        .then() {
-          dbConnector.transactions
-        });*/
   }
 
   Widget renderSearchField() {
     return Container(
-        color: Utils.backgroundColor,
-        padding: EdgeInsets.all(25),
+        color: Utils.lightColor,
+        padding: EdgeInsets.only(top: 20, right: 20, left: 20),
         child: TextField(
           onChanged: (value) {
             historyListStateKey.currentState!.search(value);
           },
           controller: editingController,
           decoration: InputDecoration(
+              labelStyle: TextStyle(color: Utils.mediumDarkColor),
+              hintStyle: TextStyle(color: Utils.textColor),
               labelText: "Search",
               hintText: "Search",
-              prefixIcon: Icon(Icons.search),
+              focusColor: Utils.mediumDarkColor,
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: Utils.mediumDarkColor,
+              ),
               suffixIcon: IconButton(
-                icon: Icon(Icons.clear),
+                icon: Icon(
+                  Icons.clear_rounded,
+                  color: Utils.mediumDarkColor,
+                ),
                 onPressed: (() {
                   setState(() {
                     showSearchBar = false;
+                    editingController.clear();
                   });
                 }),
               ),
               border: OutlineInputBorder(
+                  borderSide: BorderSide(color: Utils.darkColor),
+                  borderRadius: BorderRadius.all(Radius.circular(25.0))),
+              focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Utils.mediumDarkColor),
                   borderRadius: BorderRadius.all(Radius.circular(25.0)))),
         ));
   }
 
   Widget iconSection() {
     return Container(
-      color: Utils.backgroundColor,
-      padding: EdgeInsets.only(top: 10),
+      padding: EdgeInsets.only(top: 10, bottom: 10),
+      color: Utils.mediumLightColor,
       child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             IconButton(
+                iconSize: 30,
                 icon: Icon(Icons.camera_alt_outlined),
                 onPressed: (() async {
                   final XFile? image =
@@ -96,7 +136,8 @@ class _HomeScreen extends State<HomeScreen> {
                   goToResults(image);
                 })),
             IconButton(
-              icon: Icon(Icons.filter),
+              iconSize: 30,
+              icon: Icon(Icons.filter_rounded),
               onPressed: (() async {
                 final XFile? image =
                     await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -105,7 +146,8 @@ class _HomeScreen extends State<HomeScreen> {
               }),
             ),
             IconButton(
-              icon: Icon(Icons.search),
+              iconSize: 30,
+              icon: Icon(Icons.search_rounded),
               onPressed: (() async {
                 setState(() {
                   showSearchBar = true;
@@ -113,198 +155,240 @@ class _HomeScreen extends State<HomeScreen> {
               }),
             ),
             IconButton(
-              icon: Icon(Icons.auto_graph),
+              iconSize: 30,
+              icon: Icon(Icons.filter_alt_rounded),
               onPressed: (() {
-                Navigator.push(
-                    _context,
-                    MaterialPageRoute(
-                        builder: (_context) => StatisticsScreen()));
-              }),
-            ),
-            IconButton(
-              icon: Icon(Icons.filter_alt),
-              onPressed: (() {
-                print("filter");
+                startDate['previous'] =
+                    startDate['dialog'] = startDate['selected'];
+                endDate['previous'] = endDate['dialog'] = endDate['selected'];
+                category['previous'] =
+                    category['dialog'] = category['selected'];
+                dropdownValueCategory = category['selected'].description;
+                showDialog(
+                    context: _context,
+                    builder: (context) {
+                      return StatefulBuilder(builder: (context, setState) {
+                        return filterPopup(context, setState);
+                      });
+                    });
               }),
             ),
           ]),
     );
   }
-  Widget drawer = Drawer(
-    backgroundColor: Utils.drawerColor,
-    child: ListView(
-      padding: EdgeInsets.fromLTRB(0, 80, 0, 0),
-      itemExtent: 70.0,
-      children: [
-        ListTile(
-          tileColor: Utils.tileColor,
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: Utils.drawerColor, width: 10),
-          ),
-          title: Text('History',
-              style:
-                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
-          onTap: () {
-            Navigator.push(_context,
-                MaterialPageRoute(builder: (_context) => HomeScreen()));
-          },
-        ),
-        ListTile(
-          tileColor: Utils.tileColor,
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: Utils.drawerColor, width: 10),
-          ),
-          title: Text('Scan',
-              style:
-                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
-          onTap: () {
-            print("scan in hamburger");
-          },
-        ),
-        ListTile(
-          tileColor: Utils.tileColor,
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: Utils.drawerColor, width: 10),
-          ),
-          title: Text('Settings',
-              style:
-                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
-          onTap: () {
-            Navigator.of(_context)
-                .push(
-                    MaterialPageRoute(builder: (_context) => SettingsScreen()))
-                .then((value) {
-              Phoenix.rebirth(_context);
-            });
-          },
-        ),
-        ListTile(
-          tileColor: Utils.tileColor,
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: Utils.drawerColor, width: 10),
-          ),
-          title: Text('Run tests',
-              style:
-                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
-          onTap: () async {
-            print("Running tests");
-            String userId = "bruh";
-            List<ReceiptItem> items = [
-              ReceiptItem(
-                itemName: "Snusk",
-                amount: 9001,
+
+  updateSelected(newStartDate, newEndDate, newCategory) {
+    setState(() {
+      startDate['selected'] = newStartDate;
+      endDate['selected'] = newEndDate;
+      category['selected'] = newCategory;
+    });
+  }
+
+  Widget filterPopup(context, setState) {
+    return AlertDialog(
+      title: Text("Filter"),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+            Text("Start date:"),
+            TextButton(
+              style: ButtonStyle(
+                foregroundColor:
+                    MaterialStateProperty.all<Color>(Utils.textColor),
+                backgroundColor:
+                    MaterialStateProperty.all<Color>(Utils.mediumLightColor),
               ),
-            ];
-            Receipt receipt = Receipt(
-              recipient: "ica",
-              date: DateTime.now(),
-              items: items,
-              total: 100.0,
-              categoryID: 1,
-            );
-            await postReceipt(userId, receipt);
-
-            List<Receipt> responseReceipts = await fetchReceipts(userId);
-            print(responseReceipts);
-
-            print("Take a picture to proceed");
-            final XFile? image =
-            await ImagePicker().pickImage(source: ImageSource.camera);
-            if (image == null) {
-              return;
+              child: Text(DateFormat.yMMM().format(startDate['dialog'])),
+              onPressed: () async {
+                DateTime? newStartDate = await showMonthYearPicker(
+                    context: context,
+                    initialDate: startDate['dialog'],
+                    firstDate: DateTime(1900),
+                    lastDate: DateTime(2100));
+                setState(() {
+                  startDate['dialog'] = newStartDate ?? startDate['dialog'];
+                });
+              },
+            ),
+          ]),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Text("End date:"),
+              TextButton(
+                style: ButtonStyle(
+                  foregroundColor:
+                      MaterialStateProperty.all<Color>(Utils.textColor),
+                  backgroundColor:
+                      MaterialStateProperty.all<Color>(Utils.mediumLightColor),
+                ),
+                child: Text(DateFormat.yMMM().format(endDate['dialog'])),
+                onPressed: () async {
+                  DateTime? newEndDate = await showMonthYearPicker(
+                      context: context,
+                      initialDate: endDate['dialog'],
+                      firstDate: DateTime(1900),
+                      lastDate: DateTime(2100));
+                  if (newEndDate != null) {
+                    newEndDate =
+                        DateTime(newEndDate.year, newEndDate.month + 1, 0);
+                  }
+                  setState(() {
+                    endDate['dialog'] = newEndDate ?? endDate['dialog'];
+                  });
+                },
+              ),
+            ],
+          ),
+          Container(
+              padding: EdgeInsets.only(top: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  const Text("Category:"),
+                  dropDownCategory(context, setState),
+                ],
+              )),
+          Container(
+              padding: EdgeInsets.only(top: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  const Text("Only receipts:"),
+                  Switch(
+                    value: onlyReceipts,
+                    onChanged: (bool newValue) {
+                      setState(() {
+                        onlyReceipts = newValue;
+                      });
+                    },
+                  )
+                ],
+              )),
+        ],
+      ),
+      actions: [
+        ElevatedButton(
+          style: ButtonStyle(
+            foregroundColor: MaterialStateProperty.all<Color>(Utils.textColor),
+            backgroundColor:
+                MaterialStateProperty.all<Color>(Utils.mediumLightColor),
+          ),
+          child: const Text('Apply'),
+          onPressed: () async {
+            if (endDate['dialog'].compareTo(startDate['dialog']) < 0) {
+              final snackBar = SnackBar(
+                backgroundColor: Utils.errorColor,
+                content: Text(
+                  "Start date cannot be later than the end date",
+                  style: TextStyle(color: Colors.white),
+                ),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+            } else {
+              updateSelected(
+                  startDate['dialog'], endDate['dialog'], category['dialog']);
+              Navigator.of(context).pop();
             }
-
-            String backendId = responseReceipts[0].backendId!;
-            await updateImage(userId, backendId, image);
-            final responseImage = await fetchImage(userId, backendId);
-            print("Original image size: ${await image.length()}");
-            print("Response image size: ${await responseImage.length()}");
-
-            final responseBytes = await responseImage.readAsBytes();
-            print("Displaying response image...");
-            Navigator.of(_context)
-                .push(
-                MaterialPageRoute(
-                    builder: (_context) => Image.memory(responseBytes))
-            ).then((value) {
-              Phoenix.rebirth(_context);
-            });
-
-            print("Updating a receipt...");
-            receipt.items[0].itemName = "Snus";
-            await updateReceipt(userId, backendId, receipt);
-            responseReceipts = await fetchReceipts(userId);
-            print(responseReceipts);
-
-            print("Tests finished");
           },
         ),
-        ListTile(
-          tileColor: Utils.tileColor,
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: Utils.drawerColor, width: 10),
+        ElevatedButton(
+          style: ButtonStyle(
+            foregroundColor: MaterialStateProperty.all<Color>(Utils.textColor),
+            backgroundColor:
+                MaterialStateProperty.all<Color>(Utils.mediumLightColor),
           ),
-          title: Text('Login',
-              style:
-                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
-          onTap: () {
-            Navigator.of(_context)
-                .push(MaterialPageRoute(builder: (_context) => OpenLink()))
-                .then((value) {
-              Phoenix.rebirth(_context);
-            });
+          child: const Text('Cancel'),
+          onPressed: () async {
+            updateSelected(startDate['previous'], endDate['previous'],
+                category['previous']);
+            Navigator.of(context).pop();
           },
         ),
       ],
-    ),
-  );
+    );
+  }
+
+  Widget dropDownCategory(context, setState) {
+    return FutureBuilder(
+        future: categoriesFutureBuilder,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Text("${snapshot.error}");
+          } else if (snapshot.hasData) {
+            categories = snapshot.data!;
+            if (!categories.contains(TransactionCategory.noneCategory)) {
+              categories.insert(0, TransactionCategory.noneCategory);
+            }
+            return SizedBox(
+                width: 130,
+                height: 30,
+                child: DropdownButton<String>(
+                    isDense: true,
+                    isExpanded: true,
+                    value: dropdownValueCategory,
+                    onChanged: (value) {
+                      TransactionCategory newCategory =
+                          TransactionCategory.getCategoryByDesc(
+                              value!, categories);
+                      setState(() {
+                        dropdownValueCategory = value;
+                        category['dialog'] = newCategory;
+                      });
+                    },
+                    items: categories.map<DropdownMenuItem<String>>(
+                        (TransactionCategory category) {
+                      return DropdownMenuItem<String>(
+                        value: category.description,
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Container(
+                                  padding: EdgeInsets.only(right: 10),
+                                  child: Icon(Icons.label_rounded,
+                                      color: category.color)),
+                              Text(category.description,
+                                  overflow: TextOverflow.ellipsis)
+                            ]),
+                      );
+                    }).toList()));
+          } else {
+            return Text("Unexpected error");
+          }
+        });
+  }
 
   @override
   Widget build(BuildContext context) {
     _context = context;
-    List<Widget> children = [
-      iconSection(),
-      Expanded(child: HistoryList(key: historyListStateKey))
-    ];
-    if (showSearchBar) {
-      children = [
-        renderSearchField(),
-        Expanded(child: HistoryList(key: historyListStateKey))
-      ];
-    }
     return SafeArea(
         child: Scaffold(
             appBar: AppBar(
               toolbarHeight: 80,
               toolbarOpacity: 1,
-              backgroundColor: Utils.backgroundColor,
-              foregroundColor: Colors.black,
-              title: Column(children: [
-                Text("EconomiCalc",
-                    style: TextStyle(
-                        color: Color(0xff000000),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 36.0)),
-              ]),
+              backgroundColor: Utils.mediumLightColor,
+              foregroundColor: Utils.textColor,
+              title: Text("EconomiCalc", style: TextStyle(fontSize: 36.0)),
               centerTitle: true,
-              elevation: 0,
-              actions: [
-                IconButton(
-                    onPressed: () {
-                      Navigator.of(_context)
-                          .push(MaterialPageRoute(
-                              builder: (_context) => SettingsScreen()))
-                          .then((value) {
-                        Phoenix.rebirth(_context);
-                      });
-                    },
-                    icon: Icon(Icons.settings))
-              ],
+              elevation: 5,
             ),
             key: _globalKey,
-            drawer: drawer,
+            drawer: DrawerMenu(0),
+            resizeToAvoidBottomInset: false,
+            bottomNavigationBar: iconSection(),
             body: Column(
-              children: children,
+              children: [
+                showSearchBar ? renderSearchField() : Container(),
+                Expanded(
+                    child: HistoryList(
+                        historyListStateKey,
+                        startDate['selected'],
+                        endDate['selected'],
+                        category['selected'],
+                        onlyReceipts)),
+              ],
             )));
   }
 }

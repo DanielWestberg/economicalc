@@ -27,8 +27,8 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   final columns = ["Items", "Sum"];
   final dbConnector = SQFLite.instance;
   late String? dropdownValue;
-  late Future<List<Category>> categoriesFutureBuilder;
-  late List<Category> categories;
+  late Future<List<TransactionCategory>> categoriesFutureBuilder;
+  late List<TransactionCategory> categories;
   late Receipt receipt;
   late Future<Receipt>? receiptFutureBuilder;
 
@@ -53,33 +53,21 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
             appBar: AppBar(
               actions: [
                 IconButton(
-                    alignment: Alignment.topCenter,
-                    padding: EdgeInsets.only(right: 20, top: 30),
+                    alignment: Alignment.center,
                     onPressed: (() {
                       print("receipt");
                     }),
                     icon: Icon(Icons.receipt_long))
               ],
-              toolbarHeight: 180,
-              backgroundColor: Utils.backgroundColor,
+              toolbarHeight: 120,
+              backgroundColor: Utils.mediumLightColor,
               foregroundColor: Colors.black,
-              leading: new IconButton(
+              leading: IconButton(
                   onPressed: (() {
                     Navigator.pop(context);
                   }),
                   icon: Icon(Icons.arrow_back)),
-              title: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                        padding: EdgeInsets.only(left: 10),
-                        child: Text("EconomiCalc",
-                            style: TextStyle(
-                                color: Color(0xff000000),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 36.0))),
-                    headerInfo()
-                  ]),
+              title: headerInfo(),
               centerTitle: false,
               elevation: 0,
             ),
@@ -111,25 +99,102 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                       widget.transaction.categoryID =
                           await SQFLite.getCategoryIDfromDescription(
                               dropdownValue!);
-                      dbConnector.updateTransaction(widget.transaction!);
-                      dbConnector.assignCategories(widget.transaction);
+                      await dbConnector.updateTransaction(widget.transaction);
+                      int? n = await dbConnector
+                          .numOfCategoriesWithSameName(widget.transaction);
+                      if (n > 0) {
+                        showAlertDialog(context, n, dropdownValue!);
+                      } else {
+                        final snackBar = SnackBar(
+                          backgroundColor: Utils.mediumDarkColor,
+                          content: Text(
+                            'Category was updated to $dropdownValue.',
+                            style: TextStyle(color: Utils.lightColor),
+                          ),
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                      }
                     },
-                    items: categories
-                        .map<DropdownMenuItem<String>>((Category category) {
+                    items: categories.map<DropdownMenuItem<String>>(
+                        (TransactionCategory category) {
                       return DropdownMenuItem<String>(
                         value: category.description,
-                        child: Text(category.description,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                fontSize: fontSize,
-                                fontWeight: FontWeight.w600,
-                                color: category.color)),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Container(
+                                  padding: EdgeInsets.only(right: 5),
+                                  child: Icon(Icons.label_rounded,
+                                      color: category.color)),
+                              Text(
+                                category.description,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: fontSize),
+                              )
+                            ]),
                       );
                     }).toList()));
           } else {
             return Text("Unexpected error");
           }
         });
+  }
+
+  showAlertDialog(BuildContext context, int n, String dropdownValue) {
+    // set up the buttons
+    Widget cancelButton = TextButton(
+      child: Text("No"),
+      onPressed: () {
+        Navigator.of(context).pop();
+        final snackBar = SnackBar(
+          backgroundColor: Utils.mediumDarkColor,
+          content: Text(
+            'Category was updated to $dropdownValue.',
+            style: TextStyle(color: Utils.lightColor),
+          ),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      },
+    );
+    Widget continueButton = TextButton(
+      child: Text("Yes"),
+      onPressed: () {
+        dbConnector.assignCategories(widget.transaction);
+        Navigator.of(context).pop();
+        final snackBar = SnackBar(
+          backgroundColor: Utils.mediumDarkColor,
+          content: Text(
+            'Categories were updated to $dropdownValue.',
+            style: TextStyle(color: Utils.lightColor),
+          ),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: n == 1
+          ? Text("$n transaction with the same store name found")
+          : Text("$n transactions with the same store name found"),
+      content: n == 1
+          ? Text(
+              "Would you like to update the category for that transaction as well?")
+          : Text(
+              "Would you like to update the category for those transactions as well?"),
+      actions: [
+        cancelButton,
+        continueButton,
+      ],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
   }
 
   Widget headerInfo() {
@@ -142,10 +207,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(children: [
-                  Icon(Icons.category),
-                  Padding(padding: EdgeInsets.only(left: 5), child: dropDown()),
-                ]),
+                dropDown(),
                 Row(
                   children: [
                     Icon(Icons.store),
@@ -157,8 +219,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                             child: Text(
                               widget.transaction.store!,
                               style: TextStyle(
-                                  fontSize: fontSize,
-                                  fontWeight: FontWeight.w600),
+                                  color: Utils.textColor, fontSize: fontSize),
                             ))),
                   ],
                 ),
@@ -172,7 +233,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                               .format(widget.transaction.date)
                               .toString(),
                           style: TextStyle(
-                              fontSize: fontSize, fontWeight: FontWeight.w600),
+                              color: Utils.textColor, fontSize: fontSize),
                         )),
                   ],
                 )
@@ -183,8 +244,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                 child: Column(children: [
                   Icon(Icons.payment),
                   Text("${widget.transaction.totalAmount} kr",
-                      style: TextStyle(
-                          fontSize: fontSize, fontWeight: FontWeight.w600))
+                      style: TextStyle(fontSize: fontSize))
                 ])),
           ],
         ));
@@ -241,7 +301,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     });
   }
 
-  Future<List<Category>> getCategories(SQFLite dbConnector) async {
+  Future<List<TransactionCategory>> getCategories(SQFLite dbConnector) async {
     return await dbConnector.getAllcategories();
   }
 

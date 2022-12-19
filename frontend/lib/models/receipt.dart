@@ -11,7 +11,6 @@ class Receipt {
   String? categoryDesc;
   List<ReceiptItem> items;
   int? categoryID;
-  String? backendId;
 
   Receipt({this.id,
     required this.recipient,
@@ -20,7 +19,6 @@ class Receipt {
     required this.items,
     this.categoryDesc,
     this.categoryID,
-    this.backendId,
   });
 
   @override
@@ -32,8 +30,7 @@ class Receipt {
       total == other.total &&
       categoryDesc == other.categoryDesc &&
       items.every((item) => other.items.contains(item)) &&
-      categoryID == other.categoryID &&
-      backendId == other.backendId
+      categoryID == other.categoryID
   );
 
   @override
@@ -44,8 +41,7 @@ class Receipt {
       total.hashCode |
       categoryDesc.hashCode |
       items.fold(0, (previousValue, element) => previousValue | element.hashCode) |
-      categoryID.hashCode |
-      backendId.hashCode
+      categoryID.hashCode
   );
 
 
@@ -64,8 +60,8 @@ class Receipt {
       'categoryID': categoryID
     };
 
-    if (backendId != null) {
-      result["_id"] = backendId;
+    if (id != null) {
+      result["id"] = id;
     }
 
     return result;
@@ -73,7 +69,7 @@ class Receipt {
 
   @override
   toString() {
-    return "Receipt ${backendId ?? ""}: "
+    return "Receipt ${id ?? ""}: "
     "{$recipient, $date, $total, $items, $categoryID}";
   }
 
@@ -84,12 +80,12 @@ class Receipt {
         .cast<ReceiptItem>();
 
     return Receipt(
+      id: json["id"],
       recipient: json["recipient"],
       date: DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'").parseUtc(json["date"]),
       total: json["total"],
       items: items,
       categoryID: json["categoryID"],
-      backendId: json["_id"],
     );
   }
 

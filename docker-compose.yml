@@ -19,6 +19,8 @@ services:
 
       TINK_CLIENT_ID: 1a539460199a4e8bb374893752db14e6
       TINK_CLIENT_SECRET: bcbb415fa0424cec974372e46c192ece
+    env_file:
+      - ../tink_var.env
     ports:
       - "5000:5000"
     volumes:

@@ -1,12 +1,15 @@
+import 'package:economicalc_client/components/drawer.dart';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
+import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:month_year_picker/month_year_picker.dart';
 
 const List<String> dropdownList = <String>['Table', 'Chart'];
 
@@ -34,142 +37,196 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   };
 
   Map<String, dynamic> category = {
-    "selected": Category(description: "None", color: Colors.black, id: 0),
-    "previous": Category(description: "None", color: Colors.black, id: 0),
-    "dialog": Category(description: "None", color: Colors.black, id: 0),
+    "selected":
+        TransactionCategory(description: "None", color: Colors.black, id: 0),
+    "previous":
+        TransactionCategory(description: "None", color: Colors.black, id: 0),
+    "dialog":
+        TransactionCategory(description: "None", color: Colors.black, id: 0),
   };
 
-  Category noneCategory =
-      Category(description: "None", color: Colors.black, id: 0);
+  TransactionCategory noneCategory =
+      TransactionCategory(description: "None", color: Colors.black, id: 0);
+  Map<String, dynamic> contentSelection = {
+    "selected": [true, false],
+    "previous": [true, false],
+    "dialog": [true, false],
+  };
+
+  Map<String, dynamic> expIncSelection = {
+    "selected": [true, false],
+    "previous": [true, false],
+    "dialog": [true, false],
+  };
+
   String dropdownValue = dropdownList.first;
   String dropdownValueCategory = 'None';
 
   final SQFLite dbConnector = SQFLite.instance;
-  late List<Category> categories;
-  late Future<List<Category>> categoriesFutureBuilder;
+  late List<TransactionCategory> categories;
+  late Future<List<TransactionCategory>> categoriesFutureBuilder;
 
   final columns = ["Items", "Sum"];
-  late Future<List<ReceiptItem>> dataFuture;
-  List<ReceiptItem> rows = [];
+  late Future<List<ReceiptItem>> dataFutureItems;
+  late Future<List<Map<String, Object>>> dataFutureCategorySums;
+  List<ReceiptItem> rowsItems = [];
+  List<Map<String, Object>> rowsTotals = [];
 
   @override
   void initState() {
     super.initState();
     categoriesFutureBuilder = dbConnector.getAllcategories();
 
-    dataFuture = dbConnector.getFilteredReceiptItems(
+    dataFutureItems = dbConnector.getFilteredReceiptItems(
         startDate['selected'], endDate['selected'], category['selected']);
+
+    dataFutureCategorySums = dbConnector.getFilteredCategoryTotals(
+        startDate['selected'],
+        endDate['selected'],
+        expIncSelection['selected'][0]);
   }
 
   updateData() async {
-    var updatedDataFuture = dbConnector.getFilteredReceiptItems(
-        startDate['selected'], endDate['selected'], category['selected']);
+    if (contentSelection['selected'][0]) {
+      var updatedDataFutureItems = dbConnector.getFilteredReceiptItems(
+          startDate['selected'], endDate['selected'], category['selected']);
 
-    setState(() {
-      dataFuture = updatedDataFuture;
-    });
+      setState(() {
+        dataFutureItems = updatedDataFutureItems;
+      });
+    }
+
+    if (contentSelection['selected'][1]) {
+      var updatedDataFutureCategorySums = dbConnector.getFilteredCategoryTotals(
+          startDate['selected'],
+          endDate['selected'],
+          expIncSelection['selected'][0]);
+
+      setState(() {
+        dataFutureCategorySums = updatedDataFutureCategorySums;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-        child: Scaffold(
-            appBar: AppBar(
-              toolbarHeight: 180,
-              backgroundColor: Utils.backgroundColor,
-              foregroundColor: Colors.black,
-              title: Column(children: [
-                const Text("Statistics",
-                    style: TextStyle(
-                        color: Color(0xff000000),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 25.0)),
-                headerInfo(context)
-              ]),
-              leading: IconButton(
-                  alignment: Alignment.topCenter,
-                  padding: EdgeInsets.only(left: 10, top: 50),
-                  onPressed: (() {
-                    Navigator.pop(context);
-                  }),
-                  icon: Icon(Icons.arrow_back)),
-              centerTitle: true,
-              elevation: 0,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.filter_alt),
-                  alignment: Alignment.topCenter,
-                  padding: const EdgeInsets.only(right: 20, top: 50),
-                  onPressed: () {
-                    startDate['previous'] =
-                        startDate['dialog'] = startDate['selected'];
-                    endDate['previous'] =
-                        endDate['dialog'] = endDate['selected'];
-                    category['previous'] =
-                        category['dialog'] = category['selected'];
-                    dropdownValueCategory = category['selected'].description;
-                    showDialog(
-                        context: context,
-                        builder: (context) {
-                          return StatefulBuilder(builder: (context, setState) {
-                            return filterPopup(context, setState);
-                          });
-                        });
-                  },
-                )
-              ],
-            ),
-            body: displayStats(dropdownValue)));
-  }
-
-  Widget displayStats(String dropdownValue) {
-    if (dropdownValue == "Table") {
-      return ListView(children: [buildDataTable()]);
-    } else if (dropdownValue == "Chart") {
-      return itemsChart();
-    }
-    return Text("Invalid input");
+        child: DefaultTabController(
+            length: contentSelection['selected'][0] ? 2 : 1,
+            child: Scaffold(
+                // drawer: DrawerMenu(1),
+                appBar: AppBar(
+                  leading: IconButton(
+                      onPressed: (() {
+                        Navigator.pop(context);
+                      }),
+                      icon: Icon(Icons.arrow_back)),
+                  toolbarHeight: 100,
+                  backgroundColor: Utils.mediumLightColor,
+                  foregroundColor: Colors.black,
+                  title: Column(children: [
+                    Container(
+                        padding: EdgeInsets.all(5),
+                        child: Text("Statistics",
+                            style: TextStyle(
+                                color: Utils.textColor, fontSize: 25.0))),
+                    headerInfo(context)
+                  ]),
+                  centerTitle: true,
+                  elevation: 0,
+                  actions: [
+                    IconButton(
+                      icon: Icon(
+                        Icons.filter_alt,
+                        color: Utils.textColor,
+                      ),
+                      alignment: Alignment.center,
+                      onPressed: () {
+                        startDate['previous'] =
+                            startDate['dialog'] = startDate['selected'];
+                        endDate['previous'] =
+                            endDate['dialog'] = endDate['selected'];
+                        category['previous'] =
+                            category['dialog'] = category['selected'];
+                        dropdownValueCategory =
+                            category['selected'].description;
+                        contentSelection['previous'] =
+                            contentSelection['dialog'] =
+                                contentSelection['selected'];
+                        expIncSelection['previous'] =
+                            expIncSelection['dialog'] =
+                                expIncSelection['selected'];
+                        showDialog(
+                            context: context,
+                            builder: (context) {
+                              return StatefulBuilder(
+                                  builder: (context, setState) {
+                                return filterPopup(context, setState);
+                              });
+                            });
+                      },
+                    )
+                  ],
+                  bottom: TabBar(
+                    labelColor: Utils.darkColor,
+                    indicatorColor: Utils.mediumDarkColor,
+                    tabs: contentSelection['selected'][0]
+                        ? [
+                            Tab(
+                              text: "Table",
+                            ),
+                            Tab(
+                              text: "Chart",
+                            ),
+                          ]
+                        : [
+                            Tab(
+                              text: "Chart",
+                            ),
+                          ],
+                  ),
+                ),
+                body: contentSelection['selected'][0]
+                    ? TabBarView(children: [
+                        ListView(children: [buildDataTable()]),
+                        itemsChart(),
+                      ])
+                    : TabBarView(children: [
+                        totalsChart(),
+                      ]))));
   }
 
   Widget headerInfo(context) {
     return Container(
-        padding: EdgeInsets.only(top: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
+        child: Container(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.date_range),
             Container(
-                child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Icon(Icons.date_range),
+              padding: EdgeInsets.only(left: 5),
+              child: Flexible(
+                  child: Text(
+                "${DateFormat.yMMMd('sv_SE').format(startDate['selected'])} - ${DateFormat.yMMMd('sv_SE').format(endDate['selected'])}",
+                style: TextStyle(color: Utils.textColor, fontSize: 14),
+              )),
+            ),
+          ]),
+          contentSelection['selected'][0]
+              ? Row(mainAxisAlignment: MainAxisAlignment.start, children: [
                   Container(
-                    padding: EdgeInsets.only(left: 5),
-                    child: Flexible(
-                        child: Text(
-                      "${DateFormat('yyyy/MM/dd').format(startDate['selected'])}-${DateFormat('yyyy/MM/dd').format(endDate['selected'])}",
-                      style: TextStyle(fontSize: 12),
-                    )),
-                  ),
-                ]),
-                Row(
-                  children: [
-                    Icon(Icons.category),
-                    Padding(
-                        padding: EdgeInsets.only(left: 5),
-                        child: Text(category['selected'].description,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: category['selected'].color))),
-                  ],
-                ),
-              ],
-            )),
-            Padding(padding: EdgeInsets.only(right: 20), child: dropDown()),
-          ],
-        ));
+                      padding: EdgeInsets.only(right: 10),
+                      child: Icon(Icons.label_rounded,
+                          color: category['selected'].color)),
+                  Text(category['selected'].description,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 14, color: Utils.textColor))
+                ])
+              : Text(""),
+        ],
+      ),
+    ));
   }
 
   Widget filterPopup(context, setState) {
@@ -182,13 +239,14 @@ class StatisticsScreenState extends State<StatisticsScreen> {
             Text("Start date:"),
             TextButton(
               style: ButtonStyle(
-                foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
+                foregroundColor:
+                    MaterialStateProperty.all<Color>(Utils.textColor),
                 backgroundColor:
-                    MaterialStateProperty.all<Color>(Colors.black12),
+                    MaterialStateProperty.all<Color>(Utils.mediumLightColor),
               ),
-              child: Text(DateFormat('yyyy-MM-dd').format(startDate['dialog'])),
+              child: Text(DateFormat.yMMM().format(startDate['dialog'])),
               onPressed: () async {
-                DateTime? newStartDate = await showDatePicker(
+                DateTime? newStartDate = await showMonthYearPicker(
                     context: context,
                     initialDate: startDate['dialog'],
                     firstDate: DateTime(1900),
@@ -206,17 +264,21 @@ class StatisticsScreenState extends State<StatisticsScreen> {
               TextButton(
                 style: ButtonStyle(
                   foregroundColor:
-                      MaterialStateProperty.all<Color>(Colors.black),
+                      MaterialStateProperty.all<Color>(Utils.textColor),
                   backgroundColor:
-                      MaterialStateProperty.all<Color>(Colors.black12),
+                      MaterialStateProperty.all<Color>(Utils.mediumLightColor),
                 ),
-                child: Text(DateFormat('yyyy-MM-dd').format(endDate['dialog'])),
+                child: Text(DateFormat.yMMM().format(endDate['dialog'])),
                 onPressed: () async {
-                  DateTime? newEndDate = await showDatePicker(
+                  DateTime? newEndDate = await showMonthYearPicker(
                       context: context,
                       initialDate: endDate['dialog'],
                       firstDate: DateTime(1900),
                       lastDate: DateTime(2100));
+                  if (newEndDate != null) {
+                    newEndDate =
+                        DateTime(newEndDate.year, newEndDate.month + 1, 0);
+                  }
                   setState(() {
                     endDate['dialog'] = newEndDate ?? endDate['dialog'];
                   });
@@ -229,23 +291,78 @@ class StatisticsScreenState extends State<StatisticsScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Text("Category:"),
-                  dropDownCategory(context, setState),
+                  Text("Content:"),
+                  ToggleButtons(
+                    color: Utils.textColor,
+                    selectedColor: Utils.textColor,
+                    fillColor: Utils.mediumLightColor,
+                    children: [Text("Items"), Text("Totals")],
+                    onPressed: (int index) {
+                      List<bool> contentSelectionTemp = [];
+                      for (int i = 0;
+                          i < contentSelection['dialog'].length;
+                          i++) {
+                        contentSelectionTemp.add(i == index);
+                      }
+                      setState(() {
+                        contentSelection['dialog'] = contentSelectionTemp;
+                      });
+                    },
+                    isSelected: contentSelection['dialog'],
+                  )
                 ],
-              ))
+              )),
+          contentSelection['dialog'][0]
+              ? Container(
+                  padding: EdgeInsets.only(top: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Text("Category:"),
+                      dropDownCategory(context, setState),
+                    ],
+                  ))
+              : Container(
+                  padding: EdgeInsets.only(top: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Text("Exp/Inc:"),
+                      ToggleButtons(
+                        color: Utils.textColor,
+                        selectedColor: Utils.textColor,
+                        fillColor: Utils.mediumLightColor,
+                        children: [Text("Expenses"), Text("Income")],
+                        onPressed: (int index) {
+                          setState(() {
+                            for (int i = 0;
+                                i < expIncSelection['dialog'].length;
+                                i++) {
+                              expIncSelection['dialog'][i] = (i == index);
+                            }
+                          });
+                        },
+                        isSelected: expIncSelection['dialog'],
+                      )
+                    ],
+                  )),
         ],
       ),
       actions: [
         ElevatedButton(
           style: ButtonStyle(
-              backgroundColor:
-                  MaterialStateProperty.all<Color>(Utils.backgroundColor)),
+            foregroundColor: MaterialStateProperty.all<Color>(Utils.textColor),
+            backgroundColor:
+                MaterialStateProperty.all<Color>(Utils.mediumLightColor),
+          ),
           child: const Text('Apply'),
           onPressed: () async {
             setState(() {
               category['selected'] = category['dialog'];
               startDate['selected'] = startDate['dialog'];
               endDate['selected'] = endDate['dialog'];
+              contentSelection['selected'] = contentSelection['dialog'];
+              expIncSelection['selected'] = expIncSelection['dialog'];
             });
             await updateData();
             Navigator.of(context).pop();
@@ -253,42 +370,24 @@ class StatisticsScreenState extends State<StatisticsScreen> {
         ),
         ElevatedButton(
           style: ButtonStyle(
-              backgroundColor:
-                  MaterialStateProperty.all<Color>(Utils.backgroundColor)),
+            foregroundColor: MaterialStateProperty.all<Color>(Utils.textColor),
+            backgroundColor:
+                MaterialStateProperty.all<Color>(Utils.mediumLightColor),
+          ),
           child: const Text('Cancel'),
           onPressed: () async {
             setState(() {
               category['selected'] = category['previous'];
               startDate['selected'] = startDate['previous'];
               endDate['selected'] = endDate['previous'];
+              contentSelection['selected'] = contentSelection['previous'];
+              expIncSelection['selected'] = expIncSelection['previous'];
             });
             await updateData();
             Navigator.of(context).pop();
           },
         ),
       ],
-    );
-  }
-
-  Widget dropDown() {
-    return DropdownButton<String>(
-      value: dropdownValue,
-      elevation: 16,
-      underline: Container(
-        height: 2,
-        color: Colors.black,
-      ),
-      onChanged: (String? value) {
-        setState(() {
-          dropdownValue = value!;
-        });
-      },
-      items: dropdownList.map<DropdownMenuItem<String>>((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: Text(value),
-        );
-      }).toList(),
     );
   }
 
@@ -304,29 +403,35 @@ class StatisticsScreenState extends State<StatisticsScreen> {
               categories.insert(0, noneCategory);
             }
             return SizedBox(
-                width: 130,
+                width: 140,
                 height: 30,
                 child: DropdownButton<String>(
                     isDense: true,
                     isExpanded: true,
                     value: dropdownValueCategory,
                     onChanged: (value) {
-                      Category newCategory =
-                          Category.getCategoryByDesc(value!, categories);
+                      TransactionCategory newCategory =
+                          TransactionCategory.getCategoryByDesc(
+                              value!, categories);
                       setState(() {
                         dropdownValueCategory = value;
                         category['dialog'] = newCategory;
                       });
                     },
-                    items: categories
-                        .map<DropdownMenuItem<String>>((Category category) {
+                    items: categories.map<DropdownMenuItem<String>>(
+                        (TransactionCategory category) {
                       return DropdownMenuItem<String>(
                         value: category.description,
-                        child: Text(category.description,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: category.color)),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Container(
+                                  padding: EdgeInsets.only(right: 10),
+                                  child: Icon(Icons.label_rounded,
+                                      color: category.color)),
+                              Text(category.description,
+                                  overflow: TextOverflow.ellipsis)
+                            ]),
                       );
                     }).toList()));
           } else {
@@ -337,18 +442,18 @@ class StatisticsScreenState extends State<StatisticsScreen> {
 
   Widget buildDataTable() {
     return FutureBuilder(
-        future: dataFuture,
+        future: dataFutureItems,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Text("${snapshot.error}");
           } else if (snapshot.hasData) {
-            rows = snapshot.data!;
+            rowsItems = snapshot.data!;
             return DataTable(
                 columnSpacing: 30,
                 sortAscending: isAscending,
                 sortColumnIndex: sortColumnIndex,
                 columns: getColumns(columns),
-                rows: getRows(rows));
+                rows: getRows(rowsItems));
           } else {
             return Text('Waiting....');
           }
@@ -373,10 +478,10 @@ class StatisticsScreenState extends State<StatisticsScreen> {
 
   void onSort(int columnIndex, bool ascending) {
     if (columnIndex == 0) {
-      rows.sort((row1, row2) =>
+      rowsItems.sort((row1, row2) =>
           Utils.compareString(ascending, row1.itemName, row2.itemName));
     } else if (columnIndex == 1) {
-      rows.sort((row1, row2) =>
+      rowsItems.sort((row1, row2) =>
           Utils.compareNumber(ascending, row1.amount, row2.amount));
     }
 
@@ -386,7 +491,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
     });
   }
 
-  double getMaxSum(List<ReceiptItem> items) {
+  double getMaxItemsSum(List<ReceiptItem> items) {
     var max = items.first;
     items.forEach((e) {
       if (e.amount > max.amount) {
@@ -396,36 +501,99 @@ class StatisticsScreenState extends State<StatisticsScreen> {
     return max.amount.toDouble();
   }
 
+  double getMaxCategorySum(List<Map<String, Object>> categorySums) {
+    double max = categorySums.first['totalSum'] as double;
+    categorySums.forEach((e) {
+      double elementSum = e['totalSum']! as double;
+      if (elementSum > max) {
+        max = e['totalSum'] as double;
+      }
+    });
+    return max;
+  }
+
   @override
   Widget itemsChart() {
     return FutureBuilder(
-        future: dataFuture,
+        future: dataFutureItems,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Text("${snapshot.error}");
           } else if (snapshot.hasData) {
-            rows = snapshot.data!;
-            rows.sort((a, b) => Utils.compareNumber(true, a.amount, b.amount));
+            rowsItems = snapshot.data!;
+            rowsItems
+                .sort((a, b) => Utils.compareNumber(true, a.amount, b.amount));
             return Container(
-                padding: EdgeInsets.all(5),
                 child: SfCartesianChart(
-                    primaryXAxis: CategoryAxis(),
+                    backgroundColor: Utils.lightColor,
+                    primaryXAxis: CategoryAxis(
+                        labelsExtent: 100, labelStyle: TextStyle(fontSize: 10)),
                     primaryYAxis: NumericAxis(
                         minimum: 0,
-                        maximum: getMaxSum(rows),
+                        maximum: getMaxItemsSum(rowsItems),
                         interval: 100,
                         visibleMinimum: 0,
                         decimalPlaces: 2),
                     tooltipBehavior: TooltipBehavior(enable: true),
                     series: <ChartSeries<ReceiptItem, String>>[
-                      BarSeries<ReceiptItem, String>(
-                          dataSource: rows,
-                          xValueMapper: (ReceiptItem rows, _) => rows.itemName,
-                          yValueMapper: (ReceiptItem rows, _) => rows.amount,
-                          name: '',
-                          dataLabelSettings: DataLabelSettings(isVisible: true),
-                          color: Color.fromARGB(255, 68, 104, 107))
-                    ]));
+                  BarSeries<ReceiptItem, String>(
+                      dataSource: rowsItems,
+                      xValueMapper: (ReceiptItem rowsItems, _) =>
+                          rowsItems.itemName,
+                      yValueMapper: (ReceiptItem rowsItems, _) =>
+                          rowsItems.amount,
+                      name: '',
+                      dataLabelSettings: DataLabelSettings(isVisible: true),
+                      color: Utils.darkColor)
+                ]));
+          } else {
+            return Center(
+                child: LoadingAnimationWidget.threeArchedCircle(
+                    color: Colors.black, size: 40));
+          }
+        });
+  }
+
+  @override
+  Widget totalsChart() {
+    return FutureBuilder(
+        future: dataFutureCategorySums,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Text("${snapshot.error}");
+          } else if (snapshot.hasData) {
+            rowsTotals = snapshot.data!;
+            rowsTotals.sort((a, b) => Utils.compareNumber(
+                true, a['totalSum'] as double, b['totalSum'] as double));
+            return Container(
+                child: SfCartesianChart(
+                    plotAreaBackgroundColor: Utils.lightColor,
+                    primaryXAxis: CategoryAxis(
+                        labelPosition: ChartDataLabelPosition.outside,
+                        labelsExtent: 80,
+                        labelStyle: TextStyle(fontSize: 14)),
+                    primaryYAxis: NumericAxis(
+                        labelPosition: ChartDataLabelPosition.outside,
+                        minimum: 0,
+                        maximum: getMaxCategorySum(rowsTotals),
+                        interval: (getMaxCategorySum(rowsTotals) / 10),
+                        numberFormat: NumberFormat.compact(locale: "sv_SE"),
+                        visibleMinimum: 0,
+                        decimalPlaces: 2),
+                    tooltipBehavior: TooltipBehavior(enable: true),
+                    series: [
+                  BarSeries(
+                      sortingOrder: SortingOrder.ascending,
+                      dataSource: rowsTotals,
+                      xValueMapper: (Map<String, Object> object, _) =>
+                          (object['category'] as TransactionCategory)
+                              .description,
+                      yValueMapper: (Map<String, Object> object, _) =>
+                          object['totalSum'] as double,
+                      name: '',
+                      dataLabelSettings: DataLabelSettings(isVisible: true),
+                      color: Utils.darkColor)
+                ]));
           } else {
             return Center(
                 child: LoadingAnimationWidget.threeArchedCircle(

@@ -49,6 +49,10 @@ dependencies:
   settings_ui: ^2.0.2
   flutter_colorpicker: ^1.0.3
   image_gallery_saver: ^1.7.1
+  device_apps: ^2.2.0
+  url_launcher: ^6.1.7
+  android_intent: ^2.0.2
+  month_year_picker: ^0.2.0+2
 
 dev_dependencies:
   flutter_test:

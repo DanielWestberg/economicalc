@@ -6,6 +6,7 @@ import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
+import 'package:month_year_picker/month_year_picker.dart';
 
 void main() {
   runApp(Phoenix(
@@ -20,7 +21,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
         title: 'EconomiCalc',
-        theme: ThemeData(scaffoldBackgroundColor: Utils.backgroundColor),
+        localizationsDelegates: [
+          MonthYearPickerLocalizations.delegate,
+        ],
+        theme: ThemeData(scaffoldBackgroundColor: Utils.lightColor),
         home: HomeScreen());
   }
 }
