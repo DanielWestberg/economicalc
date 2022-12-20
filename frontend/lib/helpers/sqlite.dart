@@ -20,9 +20,14 @@ class SQFLite {
   static const cookieId = 0;
 
   final DatabaseFactory _dbFactory;
+  final Future<String> Function() _path;
 
-  SQFLite([DatabaseFactory? dbFactory]):
-      _dbFactory = dbFactory ?? databaseFactory;
+  static Future<String> _defaultPath() async =>
+      join(await getDatabasesPath(), _databaseName);
+
+  SQFLite({DatabaseFactory? dbFactory, Future<String> Function()? path}):
+      _dbFactory = dbFactory ?? databaseFactory,
+      _path = path ?? _defaultPath;
 
   static final SQFLite instance = SQFLite();
 
@@ -38,9 +43,8 @@ class SQFLite {
   }
 
   initDatabase() async {
-    String path = join(await getDatabasesPath(), _databaseName);
     return await _dbFactory.openDatabase(
-        path,
+        await _path(),
         options: OpenDatabaseOptions(
             version: _databaseVersion,
             onCreate: _onCreate,
