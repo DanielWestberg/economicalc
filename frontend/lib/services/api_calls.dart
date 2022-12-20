@@ -54,9 +54,15 @@ class ApiCaller {
   final bool testMode;
   final String apiServer;
   final SQFLite _dbConnector;
-  Cookie? _cookie;
+  late Cookie? _cookie;
 
-  Cookie? get cookie => _cookie;
+  Cookie? get cookie {
+    if (_cookie == null) {
+      _dbConnector.getCookie().then((c) => _cookie = c);
+    }
+
+    return _cookie;
+  }
   set cookie(Cookie? cookie) {
     _cookie = cookie;
     _dbConnector.setCookie(cookie);
@@ -77,9 +83,7 @@ class ApiCaller {
   String get tinkReportEndpoint => _tinkReportEndpoint;
 
   ApiCaller._privateConstructor(this.testMode, this._dbConnector):
-      apiServer = testMode ? "192.168.0.165:5000" : "api.economicalc.online" {
-    _dbConnector.getCookie().then((c) => _cookie = c);
-  }
+      apiServer = testMode ? "192.168.0.165:5000" : "api.economicalc.online";
 
   static ApiCaller nonTestInstance =
       ApiCaller._privateConstructor(false, SQFLite.instance);
