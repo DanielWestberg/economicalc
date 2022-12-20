@@ -19,8 +19,8 @@ class SQFLite {
   static final _databaseVersion = 1;
   static const cookieId = 0;
 
-  SQFLite._privateConstructor();
-  static final SQFLite instance = SQFLite._privateConstructor();
+  SQFLite();
+  static final SQFLite instance = SQFLite();
   Future<Database?> get database async {
     if (_database != null) {
       return _database;
