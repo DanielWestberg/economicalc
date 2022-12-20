@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:economicalc_client/helpers/quota_exception.dart';
 import 'package:economicalc_client/helpers/sqlite.dart';
@@ -8,14 +9,16 @@ import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../services/api_calls.dart';
 
 class ResultsScreen extends StatefulWidget {
   final XFile? image;
+  Transaction? existingTransaction;
 
-  const ResultsScreen({super.key, required this.image});
+  ResultsScreen({super.key, required this.image, this.existingTransaction});
 
   @override
   ResultsScreenState createState() => ResultsScreenState();
@@ -24,7 +27,7 @@ class ResultsScreen extends StatefulWidget {
 class ResultsScreenState extends State<ResultsScreen> {
   int? sortColumnIndex;
   bool isAscending = false;
-  double fontSize = 14;
+  double fontSize = 16;
   double sizedBoxWidth = 150;
   double sizedBoxHeight = 30;
   final columns = ["Items", "Total"];
@@ -60,9 +63,12 @@ class ResultsScreenState extends State<ResultsScreen> {
                 appBar: AppBar(
                   backgroundColor: Utils.mediumLightColor,
                   foregroundColor: Colors.black,
-                  title: Text('Scan result'),
+                  title: Text(
+                    'Scan result',
+                    style: GoogleFonts.roboto(color: Utils.textColor),
+                  ),
                   centerTitle: true,
-                  elevation: 0,
+                  elevation: 10,
                 ),
                 body: ListView(children: [
                   photoArea(),
@@ -73,16 +79,38 @@ class ResultsScreenState extends State<ResultsScreen> {
   }
 
   Widget photoArea() {
-    return Container(
+    return SizedBox(
+        width: MediaQuery.of(context).size.width,
         height: 250,
-        width: 300,
-        padding: EdgeInsets.only(top: 10, bottom: 30),
-        child: GestureDetector(
-          onTap: () {
-            showImageViewer(context, FileImage(File(widget.image!.path)));
-          },
-          child: Image.file(File(widget.image!.path), fit: BoxFit.contain),
-        ));
+        child: Container(
+            child: Stack(fit: StackFit.expand, children: [
+          Image.file(File(widget.image!.path), fit: BoxFit.cover),
+          BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+              child: Container(
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.0)),
+              )),
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 130, vertical: 100),
+            child: TextButton(
+              style: ButtonStyle(
+                  shape: MaterialStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                    ),
+                  ),
+                  backgroundColor:
+                      MaterialStateProperty.all<Color>(Utils.mediumLightColor)),
+              onPressed: () {
+                showImageViewer(context, FileImage(File(widget.image!.path)));
+              },
+              child: Text(
+                "View receipt",
+                style: GoogleFonts.roboto(color: Utils.textColor),
+              ),
+            ),
+          )
+        ])));
   }
 
   Widget confirmButton() {
@@ -92,20 +120,48 @@ class ResultsScreenState extends State<ResultsScreen> {
           onTap: () async {
             int receiptID =
                 await dbConnector.insertReceipt(receipt, dropdownValue);
-            Transaction transaction = Transaction(
-              date: receipt.date,
-              totalAmount: -receipt.total!,
-              store: receipt.recipient,
-              bankTransactionID: null,
-              receiptID: receiptID,
-              categoryID:
-                  await SQFLite.getCategoryIDfromDescription(dropdownValue),
-              categoryDesc: dropdownValue,
-            );
-            await dbConnector.insertTransaction(transaction);
-            int? n = await dbConnector.numOfCategoriesWithSameName(transaction);
-            if (n > 0) {
-              showAlertDialog(context, n, transaction);
+            if (widget.existingTransaction != null) {
+              if (widget.existingTransaction!.totalAmount != receipt.total) {
+                final snackBar = SnackBar(
+                  backgroundColor: Utils.errorColor,
+                  content: Text(
+                    "Total amount of scanned receipt and existing transaction don't match. Please scan the correct receipt or edit the results.",
+                    style: GoogleFonts.roboto(color: Utils.lightColor),
+                  ),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(snackBar);
+              } else {
+                widget.existingTransaction!.receiptID = receiptID;
+                widget.existingTransaction!.categoryDesc = receipt.categoryDesc;
+                widget.existingTransaction!.categoryID = receipt.categoryID;
+                await dbConnector
+                    .updateTransaction(widget.existingTransaction!);
+                Navigator.pop(context);
+                final snackBar = SnackBar(
+                  backgroundColor: Utils.darkColor,
+                  content: Text(
+                    "Receipt was successfully attached to transaction.",
+                    style: GoogleFonts.roboto(color: Utils.lightColor),
+                  ),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(snackBar);
+              }
+            } else {
+              Transaction transaction = Transaction(
+                date: receipt.date,
+                totalAmount: -receipt.total!,
+                store: receipt.recipient,
+                bankTransactionID: null,
+                receiptID: receiptID,
+                categoryID: receipt.categoryID,
+                categoryDesc: receipt.categoryDesc,
+              );
+              await dbConnector.insertTransaction(transaction);
+              int? n =
+                  await dbConnector.numOfCategoriesWithSameName(transaction);
+              if (n > 0) {
+                showAlertDialog(context, n, transaction);
+              }
             }
           },
           child: Row(
@@ -124,18 +180,20 @@ class ResultsScreenState extends State<ResultsScreen> {
             categories = snapshot.data!;
 
             return SizedBox(
-                width: sizedBoxWidth,
-                height: sizedBoxHeight,
+                width: 300,
                 child: DropdownButton<String>(
                     isDense: true,
                     isExpanded: true,
                     value: dropdownValue,
                     onChanged: (
                       String? value,
-                    ) {
+                    ) async {
+                      int? categoryID = await dbConnector
+                          .getCategoryIDfromDescription(dropdownValue);
                       setState(() {
                         dropdownValue = value!;
                         receipt.categoryDesc = dropdownValue;
+                        receipt.categoryID = categoryID;
                       });
                     },
                     items: categories.map<DropdownMenuItem<String>>(
@@ -152,7 +210,7 @@ class ResultsScreenState extends State<ResultsScreen> {
                               Text(
                                 category.description,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: fontSize),
+                                style: GoogleFonts.roboto(fontSize: fontSize),
                               )
                             ]),
                       );
@@ -213,57 +271,42 @@ class ResultsScreenState extends State<ResultsScreen> {
           } else if (snapshot.hasData) {
             receipt = snapshot.data!;
             return Container(
-                padding: EdgeInsets.only(top: 10, left: 50, bottom: 20),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                padding: EdgeInsets.only(top: 20, left: 20, bottom: 20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        dropDown(),
-                        Row(
-                          children: [
-                            Icon(Icons.store),
-                            Padding(
-                                padding: EdgeInsets.only(left: 5),
-                                child: SizedBox(
-                                    width: sizedBoxWidth,
-                                    height: sizedBoxHeight,
-                                    child: Text(
-                                      receipt.recipient,
-                                      style: TextStyle(
-                                          fontSize: fontSize,
-                                          fontWeight: FontWeight.w600),
-                                    ))),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Icon(Icons.date_range),
-                            Padding(
-                                padding: EdgeInsets.only(left: 5),
-                                child: Text(
-                                  DateFormat("yyyy-MM-dd")
-                                      .format(receipt.date)
-                                      .toString(),
-                                  style: TextStyle(
-                                      fontSize: fontSize,
-                                      fontWeight: FontWeight.w600),
-                                )),
-                          ],
-                        )
-                      ],
+                    Container(
+                        child: Text(
+                      receipt.recipient,
+                      style: GoogleFonts.roboto(fontSize: fontSize),
+                    )),
+                    Container(
+                        padding: EdgeInsets.only(top: 5),
+                        child: Text(
+                          DateFormat("yyyy-MM-dd")
+                              .format(receipt.date)
+                              .toString(),
+                          style: GoogleFonts.roboto(fontSize: fontSize),
+                        )),
+                    Container(
+                        padding: EdgeInsets.only(top: 5, bottom: 10),
+                        child: Text(
+                            NumberFormat.currency(locale: 'sv_SE')
+                                .format(receipt.total),
+                            style: GoogleFonts.roboto(fontSize: fontSize))),
+                    Container(
+                      padding: EdgeInsets.only(top: 15),
+                      child: Text(
+                        'Set category for transaction:',
+                        style: GoogleFonts.roboto(
+                            color: Utils.textColor, fontSize: fontSize),
+                      ),
                     ),
-                    Padding(
-                        padding: EdgeInsets.only(left: 10),
-                        child: Column(children: [
-                          Icon(Icons.payment),
-                          Text("${receipt.total} kr",
-                              style: TextStyle(
-                                  fontSize: fontSize,
-                                  fontWeight: FontWeight.w600))
-                        ])),
+                    Container(
+                      padding: EdgeInsets.only(top: 5, right: 10),
+                      child: dropDown(),
+                    )
                   ],
                 ));
           } else {
@@ -295,7 +338,8 @@ class ResultsScreenState extends State<ResultsScreen> {
   List<DataColumn> getColumns(List<String> columns) => columns
       .map((String column) => DataColumn(
           label: Text(column,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0)),
+              style: GoogleFonts.roboto(
+                  fontWeight: FontWeight.bold, fontSize: 16.0)),
           onSort: onSort))
       .toList();
 
@@ -310,7 +354,6 @@ class ResultsScreenState extends State<ResultsScreen> {
             TextFormField(
               initialValue: '$data',
               onChanged: (value) {
-                print(receipt);
                 if (data == cells[0]) {
                   int index = receipt.items
                       .indexWhere((element) => element.itemName == data);
@@ -370,7 +413,7 @@ class ResultsScreenState extends State<ResultsScreen> {
         backgroundColor: Utils.errorColor,
         content: Text(
           'ERROR: Hourly quota exceeded. Try again in a few hours or use a VPN.',
-          style: TextStyle(color: Colors.white),
+          style: GoogleFonts.roboto(color: Colors.white),
         ),
       );
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
@@ -381,7 +424,7 @@ class ResultsScreenState extends State<ResultsScreen> {
         backgroundColor: Utils.errorColor,
         content: Text(
           'ERROR: Image could not be processed.',
-          style: TextStyle(color: Colors.white),
+          style: GoogleFonts.roboto(color: Colors.white),
         ),
       );
       ScaffoldMessenger.of(context).showSnackBar(snackBar);

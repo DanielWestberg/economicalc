@@ -56,8 +56,13 @@ class DrawerMenu extends StatelessWidget {
             title: Text('Statistics',
                 style: TextStyle(fontSize: Utils.drawerFontsize)),
             onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => StatisticsScreen()));
+              Navigator.of(context)
+                  .push(MaterialPageRoute(
+                      builder: (context) => StatisticsScreen()))
+                  .then((value) {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => HomeScreen()));
+              });
             },
           ),
           // ListTile(
@@ -146,7 +151,8 @@ class DrawerMenu extends StatelessWidget {
               Navigator.of(context)
                   .push(MaterialPageRoute(builder: (context) => OpenLink(true)))
                   .then((value) {
-                Phoenix.rebirth(context);
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => HomeScreen()));
               });
             },
           ),
@@ -170,7 +176,8 @@ class DrawerMenu extends StatelessWidget {
                   .push(
                       MaterialPageRoute(builder: (context) => OpenLink(false)))
                   .then((value) {
-                Phoenix.rebirth(context);
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => HomeScreen()));
               });
             },
           ),
@@ -194,7 +201,8 @@ class DrawerMenu extends StatelessWidget {
                   .push(
                       MaterialPageRoute(builder: (context) => SettingsScreen()))
                   .then((value) {
-                Phoenix.rebirth(context);
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => HomeScreen()));
               });
             },
           ),

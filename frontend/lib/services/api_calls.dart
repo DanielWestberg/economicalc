@@ -116,30 +116,23 @@ Future<LoginData> fetchLoginData(
   var uri = getUri(path);
   var response =
       await http.post(uri, headers: headers, body: json.encode(data));
-  //print(uri);
-  //print(response);
   if (response.statusCode != 200) {
     throw UnexpectedResponseException(response);
   }
-  //print(response.body);
   return LoginData.fromResponse(response);
 }
 
 Future<List<BankTransaction>> fetchTransactions(String access_token) async {
-  //print("INSIDE TRANSACTIOn");
   String path = '/tink_transaction_history/';
   path += access_token;
   final response = await http.get(getUri(path));
   if (response.statusCode == 200) {
     List<dynamic> transactions =
         convert.jsonDecode(response.body)["transactions"];
-    //print(transactions);
     List<BankTransaction> resTrans = [];
     transactions.forEach((transaction) {
       resTrans.add(BankTransaction.fromJson(transaction));
     });
-    //print("RESTRANSACT");
-    //print(resTrans);
 
     return resTrans;
   } else {
@@ -154,15 +147,8 @@ Future<Response> CodeToAccessToken(String code, bool test) async {
     path += '/T';
   else
     path += '/F';
-  print("PATH: " + path);
-  print("APISERVER: " + apiServer);
-  print("URIU PÅATH");
-  print(getUri(path));
   final response = await http.get(getUri(path));
-  print("Hej");
-  print("response: ${response.body}");
   Response accessToken = Response.fromJson(convert.jsonDecode(response.body));
-  print("after response convert");
   return accessToken;
 }
 
@@ -225,7 +211,6 @@ processImageWithAsprise(File imageFile) async {
       throw Exception(respJson['message']);
     }
   }
-  print(respJson);
   return respJson;
 }
 

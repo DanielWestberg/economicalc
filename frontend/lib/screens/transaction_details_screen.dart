@@ -3,7 +3,11 @@ import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/models/transaction.dart';
+import 'package:economicalc_client/screens/results_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 var dropDownItems = Utils.categories;
@@ -21,8 +25,8 @@ class TransactionDetailsScreen extends StatefulWidget {
 class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   int? sortColumnIndex;
   bool isAscending = false;
-  double fontSize = 14;
-  double sizedBoxWidth = 140;
+  double fontSize = 12;
+  double sizedBoxWidth = 240;
   double sizedBoxHeight = 30;
   final columns = ["Items", "Sum"];
   final dbConnector = SQFLite.instance;
@@ -46,33 +50,80 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     }
   }
 
+  void goToResults(XFile? image, BuildContext context) {
+    Navigator.of(context)
+        .push(MaterialPageRoute(
+            builder: (context) => ResultsScreen(
+                  image: image,
+                  existingTransaction: widget.transaction,
+                )))
+        .then((value) {
+      if (value != false) {
+        Navigator.pop(context);
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    TransactionDetailsScreen(null, widget.transaction)));
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
         child: Scaffold(
-            appBar: AppBar(
-              actions: [
-                IconButton(
-                    alignment: Alignment.center,
-                    onPressed: (() {
-                      print("receipt");
-                    }),
-                    icon: Icon(Icons.receipt_long))
-              ],
-              toolbarHeight: 120,
-              backgroundColor: Utils.mediumLightColor,
-              foregroundColor: Colors.black,
-              leading: IconButton(
-                  onPressed: (() {
-                    Navigator.pop(context);
-                  }),
-                  icon: Icon(Icons.arrow_back)),
-              title: headerInfo(),
-              centerTitle: false,
-              elevation: 0,
-            ),
-            body:
-                ListView(children: [buildDataTable(), deleteButton(context)])));
+            body: NestedScrollView(
+                headerSliverBuilder: ((context, innerBoxIsScrolled) => [
+                      SliverAppBar(
+                        expandedHeight: 250,
+                        backgroundColor: Utils.mediumLightColor,
+                        foregroundColor: Colors.black,
+                        leading: Container(
+                            padding: EdgeInsets.only(top: 10, left: 10),
+                            child: IconButton(
+                                alignment: Alignment.topCenter,
+                                onPressed: (() {
+                                  Navigator.of(context)
+                                      .popUntil((route) => route.isFirst);
+                                }),
+                                icon: Icon(Icons.arrow_back))),
+                        actions: [
+                          Container(
+                            padding: EdgeInsets.only(top: 10, right: 5),
+                            child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  shape: CircleBorder(),
+                                  alignment: Alignment.center,
+                                  backgroundColor:
+                                      Utils.lightColor.withOpacity(0.9),
+                                  foregroundColor: Utils.darkColor,
+                                ),
+                                onPressed: (() {
+                                  widget.transaction.receiptID != null
+                                      ? Text("TODO: Show image")
+                                      : receiptBtnAlertDialog(context);
+                                }),
+                                child: Icon(Icons.receipt_long_rounded)),
+                          )
+                        ],
+                        flexibleSpace: FlexibleSpaceBar(
+                          background: Container(
+                              decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                      begin: Alignment.bottomLeft,
+                                      end: Alignment.topRight,
+                                      colors: [
+                                Utils.mediumLightColor,
+                                Utils.mediumDarkColor
+                              ]))),
+                          title: headerInfo(),
+                          titlePadding: EdgeInsets.all(10),
+                        ),
+                      )
+                    ]),
+                body: ListView(
+                    children: [buildDataTable(), deleteButton(context)]))));
   }
 
   Widget dropDown() {
@@ -84,21 +135,28 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
           } else if (snapshot.hasData) {
             categories = snapshot.data!;
 
-            return SizedBox(
-                width: sizedBoxWidth,
-                height: sizedBoxHeight,
+            return Container(
+                padding: EdgeInsets.only(right: 5),
                 child: DropdownButton<String>(
                     isDense: true,
+                    itemHeight: null,
                     isExpanded: true,
                     value: dropdownValue,
+                    icon: Icon(Icons.arrow_drop_down_circle_outlined),
+                    iconEnabledColor: Utils.darkColor,
                     onChanged: (value) async {
                       setState(() {
                         dropdownValue = value;
                       });
+                      if (widget.transaction.receiptID != null) {
+                        Receipt receipt = await dbConnector
+                            .getReceiptfromID(widget.transaction.receiptID!);
+                        receipt.categoryDesc = dropdownValue;
+                        await dbConnector.updateReceipt(receipt);
+                      }
                       widget.transaction.categoryDesc = dropdownValue;
-                      widget.transaction.categoryID =
-                          await SQFLite.getCategoryIDfromDescription(
-                              dropdownValue!);
+                      widget.transaction.categoryID = await dbConnector
+                          .getCategoryIDfromDescription(dropdownValue!);
                       await dbConnector.updateTransaction(widget.transaction);
                       int? n = await dbConnector
                           .numOfCategoriesWithSameName(widget.transaction);
@@ -106,10 +164,10 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                         showAlertDialog(context, n, dropdownValue!);
                       } else {
                         final snackBar = SnackBar(
-                          backgroundColor: Utils.mediumDarkColor,
+                          backgroundColor: Utils.darkColor,
                           content: Text(
                             'Category was updated to $dropdownValue.',
-                            style: TextStyle(color: Utils.lightColor),
+                            style: GoogleFonts.roboto(color: Utils.lightColor),
                           ),
                         );
                         ScaffoldMessenger.of(context).showSnackBar(snackBar);
@@ -126,11 +184,14 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                                   padding: EdgeInsets.only(right: 5),
                                   child: Icon(Icons.label_rounded,
                                       color: category.color)),
-                              Text(
-                                category.description,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: fontSize),
-                              )
+                              SizedBox(
+                                  width: 100,
+                                  child: Text(
+                                    category.description,
+                                    overflow: TextOverflow.ellipsis,
+                                    style:
+                                        GoogleFonts.roboto(fontSize: fontSize),
+                                  ))
                             ]),
                       );
                     }).toList()));
@@ -143,6 +204,9 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   showAlertDialog(BuildContext context, int n, String dropdownValue) {
     // set up the buttons
     Widget cancelButton = TextButton(
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
       child: Text("No"),
       onPressed: () {
         Navigator.of(context).pop();
@@ -157,6 +221,9 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
       },
     );
     Widget continueButton = TextButton(
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
       child: Text("Yes"),
       onPressed: () {
         dbConnector.assignCategories(widget.transaction);
@@ -197,57 +264,115 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     );
   }
 
-  Widget headerInfo() {
-    return Container(
-        padding: EdgeInsets.only(top: 10),
-        child: Row(
+  receiptBtnAlertDialog(BuildContext context) {
+    // set up the buttons
+    Widget cancelButton = TextButton(
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
+      child: Text("No"),
+      onPressed: () {
+        Navigator.of(context).pop();
+      },
+    );
+    Widget continueCameraButton = TextButton(
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
+      onPressed: (() async {
+        final XFile? image =
+            await ImagePicker().pickImage(source: ImageSource.camera);
+        if (image == null) return;
+        ImageGallerySaver.saveFile(image.path);
+        goToResults(image, context);
+      }),
+      child: Row(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                dropDown(),
-                Row(
-                  children: [
-                    Icon(Icons.store),
-                    Padding(
-                        padding: EdgeInsets.only(left: 5),
-                        child: SizedBox(
-                            width: sizedBoxWidth,
-                            height: sizedBoxHeight,
-                            child: Text(
-                              widget.transaction.store!,
-                              style: TextStyle(
-                                  color: Utils.textColor, fontSize: fontSize),
-                            ))),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Icon(Icons.date_range),
-                    Padding(
-                        padding: EdgeInsets.only(left: 5),
-                        child: Text(
-                          DateFormat("yyyy-MM-dd")
-                              .format(widget.transaction.date)
-                              .toString(),
-                          style: TextStyle(
-                              color: Utils.textColor, fontSize: fontSize),
-                        )),
-                  ],
-                )
-              ],
+          children: [Text("Yes "), Icon(Icons.camera_alt_outlined)]),
+    );
+    Widget continuePickerButton = TextButton(
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
+      onPressed: (() async {
+        final XFile? image =
+            await ImagePicker().pickImage(source: ImageSource.gallery);
+        if (image == null) return;
+        goToResults(image, context);
+      }),
+      child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [Text("Yes "), Icon(Icons.filter_rounded)]),
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text("No receipt found"),
+      content: Text(
+          "Would you like to attach a receipt to the current transaction?"),
+      actions: [cancelButton, continueCameraButton, continuePickerButton],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
+
+  Widget headerInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Center(
+          child: Text(
+              widget.transaction.receiptID != null
+                  ? "Receipt"
+                  : "Bank transaction",
+              style: GoogleFonts.roboto(
+                  color: Utils.textColor, fontSize: fontSize * 1.2)),
+        ),
+        Container(
+            padding: EdgeInsets.only(top: 20),
+            child: Text(
+              widget.transaction.store!,
+              style: GoogleFonts.roboto(
+                  color: Utils.textColor, fontSize: fontSize),
+            )),
+        Container(
+            padding: EdgeInsets.only(top: 0),
+            child: Text(
+              DateFormat("yyyy-MM-dd").format(widget.transaction.date),
+              style: GoogleFonts.roboto(
+                  color: Utils.textColor, fontSize: fontSize),
+            )),
+        Container(
+            padding: EdgeInsets.only(top: 0),
+            child: Text(
+                NumberFormat.currency(
+                  locale: 'sv_SE',
+                ).format(widget.transaction.totalAmount),
+                style: GoogleFonts.roboto(
+                    color: Utils.textColor, fontSize: fontSize))),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Container(
+            padding: EdgeInsets.only(top: 15),
+            child: Text(
+              'Set category for transaction:',
+              style: GoogleFonts.roboto(
+                  color: Utils.textColor, fontSize: fontSize),
             ),
-            Padding(
-                padding: EdgeInsets.only(left: 10),
-                child: Column(children: [
-                  Icon(Icons.payment),
-                  Text("${widget.transaction.totalAmount} kr",
-                      style: TextStyle(fontSize: fontSize))
-                ])),
-          ],
-        ));
+          ),
+          Container(
+            padding: EdgeInsets.only(top: 5),
+            child: Expanded(child: dropDown()),
+          )
+        ]),
+      ],
+    );
   }
 
   Widget buildDataTable() {
@@ -349,7 +474,9 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
       child: Text("Yes"),
       onPressed: () {
         dbConnector.deleteReceipt(widget.transaction.receiptID!);
-        dbConnector.deleteTransaction(widget.transaction.id!);
+        if (widget.transaction.bankTransactionID == null) {
+          dbConnector.deleteTransaction(widget.transaction.id!);
+        }
         Navigator.of(context).popUntil((route) => route.isFirst);
       },
     );

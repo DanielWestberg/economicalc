@@ -68,7 +68,6 @@ class OpenLinkState extends State<OpenLink> {
         body: WebView(
           initialUrl: selectedUrl,
           navigationDelegate: (action) async {
-            print(action.url);
             if (action.url.contains("http://localhost:3000/callback") &&
                 action.url.contains("code")) {
               //{YOUR_CALLBACK_URI}?code={YOUR_CODE}&credentials_id={YOUR_CREDENTIALS_ID}
@@ -83,9 +82,7 @@ class OpenLinkState extends State<OpenLink> {
 
               response = await CodeToAccessToken(code, widget.test);
               transactions = await fetchTransactions(response.accessToken);
-              print(transactions);
               for (var transaction in transactions) {
-                //print(transaction.descriptions.display);
                 dbConnector.postBankTransaction(transaction);
               }
               if (!mounted) return NavigationDecision.prevent;
@@ -95,20 +92,12 @@ class OpenLinkState extends State<OpenLink> {
                 action.url.contains("account_verification_report_id") &&
                 action.url.contains("transaction_report_id")) {
               Map<String, String> params = Uri.splitQueryString(action.url);
-              print("PARAMS");
-              print(params);
 
               String transaction_report_id = params["transaction_report_id"]!;
               String account_report_id = params[
                   "https://console.tink.com/callback?account_verification_report_id"]!;
               LoginData data = await fetchLoginData(
                   account_report_id, transaction_report_id, widget.test);
-
-              print(data.transactionReport["transactions"]);
-              print(data.accountReport["userDataByProvider"][0]
-                  ["financialInstitutionName"]);
-              print(data.accountReport["userDataByProvider"][0]["identity"]
-                  ["name"]);
 
               List<BankTransaction> resTrans = [];
               data.transactionReport["transactions"].forEach((transaction) {
@@ -128,20 +117,13 @@ class OpenLinkState extends State<OpenLink> {
               //NO CODE REETURNED == SOMETHING WENT WRONG
               return NavigationDecision.navigate;
             } else if (action.url.contains("bankid")) {
-              print(action.url);
               Map<String, String> params = Uri.splitQueryString(action.url);
-              print(params);
-              print(params["bankid:///?autostarttoken"]);
               String autostarttoken = params["bankid:///?autostarttoken"]!;
 
               String redirect = "null";
 
-              print(autostarttoken);
-              print(redirect);
-
               String bankIdUrl =
                   "https://app.bankid.com/?autostarttoken=$autostarttoken&redirect=$redirect";
-              print(bankIdUrl);
 
               AndroidIntent intent =
                   AndroidIntent(data: bankIdUrl, action: "action_view");

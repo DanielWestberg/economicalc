@@ -326,16 +326,21 @@ class SQFLite {
     return items;
   }
 
-  Future<List<ReceiptItem>> getFilteredReceiptItems(
+  Future<List<Map<String, Object>>> getFilteredReceiptItems(
       startDate, endDate, category) async {
     final receipts = await getAllReceipts();
-    List<ReceiptItem> filteredItems = [];
+    List<Map<String, Object>> filteredItems = [];
 
     if (category.description == 'None') {
       for (var receipt in receipts) {
         if (receipt.date.compareTo(startDate) >= 0 &&
             receipt.date.compareTo(endDate) <= 0) {
-          receipt.items.forEach((item) => filteredItems.add(item));
+          TransactionCategory? category =
+              await getCategoryFromID(receipt.categoryID!);
+          receipt.items.forEach((item) => filteredItems.add({
+                "category": category!,
+                "receiptItem": item,
+              }));
         }
       }
     } else {
@@ -343,7 +348,12 @@ class SQFLite {
         if (receipt.date.compareTo(startDate) >= 0 &&
             receipt.date.compareTo(endDate) <= 0 &&
             receipt.categoryID == category.id) {
-          receipt.items.forEach((item) => filteredItems.add(item));
+          TransactionCategory? category =
+              await getCategoryFromID(receipt.categoryID!);
+          receipt.items.forEach((item) => filteredItems.add({
+                "category": category!,
+                "receiptItem": item,
+              }));
         }
       }
     }
@@ -387,22 +397,21 @@ class SQFLite {
     );
   }
 
-  Future<void> updateReceipt(Receipt transaction) async {
+  Future<void> updateReceipt(Receipt receipt) async {
     // Get a reference to the database.
     final db = await instance.database;
 
-    int? categoryID =
-        await getCategoryIDfromDescription(transaction.categoryDesc!);
-    transaction.categoryID = categoryID;
+    int? categoryID = await getCategoryIDfromDescription(receipt.categoryDesc!);
+    receipt.categoryID = categoryID;
 
     // Update the given receipt.
     await db?.update(
       'receipts',
-      transaction.toMap(),
+      encodeReceipt(receipt),
       // Ensure that the receipt has a matching id.
       where: 'id = ?',
       // Pass the receipt's id as a whereArg to prevent SQL injection.
-      whereArgs: [transaction.id],
+      whereArgs: [receipt.id],
     );
   }
 
@@ -438,14 +447,14 @@ class SQFLite {
 
   /*************************** CATEGORIES *******************************/
 
-  static Future<int?> getCategoryIDfromDescription(String description) async {
+  Future<int?> getCategoryIDfromDescription(String description) async {
     final db = await instance.database;
     List<Map<String, Object?>>? obj = await db?.rawQuery(
         'SELECT id FROM categories WHERE description = "${description}" ');
     return obj![0]['id'] as int;
   }
 
-  static Future<String?> getCategoryDescriptionfromID(int id) async {
+  Future<String?> getCategoryDescriptionfromID(int id) async {
     final db = await instance.database;
     List<Map<String, Object?>>? obj = await db
         ?.rawQuery('SELECT description FROM categories WHERE id = "${id}"');

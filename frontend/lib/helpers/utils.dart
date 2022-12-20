@@ -1,6 +1,7 @@
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class Utils {
   static int compareString(bool ascending, String value1, String value2) =>
@@ -8,6 +9,9 @@ class Utils {
 
   static int compareNumber(bool ascending, num value1, num value2) =>
       ascending ? value1.compareTo(value2) : value2.compareTo(value1);
+
+  // FONTS
+  static TextStyle mainFont = GoogleFonts.abel();
 
   // FONTSIZES
   static double drawerFontsize = 20;
