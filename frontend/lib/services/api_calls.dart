@@ -54,15 +54,10 @@ class ApiCaller {
   final bool testMode;
   final String apiServer;
   final SQFLite _dbConnector;
-  late Cookie? _cookie;
+  Cookie? _cookie;
 
-  Cookie? get cookie {
-    if (_cookie == null) {
-      _dbConnector.getCookie().then((c) => _cookie = c);
-    }
+  Cookie? get cookie => _cookie;
 
-    return _cookie;
-  }
   set cookie(Cookie? cookie) {
     _cookie = cookie;
     _dbConnector.setCookie(cookie);
@@ -266,7 +261,11 @@ class ApiCaller {
     return respJson;
   }
 
-  void _assertCookieNotNull() {
+  void _assertCookieNotNull() async {
+    if (cookie == null) {
+      _cookie = await _dbConnector.getCookie();
+    }
+
     if (cookie == null) {
       throw const UnauthorizedException();
     }
