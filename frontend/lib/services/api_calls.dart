@@ -53,7 +53,7 @@ class UnexpectedStatusCodeException implements Exception {
 class ApiCaller {
   final bool testMode;
   final String apiServer;
-  final SQFLite _dbConnector = SQFLite.instance;
+  final SQFLite _dbConnector;
   Cookie? _cookie;
 
   Cookie? get cookie => _cookie;
@@ -76,18 +76,24 @@ class ApiCaller {
       "&account_dialog_type=SINGLE";
   String get tinkReportEndpoint => _tinkReportEndpoint;
 
-  ApiCaller._privateConstructor(this.testMode):
+  ApiCaller._privateConstructor(this.testMode, this._dbConnector):
       apiServer = testMode ? "192.168.0.165:5000" : "api.economicalc.online" {
     _dbConnector.getCookie().then((c) => _cookie = c);
   }
 
   static ApiCaller nonTestInstance =
-      ApiCaller._privateConstructor(false);
+      ApiCaller._privateConstructor(false, SQFLite.instance);
   static ApiCaller testInstance =
-      kDebugMode ? ApiCaller._privateConstructor(true) : nonTestInstance;
+      kDebugMode ?
+      ApiCaller._privateConstructor(true, SQFLite.instance) : nonTestInstance;
 
+  // Preferred constructor
   factory ApiCaller([bool testMode = true]) =>
     testMode ? testInstance : nonTestInstance;
+
+  // Primarily for inserting mock database
+  factory ApiCaller.withDb(SQFLite dbConnector, [bool testMode = true]) =>
+    ApiCaller._privateConstructor(testMode, dbConnector);
 
   Uri getUri(String path) {
     if (testMode) {
