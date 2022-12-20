@@ -106,6 +106,8 @@ class ResultsScreenState extends State<ResultsScreen> {
             int? n = await dbConnector.numOfCategoriesWithSameName(transaction);
             if (n > 0) {
               showAlertDialog(context, n, transaction);
+            } else {
+              showConfirmationButton(context);
             }
           },
           child: Row(
@@ -163,19 +165,45 @@ class ResultsScreenState extends State<ResultsScreen> {
         });
   }
 
+  showConfirmationButton(BuildContext context) {
+    Widget confirmationButton = TextButton(
+      child: Text("Ok"),
+      onPressed: () {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      },
+    );
+    AlertDialog alert = AlertDialog(
+      
+      content: Text("Receipt successfully added!"),
+      actions: [
+        confirmationButton,
+      ],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    ).then((value) => Navigator.of(context).popUntil((route) => route.isFirst));
+  }
+
   showAlertDialog(BuildContext context, int n, transaction) {
     // set up the buttons
     Widget cancelButton = TextButton(
       child: Text("No"),
       onPressed: () {
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        Navigator.of(context, rootNavigator: true).pop('dialog');
+        showConfirmationButton(context);
       },
     );
     Widget continueButton = TextButton(
       child: Text("Yes"),
       onPressed: () {
         dbConnector.assignCategories(transaction);
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        Navigator.of(context, rootNavigator: true).pop('dialog');
+        showConfirmationButton(context);
       },
     );
 
