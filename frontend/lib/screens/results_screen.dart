@@ -391,29 +391,37 @@ class ResultsScreenState extends State<ResultsScreen> {
   }
 
   Map<String, dynamic> removeJitter(Map<String, dynamic> respJson) {
-   
     var items = respJson['receipts'][0]['items'];
-    
-    for(var i = 0; i < items.length; i++) {
+
+    List<String> discountTerms = ["rabatt", "discount"];
+    List<String> redundantItems = ["öresavrundning", "avrundning"];
+
+    for (var i = 0; i < items.length; i++) {
       var item = items[i];
-      bool containsDiscount = 
-        item['description'].toLowerCase().contains("rabatt") ||
-        item['description'].toLowerCase().contains("discount");
+      bool containsDiscount = false;
 
-
-      if(item['description'].toLowerCase().contains("öresavrunding")) {
-        items.remove(item);
+      for (var discountTerm in discountTerms) {
+        if (item['description'].toLowerCase().contains(discountTerm)) {
+          containsDiscount = true;
+        }
       }
 
-      if(item['description'].toLowerCase().contains("pant")) {
-        items[i-1]['amount'] += item['amount'];
+      for (var redundantItem in redundantItems) {
+        if (item['description'].toLowerCase().contains(redundantItem)) {
+          items.remove(item);
+          containsDiscount = false;
+        }
+      }
+
+      if (item['description'].toLowerCase().contains("pant")) {
+        items[i - 1]['amount'] += item['amount'];
         items.remove(item);
       }
-      if(containsDiscount) {
-        if(item['amount'] > 0) {
-          items[i-1]['amount'] -= item['amount'];
-        } else if(item['amount'] < 0) {
-          items[i-1]['amount'] += item['amount'];
+      if (containsDiscount) {
+        if (item['amount'] > 0) {
+          items[i - 1]['amount'] -= item['amount'];
+        } else if (item['amount'] < 0) {
+          items[i - 1]['amount'] += item['amount'];
         }
         items.remove(item);
       }
@@ -421,7 +429,7 @@ class ResultsScreenState extends State<ResultsScreen> {
 
     respJson['receipts'][0]['items'] = items;
     return respJson;
-  } 
+  }
 
   Future<List<TransactionCategory>> getCategories(SQFLite dbConnector) async {
     return await dbConnector.getAllcategories();
