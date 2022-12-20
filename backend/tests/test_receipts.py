@@ -118,23 +118,41 @@ def image_to_put() -> Path:
 
 
 @pytest.fixture()
-def receipts_to_post(users, users_to_post) -> List[Tuple[User, Receipt]]:
+def receipts_to_post(users, users_to_post) -> List[Tuple[User, List[Receipt]]]:
     return [
-        (users[1], Receipt(
-            4,
-            "Specsavers",
-            [Item("Glasögon", 1.)],
-            datetime(2022, 2, 24),
-            1337.5,
-            1,
-        )), (users_to_post[0], Receipt(
-            5,
-            "Yes",
-            [Item("Dood", 1.)],
-            datetime(1970, 1, 1),
-            1.1,
-            5,
-        ))
+        (
+            users[1],
+            [
+                Receipt(
+                    1,
+                    "Specsavers",
+                    [Item("Glasögon", 1.)],
+                    datetime(2022, 2, 24),
+                    1337.5,
+                    1,
+                ),
+                Receipt(
+                    2,
+                    "P",
+                    [Item("P", 1.)],
+                    datetime(2021, 1, 2),
+                    1.,
+                    1,
+                ),
+            ],
+        ), (
+            users_to_post[0],
+            [
+                Receipt(
+                    3,
+                    "Yes",
+                    [Item("Dood", 1.)],
+                    datetime(1970, 1, 1),
+                    1.1,
+                    5,
+                ),
+            ],
+        ),
     ]
 
 
@@ -219,29 +237,31 @@ class TestReceipt():
 
 
     def test_post_user_receipt(self, db, receipts_to_post, client):
-        for (user, receipt) in receipts_to_post:
-            receipt_dict = receipt.to_dict(True)
-
+        for (user, receipt_list) in receipts_to_post:
             self.create_session_for_user(client, user)
             client.put("/")
-            response = client.post("/receipts", json=receipt_dict)
-            assert response.status == constants.created
 
-            response_dict = response.json["data"]
-            response_receipt = Receipt.from_dict(response_dict)
-            assert receipt == response_receipt
+            for receipt in receipt_list:
+                receipt_dict = receipt.to_dict(True)
 
-            user.receipts.append(receipt)
+                response = client.post("/receipts", json=receipt_dict)
+                assert response.status == constants.created
 
-            response = client.get("/receipts")
-            response_receipt_dicts = response.json["data"]
-            response_receipts = [Receipt.from_dict(d) for d in response_receipt_dicts]
+                response_dict = response.json["data"]
+                response_receipt = Receipt.from_dict(response_dict)
+                assert receipt == response_receipt
 
-            db_receipt_dicts = db.users.find_one({"bankId": user.bankId})["receipts"]
-            db_receipt_ids = [d["id"] for d in db_receipt_dicts]
-            assert receipt.id in db_receipt_ids
+                user.receipts.append(receipt)
 
-            assert receipt in response_receipts
+                response = client.get("/receipts")
+                response_receipt_dicts = response.json["data"]
+                response_receipts = [Receipt.from_dict(d) for d in response_receipt_dicts]
+
+                db_receipt_dicts = db.users.find_one({"bankId": user.bankId})["receipts"]
+                db_receipt_ids = [d["id"] for d in db_receipt_dicts]
+                assert receipt.id in db_receipt_ids
+
+                assert receipt in response_receipts
 
 
     def post_errenous_receipt(self, receipt_dict, client):
@@ -253,7 +273,7 @@ class TestReceipt():
         user = receipts_to_post[0][0]
         self.create_session_for_user(client, user)
 
-        receipt = receipts_to_post[0][1].to_dict(True)
+        receipt = receipts_to_post[0][1][0].to_dict(True)
         receipt.pop("items", None)
         self.post_errenous_receipt(receipt, client)
 
@@ -265,7 +285,7 @@ class TestReceipt():
         user = receipts_to_post[0][0]
         self.create_session_for_user(client, user)
 
-        receipt = receipts_to_post[0][1]
+        receipt = receipts_to_post[0][1][0]
         receipt_dict = receipt.to_dict(True)
         receipt_dict["items"] = {"a": "a"}
         self.post_errenous_receipt(receipt_dict, client)
@@ -279,7 +299,7 @@ class TestReceipt():
         user = receipts_to_post[0][0]
         self.create_session_for_user(client, user)
 
-        receipt = receipts_to_post[0][1]
+        receipt = receipts_to_post[0][1][0]
         receipt_dict = receipt.to_dict(True)
         item_dict = receipt_dict["items"][0]
         item_dict["itemName"] = 0
@@ -569,6 +589,30 @@ class TestReceipt():
                     assert response.status == constants.no_content
 
                     assert not fs.exists(receipt.image_id)
+
+
+    def test_bulk_post_receipts(self, db, receipts_to_post, client):
+        for (user, receipt_list) in receipts_to_post:
+            self.create_session_for_user(client, user)
+            client.put("/")
+
+            receipt_dicts = [r.to_dict(True) for r in receipt_list]
+
+            response = client.post("/receipts", json=receipt_dicts)
+            assert response.status == constants.created
+
+            response_dicts = response.json["data"]
+            response_receipts = [Receipt.from_dict(d) for d in response_dicts]
+
+            for receipt in receipt_list:
+                assert receipt in response_receipts
+
+            response = client.get("/receipts")
+            response_dicts = response.json["data"]
+            response_receipts = [Receipt.from_dict(d) for d in response_dicts]
+
+            for receipt in receipt_list:
+                assert receipt in response_receipts
 
 
     def test_access_wrong_receipt(self, db, users, client):

@@ -29,6 +29,27 @@ class UnauthorizedException implements Exception {
   String toString() => "UnauthorizedException: $message";
 }
 
+class UnexpectedResponseException implements Exception {
+  final http.Response response;
+  get statusCode => response.statusCode;
+  get message => "Unexpected $statusCode response\n${response.body}";
+
+  const UnexpectedResponseException(this.response);
+
+  @override
+  String toString() => "UnexpectedResponseException: $message";
+}
+
+class UnexpectedStatusCodeException implements Exception {
+  final int statusCode;
+  get message => "Unexpected status code $statusCode}";
+
+  const UnexpectedStatusCodeException(this.statusCode);
+
+  @override
+  String toString() => "UnexpectedStatusCodeException: $message";
+}
+
 class ApiCaller {
   final bool testMode;
   final String apiServer;
@@ -105,6 +126,28 @@ class ApiCaller {
         .items;
   }
 
+  Future<List<ReceiptItem>> fetchMockedReceiptItemsBetweenDates(
+      DateTime startDate, DateTime endDate) async {
+    final String response =
+    await rootBundle.loadString('assets/ocr_outputs.json');
+
+    List<Receipt> transactions = (json.decode(response) as List)
+        .map((e) => Receipt.fromJson(e))
+        .toList()
+        .cast<Receipt>();
+
+    List<ReceiptItem> filteredItems = [];
+
+    transactions.forEach((element) {
+      if (element.date.compareTo(startDate) >= 0 &&
+          element.date.compareTo(endDate) <= 0) {
+        element.items.forEach((item) => filteredItems.add(item));
+      }
+    });
+
+    return filteredItems;
+  }
+
   Future<LoginData> fetchLoginData(
       String account_report_id, String transaction_report_id, bool test) async {
     var headers = {
@@ -172,28 +215,6 @@ class ApiCaller {
     return accessToken;
   }
 
-  Future<List<ReceiptItem>> fetchMockedReceiptItemsBetweenDates(
-      DateTime startDate, DateTime endDate) async {
-    final String response =
-    await rootBundle.loadString('assets/ocr_outputs.json');
-
-    List<Receipt> transactions = (json.decode(response) as List)
-        .map((e) => Receipt.fromJson(e))
-        .toList()
-        .cast<Receipt>();
-
-    List<ReceiptItem> filteredItems = [];
-
-    transactions.forEach((element) {
-      if (element.date.compareTo(startDate) >= 0 &&
-          element.date.compareTo(endDate) <= 0) {
-        element.items.forEach((item) => filteredItems.add(item));
-      }
-    });
-
-    return filteredItems;
-  }
-
   processImageWithAsprise(File imageFile) async {
     String receiptOcrEndpoint = "https://ocr.asprise.com/api/v1/receipt";
 
@@ -254,9 +275,9 @@ class ApiCaller {
     }
 
     if (response.statusCode != 200) {
-      throw Exception(
-          "Unexpected status code ${response.statusCode}\n{response.body}");
+      throw UnexpectedResponseException(response);
     }
+
     List<dynamic> receipts = convert.jsonDecode(response.body)["data"];
     List<Receipt> resultReceipts = [];
     for (dynamic receipt in receipts) {
@@ -281,10 +302,30 @@ class ApiCaller {
     }
 
     if (response.statusCode != 201) {
-      throw Exception(
-          "Unexpected status code ${response.statusCode}\n${response.body}");
+      throw UnexpectedResponseException(response);
     }
+
     return Receipt.fromBackendJson(convert.jsonDecode(response.body)["data"]);
+  }
+
+  postManyReceipts(List<Receipt> receipts) async {
+    _assertCookieNotNull();
+    final uri = Uri.http(apiServer, "/receipts");
+    final headers = {
+      "Content-type": "application/json",
+      "Cookie": cookie.toString(),
+    };
+    final receiptMaps = receipts.map((r) => r.toMap()).toList();
+    final body = convert.jsonEncode(receiptMaps);
+    final response = await http.post(uri, headers: headers, body: body);
+    if (response.statusCode == 401) {
+      throw const UnauthorizedException();
+    }
+
+    if (response.statusCode != 201) {
+      throw UnexpectedResponseException(response);
+    }
+    return Receipt.fromBackendJsonList(convert.jsonDecode(response.body)["data"]);
   }
 
   updateReceipt(int receiptId, Receipt receipt) async {
@@ -301,8 +342,7 @@ class ApiCaller {
     }
 
     if (response.statusCode != 200) {
-      throw Exception(
-          "Unexpected status code ${response.statusCode}\n${response.body}");
+      throw UnexpectedResponseException(response);
     }
   }
 
@@ -318,8 +358,7 @@ class ApiCaller {
     }
 
     if (response.statusCode != 204) {
-      throw Exception(
-          "Unexpected status code ${response.statusCode}\n${response.body}");
+      throw UnexpectedResponseException(response);
     }
   }
 
@@ -337,8 +376,7 @@ class ApiCaller {
     }
 
     if (response.statusCode != 204) {
-      throw Exception(
-          "Unexpected status code ${response.statusCode}\n${await response.stream.bytesToString()}");
+      throw UnexpectedStatusCodeException(response.statusCode);
     }
   }
 
@@ -354,8 +392,7 @@ class ApiCaller {
     }
 
     if (response.statusCode != 200) {
-      throw Exception(
-          "Unexpected status code ${response.statusCode}\n${response.body}");
+      throw UnexpectedResponseException(response);
     }
     return XFile.fromData(response.bodyBytes);
   }
@@ -372,8 +409,7 @@ class ApiCaller {
     }
 
     if (response.statusCode != 204) {
-      throw Exception(
-          "Unexpected status code ${response.statusCode}\n${response.body}");
+      throw UnexpectedResponseException(response);
     }
   }
 
@@ -389,8 +425,7 @@ class ApiCaller {
     }
 
     if (response.statusCode != 200) {
-      throw Exception(
-          "Unexpected status code ${response.statusCode}\n${response.body}");
+      throw UnexpectedResponseException(response);
     }
 
     List<dynamic> categories = convert.jsonDecode(response.body)["data"];
@@ -411,8 +446,7 @@ class ApiCaller {
     }
 
     if (response.statusCode != 201) {
-      throw Exception(
-          "Unexpected status code ${response.statusCode}\n${response.body}");
+      throw UnexpectedResponseException(response);
     }
   }
 
@@ -425,13 +459,8 @@ class ApiCaller {
     };
     final body = convert.jsonEncode(category.toJson(true));
     final response = await http.put(uri, headers: headers, body: body);
-    if (response.statusCode == 401) {
-      throw const UnauthorizedException();
-    }
-
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception(
-          "Unexpected status code ${response.statusCode}\n${response.body}");
+      throw UnexpectedResponseException(response);
     }
   }
 
@@ -447,8 +476,7 @@ class ApiCaller {
     }
 
     if (response.statusCode != 204) {
-      throw Exception(
-          "Unexpected status code ${response.statusCode}\n${response.body}");
+      throw UnexpectedResponseException(response);
     }
   }
 }
