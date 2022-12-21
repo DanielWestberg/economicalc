@@ -235,16 +235,17 @@ class SQFLite {
     return null;
   }
 
-  Future<List<int>> importMissingBankTransactions() async {
+  Future<List<int>> updateTransactions() async {
     final db = await instance.database;
 
     List<BankTransaction> bankTransactions = await getAllBankTransactions();
+    bankTransactions.sort(((a, b) => b.date.compareTo(a.date)));
     int updated = 0;
     int added = 0;
 
     for (var bankTransaction in bankTransactions) {
       List<Map<String, dynamic?>>? transaction = await db?.rawQuery(
-          'SELECT * FROM transactions WHERE bankTransactionID = "$bankTransaction.id"');
+          'SELECT * FROM transactions WHERE bankTransactionID = "${bankTransaction.id}"');
 
       if (transaction!.isEmpty) {
         Transaction newTransaction = Transaction(
@@ -260,14 +261,13 @@ class SQFLite {
         Transaction? existingTransaction =
             await checkForExistingTransaction(newTransaction);
         if (existingReceipt != null) {
-          existingTransaction =
-              await getTransactionByReceiptID(existingReceipt.id!);
           if (existingTransaction == null) {
             newTransaction.receiptID = existingReceipt.id;
             await insertTransaction(newTransaction);
             added++;
           } else {
-            existingTransaction.bankTransactionID = bankTransaction.id;
+            existingTransaction.bankTransactionID =
+                newTransaction.bankTransactionID;
             await updateTransaction(existingTransaction);
             updated++;
           }
@@ -280,41 +280,8 @@ class SQFLite {
           await insertTransaction(newTransaction);
           added++;
         }
-      }
-    }
-    return [added, updated];
-  }
-
-  Future<List<int>> mergeReceiptsWithTransactions() async {
-    int updated = 0;
-    int added = 0;
-
-    List<Receipt> receipts = await getAllReceipts();
-    List<Transaction> transactions = await getAllTransactions();
-
-    for (Receipt receipt in receipts) {
-      if (transactions.isEmpty) {
-        Transaction newTransaction = Transaction(
-            store: receipt.recipient,
-            date: receipt.date,
-            totalAmount: receipt.total,
-            receiptID: receipt.id,
-            categoryID: receipt.categoryID,
-            categoryDesc: receipt.categoryDesc);
-        insertTransaction(newTransaction);
-        added++;
       } else {
-        for (Transaction transaction in transactions) {
-          bool equality =
-              await Utils.isReceiptAndTransactionEqual(receipt, transaction);
-          if (equality) {
-            transaction.receiptID = receipt.id;
-            transaction.categoryDesc = receipt.categoryDesc;
-            transaction.categoryID = receipt.categoryID;
-            await updateTransaction(transaction);
-            updated++;
-          }
-        }
+        break;
       }
     }
     return [added, updated];
@@ -342,6 +309,33 @@ class SQFLite {
       bankTransaction.toDbFormat(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+
+  Future<void> postMissingBankTransactions(
+      List<BankTransaction> updatedBankTransactions) async {
+    List<BankTransaction> bankTransactionsInDB = await getAllBankTransactions();
+
+    if (bankTransactionsInDB.isEmpty) {
+      for (BankTransaction bankTransaction in updatedBankTransactions) {
+        await postBankTransaction(bankTransaction);
+      }
+    } else {
+      bankTransactionsInDB.sort(((a, b) => b.date.compareTo(a.date)));
+      updatedBankTransactions.sort(((a, b) => b.date.compareTo(a.date)));
+
+      for (BankTransaction bankTransaction in updatedBankTransactions) {
+        if (bankTransaction.date.compareTo(bankTransactionsInDB.first.date) <=
+            0) break;
+        for (int i = 0; i < 20; i++) {
+          // Only need to check the 20 latest existing bank transactions
+          bool equality = await Utils.areBankTransactionsEqual(
+              bankTransaction, bankTransactionsInDB[i]);
+          if (equality) continue;
+          await postBankTransaction(bankTransaction);
+          break;
+        }
+      }
+    }
   }
 
   Future<void> deleteAllBankTransactions() async {
@@ -502,7 +496,7 @@ class SQFLite {
 
   /*************************** CATEGORIES *******************************/
 
-  static Future<int?> getCategoryIDfromDescription(String description) async {
+  Future<int?> getCategoryIDfromDescription(String description) async {
     final db = await instance.database;
     List<Map<String, Object?>>? obj = await db?.rawQuery(
         'SELECT id FROM categories WHERE description = "${description}" ');

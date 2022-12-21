@@ -13,11 +13,18 @@ class BankTransaction {
       required this.date});
 
   factory BankTransaction.fromJson(Map<String, dynamic> json) {
+    double amount = 0;
+    if (json['amount']['value']['unscaledValue'] != null &&
+        json['amount']['value']['scale'] != null) {
+      amount = double.parse(json['amount']['value']['unscaledValue']);
+      int scale = int.parse(json['amount']['value']['scale']);
+      if (scale == 1) amount = amount / 10;
+      if (scale == 2) amount = amount / 100;
+      if (scale == 3) amount = amount / 1000;
+    }
     return BankTransaction(
         id: json['id'],
-        amount: (json['amount']['value']['unscaledValue'] != null
-            ? double.parse(json['amount']['value']['unscaledValue']) / 10
-            : null)!,
+        amount: amount,
         description: json['descriptions']['display'] != null
             ? json['descriptions']['display']
             : null,

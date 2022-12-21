@@ -65,6 +65,7 @@ class OpenLinkState extends State<OpenLink> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
+          backgroundColor: Utils.mediumLightColor,
           title: Text(title),
         ),
         body: WebView(
@@ -84,10 +85,9 @@ class OpenLinkState extends State<OpenLink> {
 
               response = await CodeToAccessToken(code, widget.test);
               transactions = await fetchTransactions(response.accessToken);
-              dbConnector.deleteAllBankTransactions();
-              for (var transaction in transactions) {
-                dbConnector.postBankTransaction(transaction);
-              }
+
+              await dbConnector.postMissingBankTransactions(transactions);
+
               if (!mounted) return NavigationDecision.prevent;
               Navigator.of(context).popUntil((route) => route.isFirst);
               return NavigationDecision.prevent;
@@ -106,35 +106,16 @@ class OpenLinkState extends State<OpenLink> {
               data.transactionReport["transactions"].forEach((transaction) {
                 resTrans.add(BankTransaction.fromJson(transaction));
               });
+              resTrans = resTrans.reversed.toList();
 
-              List<BankTransaction> bankTransactions =
-                  await dbConnector.getAllBankTransactions();
-              if (bankTransactions.isEmpty) {
-                for (var newBankTrans in resTrans) {
-                  await dbConnector.postBankTransaction(newBankTrans);
-                }
-              } else {
-                List<Transaction> transactions =
-                    await dbConnector.getAllTransactions();
-                Transaction latestTransaction = transactions[0];
-                for (var newBankTrans in resTrans) {
-                  if (newBankTrans.date.compareTo(latestTransaction.date) > 0) {
-                    await dbConnector.postBankTransaction(newBankTrans);
-                  }
-                }
-              }
+              await dbConnector.postMissingBankTransactions(resTrans);
 
-              List<int> addedUpdated1 =
-                  await dbConnector.importMissingBankTransactions();
-              List<int> addedUpdated2 =
-                  await dbConnector.mergeReceiptsWithTransactions();
-              int added = addedUpdated1[0] + addedUpdated2[0];
-              int updated = addedUpdated1[1] + addedUpdated2[1];
+              List<int> addedUpdated = await dbConnector.updateTransactions();
 
               final snackBar = SnackBar(
                 backgroundColor: Utils.mediumDarkColor,
                 content: Text(
-                  "$added transactions were added. $updated transactions were updated.",
+                  "${addedUpdated[0]} transactions were added. ${addedUpdated[1]} transactions were updated.",
                   style: TextStyle(color: Utils.lightColor),
                 ),
               );

@@ -3,6 +3,7 @@ import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/models/transaction.dart';
+import 'package:economicalc_client/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -102,9 +103,8 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                         await dbConnector.updateReceipt(receipt);
                       }
                       widget.transaction.categoryDesc = dropdownValue;
-                      widget.transaction.categoryID =
-                          await SQFLite.getCategoryIDfromDescription(
-                              dropdownValue!);
+                      widget.transaction.categoryID = await dbConnector
+                          .getCategoryIDfromDescription(dropdownValue!);
                       await dbConnector.updateTransaction(widget.transaction);
                       int? n = await dbConnector
                           .numOfCategoriesWithSameName(widget.transaction);
@@ -353,10 +353,16 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     );
     Widget continueButton = TextButton(
       child: Text("Yes"),
-      onPressed: () {
-        dbConnector.deleteReceipt(widget.transaction.receiptID!);
-        dbConnector.deleteTransaction(widget.transaction.id!);
-        Navigator.of(context).popUntil((route) => route.isFirst);
+      onPressed: () async {
+        await dbConnector.deleteReceipt(widget.transaction.receiptID!);
+        if (widget.transaction.bankTransactionID == null) {
+          await dbConnector.deleteTransaction(widget.transaction.id!);
+        } else {
+          widget.transaction.receiptID = null;
+          await dbConnector.updateTransaction(widget.transaction);
+        }
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (context) => HomeScreen()));
       },
     );
 

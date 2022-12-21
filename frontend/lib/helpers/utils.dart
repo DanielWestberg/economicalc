@@ -82,7 +82,7 @@ class Utils {
     });
 
     if (transaction.receiptID == null &&
-        receipt.total!.abs() == transaction.totalAmount!.abs() &&
+        receipt.total! == -transaction.totalAmount! &&
         Utils.isSimilarDate(receipt.date, transaction.date)) {
       String desc = transaction.store!;
       String desc1 = receipt.recipient;
@@ -107,10 +107,35 @@ class Utils {
       list.add(element);
     });
 
-    if (trans1.totalAmount!.abs() == trans2.totalAmount!.abs() &&
+    if (trans1.totalAmount! == trans2.totalAmount! &&
         Utils.isSimilarDate(trans1.date, trans2.date)) {
       String desc = trans1.store!;
       String desc1 = trans2.store!;
+      list.sort((a, b) => b.length.compareTo(a.length));
+      String result = Utils.removeStopWords(desc, list);
+      String result1 = Utils.removeStopWords(desc1, list);
+
+      if (Utils.isSimilarStoreName(result, result1)) return true;
+    }
+    return false;
+  }
+
+  static Future<bool> areBankTransactionsEqual(
+      BankTransaction trans1, BankTransaction trans2) async {
+    String response =
+        await rootBundle.loadString('assets/swedish_municipalities.json');
+    List<dynamic> sweMuni = json.decode(response);
+
+    List<String> list = [];
+
+    sweMuni.forEach((element) {
+      list.add(element);
+    });
+
+    if (trans1.amount.abs() == trans2.amount.abs() &&
+        Utils.isSimilarDate(trans1.date, trans2.date)) {
+      String desc = trans1.description;
+      String desc1 = trans2.description;
       list.sort((a, b) => b.length.compareTo(a.length));
       String result = Utils.removeStopWords(desc, list);
       String result1 = Utils.removeStopWords(desc1, list);

@@ -88,26 +88,48 @@ class ResultsScreenState extends State<ResultsScreen> {
   Widget confirmButton() {
     return Container(
       padding: EdgeInsets.all(40),
-      child: GestureDetector(
-          onTap: () async {
+      child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Utils.mediumLightColor,
+            foregroundColor: Utils.textColor,
+          ),
+          onPressed: () async {
             int receiptID =
                 await dbConnector.insertReceipt(receipt, dropdownValue);
-            /*Transaction transaction = Transaction(
+            Transaction transaction = Transaction(
               date: receipt.date,
               totalAmount: -receipt.total!,
               store: receipt.recipient,
-              bankTransactionID: null,
               receiptID: receiptID,
               categoryID:
-                  await SQFLite.getCategoryIDfromDescription(dropdownValue),
+                  await dbConnector.getCategoryIDfromDescription(dropdownValue),
               categoryDesc: dropdownValue,
             );
-            await dbConnector.insertTransaction(transaction);
+            Transaction? alreadyExists =
+                await dbConnector.checkForExistingTransaction(transaction);
+            if (alreadyExists != null) {
+              alreadyExists.receiptID = receiptID;
+              alreadyExists.date = transaction.date;
+              alreadyExists.categoryDesc = transaction.categoryDesc;
+              alreadyExists.categoryID = transaction.categoryID;
+              await dbConnector.updateTransaction(alreadyExists);
+              final snackBar = SnackBar(
+                backgroundColor: Utils.mediumDarkColor,
+                content: Text(
+                  "Receipt was added to existing identical bank transaction",
+                  style: TextStyle(color: Utils.lightColor),
+                ),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+            } else {
+              await dbConnector.insertTransaction(transaction);
+            }
             int? n = await dbConnector.numOfCategoriesWithSameName(transaction);
             if (n > 0) {
               showAlertDialog(context, n, transaction);
+            } else {
+              Navigator.pop(context);
             }
-            */
           },
           child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -133,10 +155,13 @@ class ResultsScreenState extends State<ResultsScreen> {
                     value: dropdownValue,
                     onChanged: (
                       String? value,
-                    ) {
+                    ) async {
+                      int? categoryID = await dbConnector
+                          .getCategoryIDfromDescription(dropdownValue);
                       setState(() {
                         dropdownValue = value!;
                         receipt.categoryDesc = dropdownValue;
+                        receipt.categoryID = categoryID;
                       });
                     },
                     items: categories.map<DropdownMenuItem<String>>(
