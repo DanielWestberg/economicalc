@@ -1,9 +1,11 @@
-import 'dart:io';
 import 'dart:ui';
 
 import 'package:collection/collection.dart';
 import 'package:cross_file/cross_file.dart';
+import 'package:sqflite_common/sqlite_api.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
@@ -22,9 +24,18 @@ class MissingParamException implements Exception {
   String toString() => "MissingParamException: $message";
 }
 
+Future<String> getInMemoryDatabasePath() async {
+  return inMemoryDatabasePath;
+}
+
 main() async {
-  TestWidgetsFlutterBinding.ensureInitialized();
-  final apiCaller = ApiCaller();
+  final apiCaller = ApiCaller.withDb(
+      SQFLite(
+          dbFactory: databaseFactoryFfi,
+          path: getInMemoryDatabasePath,
+      )
+  );
+
   print("Report IDs can be found here: ${apiCaller.tinkReportEndpoint}");
   const accountReportId = String.fromEnvironment("accountReportId");
   const transactionReportId = String.fromEnvironment("transactionReportId");
@@ -37,10 +48,11 @@ main() async {
     throw const MissingParamException("transactionReportId");
   }
 
-  await apiCaller.fetchLoginData(accountReportId, transactionReportId, true);
   const int categoryId = 1234;
 
-  setUpAll(() {});
+  setUpAll(() async {
+    await apiCaller.fetchLoginData(accountReportId, transactionReportId, true);
+  });
 
   tearDownAll(() async {
     await apiCaller.deleteCategory(categoryId);
