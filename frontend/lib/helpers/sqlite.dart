@@ -125,7 +125,7 @@ class SQFLite {
   // Define a function that inserts transactions into the database
   Future<void> insertTransaction(Transaction transaction) async {
     // Get a reference to the database.
-    final db = await instance.database;
+    final db = await database;
     await db?.insert(
       'transactions',
       encodeTransaction(transaction),
@@ -160,7 +160,7 @@ class SQFLite {
 
   // A method that retrieves all the transactions from the transactions table.
   Future<List<Transaction>> getAllTransactions() async {
-    final db = await instance.database;
+    final db = await database;
 
     final List<Map<String, dynamic?>>? maps = await db?.query('transactions');
 
@@ -203,7 +203,7 @@ class SQFLite {
 
   Future<void> updateTransaction(Transaction transaction) async {
     // Get a reference to the database.
-    final db = await instance.database;
+    final db = await database;
 
     int? categoryID =
         await getCategoryIDfromDescription(transaction.categoryDesc!);
@@ -221,7 +221,7 @@ class SQFLite {
   }
 
   Future<void> deleteTransaction(int id) async {
-    final db = await instance.database;
+    final db = await database;
 
     // Remove the transaction from the database.
     await db?.delete(
@@ -238,7 +238,7 @@ class SQFLite {
   }
 
   Future<void> importMissingBankTransactions() async {
-    final db = await instance.database;
+    final db = await database;
 
     List<Map<String, dynamic?>>? bankTransactions =
         await db?.rawQuery('SELECT * FROM bankTransactions');
@@ -266,7 +266,7 @@ class SQFLite {
   /*************************** BANKTRANSACTIONS *******************************/
 
   Future<List<bank_transaction.BankTransaction>> getBankTransactions() async {
-    final db = await instance.database;
+    final db = await database;
 
     final List<Map<String, dynamic>>? maps =
         await db?.query('bankTransactions');
@@ -293,7 +293,7 @@ class SQFLite {
 
   Future<void> postBankTransaction(
       bank_transaction.BankTransaction bankTransaction) async {
-    final db = await instance.database;
+    final db = await database;
 
     await db?.insert(
       'bankTransactions',
@@ -304,7 +304,7 @@ class SQFLite {
 
   Future<bank_transaction.BankTransaction> getBankTransactionfromID(
       int id) async {
-    final db = await instance.database;
+    final db = await database;
 
     List<Map<String, dynamic?>>? maps =
         await db?.rawQuery('SELECT * FROM bankTransactions WHERE id = "${id}"');
@@ -333,7 +333,7 @@ class SQFLite {
   Future<int> insertReceipt(Receipt receipt, String categoryDesc) async {
     // Get a reference to the database.
     int? categoryID = await getCategoryIDfromDescription(categoryDesc);
-    final db = await instance.database;
+    final db = await database;
     receipt.categoryDesc = categoryDesc;
     receipt.categoryID = categoryID;
     return db!.insert(
@@ -381,7 +381,7 @@ class SQFLite {
 
   // A method that retrieves all the receipts from the receipts table.
   Future<List<Receipt>> getAllReceipts() async {
-    final db = await instance.database;
+    final db = await database;
 
     final List<Map<String, dynamic?>>? maps = await db?.query('receipts');
 
@@ -400,7 +400,7 @@ class SQFLite {
   }
 
   Future<Receipt> getReceiptfromID(int id) async {
-    final db = await instance.database;
+    final db = await database;
     List<Map<String, dynamic?>>? maps =
         await db?.rawQuery('SELECT * FROM receipts WHERE id = "${id}"');
 
@@ -417,7 +417,7 @@ class SQFLite {
 
   Future<void> updateReceipt(Receipt transaction) async {
     // Get a reference to the database.
-    final db = await instance.database;
+    final db = await database;
 
     int? categoryID =
         await getCategoryIDfromDescription(transaction.categoryDesc!);
@@ -435,7 +435,7 @@ class SQFLite {
   }
 
   Future<void> deleteReceipt(int id) async {
-    final db = await instance.database;
+    final db = await database;
 
     // Remove the receipt from the database.
     await db?.delete(
@@ -481,7 +481,7 @@ class SQFLite {
   }
 
   Future<TransactionCategory?> getCategoryFromID(int id) async {
-    final db = await instance.database;
+    final db = await database;
     List<Map<String, dynamic?>>? obj =
         await db?.rawQuery('SELECT * FROM categories WHERE id = "$id"');
     return TransactionCategory.fromJson(obj![0]);
@@ -531,7 +531,7 @@ class SQFLite {
   Future<void> insertCategory(TransactionCategory category) async {
     // Get a reference to the database.
 
-    final db = await instance.database;
+    final db = await database;
     await db?.insert(
       'categories',
       category.toJson(),
@@ -541,7 +541,7 @@ class SQFLite {
 
   Future<void> updateCategory(TransactionCategory category) async {
     // Get a reference to the database.
-    final db = await instance.database;
+    final db = await database;
 
     // Update the given category.
     await db?.update(
@@ -555,7 +555,7 @@ class SQFLite {
   }
 
   Future<void> deleteCategoryByID(int id) async {
-    final db = await instance.database;
+    final db = await database;
     int? uncategorizedID = await getCategoryIDfromDescription("Uncategorized");
 
     await db?.rawQuery(
@@ -572,7 +572,7 @@ class SQFLite {
   }
 
   Future<List<TransactionCategory>> getAllcategories() async {
-    final db = await instance.database;
+    final db = await database;
     final List<Map<String, dynamic?>>? maps = await db?.query('categories');
     return List.generate(maps!.length, (i) {
       return TransactionCategory(
@@ -585,7 +585,7 @@ class SQFLite {
   /*************************** COOKIES *******************************/
 
   Future<Cookie?> getCookie() async {
-    final db = await instance.database;
+    final db = await database;
     List<Map<String, dynamic>>? result = await db?.query(
       'cookies',
       where: 'id = $cookieId',
@@ -600,7 +600,7 @@ class SQFLite {
       'cookie': cookie.toString()
     };
 
-    final db = await instance.database;
+    final db = await database;
     await db?.insert(
       'cookies',
       value,
