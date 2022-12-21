@@ -157,6 +157,7 @@ main() async {
   test("Post multiple receipts", () async {
     List<Receipt> receipts = [
       Receipt(
+        id: 3,
         recipient: "ica",
         date: DateTime.utc(2001, 9, 11),
         items: [
@@ -173,6 +174,7 @@ main() async {
         categoryID: 2,
       ),
       Receipt(
+        id: 4,
         recipient: "gamestop",
         date: DateTime.utc(2022, 2, 24),
         items: [
