@@ -90,7 +90,7 @@ class ApiCaller {
   factory ApiCaller([bool testMode = true]) =>
     testMode ? testInstance : nonTestInstance;
 
-  // Primarily for inserting mock database
+  // Primarily for testing
   factory ApiCaller.withDb(SQFLite dbConnector, [bool testMode = true]) =>
     ApiCaller._privateConstructor(testMode, dbConnector);
 
