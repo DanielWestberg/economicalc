@@ -90,15 +90,6 @@ class HistoryListState extends State<HistoryList> {
       isLoading = true;
     });
     categories = await dbConnector.getAllcategories();
-    // Receipt receipt = await fetchOneMockedTransaction();
-    // await dbConnector.insertReceipt(receipt, "Uncategorized");
-    // await dbConnector.insertTransaction(Transaction(
-    //     date: receipt.date,
-    //     receiptID: 1,
-    //     store: receipt.recipient,
-    //     totalAmount: receipt.total,
-    //     categoryDesc: receipt.categoryDesc,
-    //     categoryID: receipt.categoryID));
     var updatedDataFuture = dbConnector.getFilteredTransactions(
         widget.startDate, widget.endDate, widget.category, widget.onlyReceipts);
     setState(() {
