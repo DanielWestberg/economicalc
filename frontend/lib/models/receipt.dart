@@ -14,6 +14,7 @@ class Receipt {
   String? backendId;
   String ocrText;
 
+
   Receipt({
     this.id,
     required this.recipient,
@@ -22,8 +23,10 @@ class Receipt {
     required this.items,
     this.categoryDesc,
     this.categoryID,
+
     this.backendId,
     required this.ocrText,
+
   });
 
   @override
@@ -36,6 +39,8 @@ class Receipt {
       items.every((item) => other.items.contains(item)) &&
       categoryID == other.categoryID &&
       backendId == other.backendId);
+  );
+
 
   @override
   get hashCode => (id.hashCode |
@@ -43,10 +48,10 @@ class Receipt {
       date.hashCode |
       total.hashCode |
       categoryDesc.hashCode |
-      items.fold(
-          0, (previousValue, element) => previousValue | element.hashCode) |
-      categoryID.hashCode |
-      backendId.hashCode);
+      items.fold(0, (previousValue, element) => previousValue | element.hashCode) |
+      categoryID.hashCode
+  );
+
 
   Map<String, dynamic> toMap() {
     List<Map<String, dynamic>> items = [];
@@ -64,8 +69,8 @@ class Receipt {
       'ocrText': ocrText
     };
 
-    if (backendId != null) {
-      result["_id"] = backendId;
+    if (id != null) {
+      result["id"] = id;
     }
 
     return result;
@@ -73,8 +78,8 @@ class Receipt {
 
   @override
   toString() {
-    return "Receipt ${backendId ?? ""}: "
-        "{$recipient, $date, $total, $items, $categoryID}";
+    return "Receipt ${id ?? ""}: "
+    "{$recipient, $date, $total, $items, $categoryID}";
   }
 
   factory Receipt.fromBackendJson(Map<String, dynamic> json) {
@@ -93,6 +98,10 @@ class Receipt {
         backendId: json["_id"],
         ocrText: json["ocr_text"]);
   }
+
+  static List<Receipt>
+  fromBackendJsonList(List<dynamic> jsonList) =>
+    jsonList.map((r) => Receipt.fromBackendJson(r)).toList();
 
   factory Receipt.fromJson(Map<String, dynamic> json) {
     List<ReceiptItem> items = json['receipts'][0]["items"]

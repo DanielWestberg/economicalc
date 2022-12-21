@@ -31,8 +31,8 @@ class ResultsScreenState extends State<ResultsScreen> {
   bool isLoading = false;
   late Future<Receipt> dataFuture;
   late Receipt receipt;
-  late Future<List<ReceiptCategory>> categoriesFutureBuilder;
-  late List<ReceiptCategory> categories;
+  late Future<List<TransactionCategory>> categoriesFutureBuilder;
+  late List<TransactionCategory> categories;
   final dbConnector = SQFLite.instance;
   int? categoryID;
   String dropdownValue =
@@ -52,34 +52,23 @@ class ResultsScreenState extends State<ResultsScreen> {
     return SafeArea(
         child: isLoading
             ? Scaffold(
-                backgroundColor: Utils.backgroundColor,
+                backgroundColor: Utils.mediumLightColor,
                 body: Center(
                     child: LoadingAnimationWidget.threeArchedCircle(
                         color: Colors.black, size: 40)))
             : Scaffold(
                 appBar: AppBar(
-                  toolbarHeight: 180,
-                  backgroundColor: Utils.backgroundColor,
+                  backgroundColor: Utils.mediumLightColor,
                   foregroundColor: Colors.black,
-                  title: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                            padding: EdgeInsets.only(left: 10),
-                            child: Text("EconomiCalc",
-                                style: TextStyle(
-                                    color: Color(0xff000000),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 36.0))),
-                      ]),
-                  centerTitle: false,
+                  title: Text('Scan result'),
+                  centerTitle: true,
                   elevation: 0,
                 ),
                 body: ListView(children: [
                   photoArea(),
-                  buttonArea(),
                   headerInfo(),
-                  buildDataTable()
+                  buildDataTable(),
+                  confirmButton(),
                 ])));
   }
 
@@ -96,9 +85,9 @@ class ResultsScreenState extends State<ResultsScreen> {
         ));
   }
 
-  Widget buttonArea() {
+  Widget confirmButton() {
     return Container(
-      padding: EdgeInsets.only(bottom: 30),
+      padding: EdgeInsets.all(40),
       child: GestureDetector(
           onTap: () async {
             int receiptID =
@@ -117,9 +106,13 @@ class ResultsScreenState extends State<ResultsScreen> {
             int? n = await dbConnector.numOfCategoriesWithSameName(transaction);
             if (n > 0) {
               showAlertDialog(context, n, transaction);
+            } else {
+              showConfirmationButton(context);
             }
           },
-          child: Icon(Icons.check)),
+          child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [Text("Confirm "), Icon(Icons.check)])),
     );
   }
 
@@ -147,16 +140,23 @@ class ResultsScreenState extends State<ResultsScreen> {
                         receipt.categoryDesc = dropdownValue;
                       });
                     },
-                    items: categories
-                        .map<DropdownMenuItem<String>>((ReceiptCategory category) {
+                    items: categories.map<DropdownMenuItem<String>>(
+                        (TransactionCategory category) {
                       return DropdownMenuItem<String>(
                         value: category.description,
-                        child: Text(category.description,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                fontSize: fontSize,
-                                fontWeight: FontWeight.w600,
-                                color: category.color)),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Container(
+                                  padding: EdgeInsets.only(right: 5),
+                                  child: Icon(Icons.label_rounded,
+                                      color: category.color)),
+                              Text(
+                                category.description,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: fontSize),
+                              )
+                            ]),
                       );
                     }).toList()));
           } else {
@@ -165,19 +165,45 @@ class ResultsScreenState extends State<ResultsScreen> {
         });
   }
 
+  showConfirmationButton(BuildContext context) {
+    Widget confirmationButton = TextButton(
+      child: Text("Ok"),
+      onPressed: () {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      },
+    );
+    AlertDialog alert = AlertDialog(
+      
+      content: Text("Receipt successfully added!"),
+      actions: [
+        confirmationButton,
+      ],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    ).then((value) => Navigator.of(context).popUntil((route) => route.isFirst));
+  }
+
   showAlertDialog(BuildContext context, int n, transaction) {
     // set up the buttons
     Widget cancelButton = TextButton(
       child: Text("No"),
       onPressed: () {
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        Navigator.of(context, rootNavigator: true).pop('dialog');
+        showConfirmationButton(context);
       },
     );
     Widget continueButton = TextButton(
       child: Text("Yes"),
       onPressed: () {
         dbConnector.assignCategories(transaction);
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        Navigator.of(context, rootNavigator: true).pop('dialog');
+        showConfirmationButton(context);
       },
     );
 
@@ -223,13 +249,7 @@ class ResultsScreenState extends State<ResultsScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(children: [
-                          Icon(Icons.category),
-                          Padding(
-                            padding: EdgeInsets.only(left: 5),
-                            child: dropDown(),
-                          ),
-                        ]),
+                        dropDown(),
                         Row(
                           children: [
                             Icon(Icons.store),
@@ -365,7 +385,8 @@ class ResultsScreenState extends State<ResultsScreen> {
     final imageFile = File(image.path);
     try {
       var response = await processImageWithAsprise(imageFile);
-      Receipt receipt = Receipt.fromJson(response);
+      Map<String, dynamic> filteredJson = removeJitter(response);
+      Receipt receipt = Receipt.fromJson(filteredJson);
 
       setState(() {
         isLoading = false;
@@ -375,7 +396,7 @@ class ResultsScreenState extends State<ResultsScreen> {
     } on QuotaException catch (e) {
       Navigator.of(context).pop(false);
       final snackBar = SnackBar(
-        backgroundColor: Utils.snackBarError,
+        backgroundColor: Utils.errorColor,
         content: Text(
           'ERROR: Hourly quota exceeded. Try again in a few hours or use a VPN.',
           style: TextStyle(color: Colors.white),
@@ -386,7 +407,7 @@ class ResultsScreenState extends State<ResultsScreen> {
     } catch (e) {
       Navigator.of(context).pop(false);
       final snackBar = SnackBar(
-        backgroundColor: Utils.snackBarError,
+        backgroundColor: Utils.errorColor,
         content: Text(
           'ERROR: Image could not be processed.',
           style: TextStyle(color: Colors.white),
@@ -397,7 +418,48 @@ class ResultsScreenState extends State<ResultsScreen> {
     }
   }
 
-  Future<List<ReceiptCategory>> getCategories(SQFLite dbConnector) async {
+  Map<String, dynamic> removeJitter(Map<String, dynamic> respJson) {
+    var items = respJson['receipts'][0]['items'];
+
+    List<String> discountTerms = ["rabatt", "discount"];
+    List<String> redundantItems = ["öresavrundning", "avrundning"];
+
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      bool containsDiscount = false;
+
+      for (var discountTerm in discountTerms) {
+        if (item['description'].toLowerCase().contains(discountTerm)) {
+          containsDiscount = true;
+        }
+      }
+
+      for (var redundantItem in redundantItems) {
+        if (item['description'].toLowerCase().contains(redundantItem)) {
+          items.remove(item);
+          containsDiscount = false;
+        }
+      }
+
+      if (item['description'].toLowerCase().contains("pant")) {
+        items[i - 1]['amount'] += item['amount'];
+        items.remove(item);
+      }
+      if (containsDiscount) {
+        if (item['amount'] > 0) {
+          items[i - 1]['amount'] -= item['amount'];
+        } else if (item['amount'] < 0) {
+          items[i - 1]['amount'] += item['amount'];
+        }
+        items.remove(item);
+      }
+    }
+
+    respJson['receipts'][0]['items'] = items;
+    return respJson;
+  }
+
+  Future<List<TransactionCategory>> getCategories(SQFLite dbConnector) async {
     return await dbConnector.getAllcategories();
   }
 }
