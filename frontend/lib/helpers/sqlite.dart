@@ -29,7 +29,11 @@ class SQFLite {
       _dbFactory = dbFactory ?? databaseFactory,
       _path = path ?? _defaultPath;
 
-  static final SQFLite instance = SQFLite();
+  static SQFLite? _instance;
+  static SQFLite get instance {
+    _instance ??= SQFLite();
+    return _instance!;
+  }
 
   Future<Database?> get database async {
     if (_database != null) {
