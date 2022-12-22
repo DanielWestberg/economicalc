@@ -12,8 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 class MissingParamException implements Exception {
   final String paramName;
-  get message =>
-      "Missing parameter $paramName. "
+  get message => "Missing parameter $paramName. "
       "Please run 'flutter test' with the flag "
       "'--dart-define=$paramName=<value>";
 
@@ -36,14 +35,12 @@ main() async {
     throw const MissingParamException("transactionReportId");
   }
 
-  final loginData = await fetchLoginData(
-      accountReportId, transactionReportId, true
-  );
+  final loginData =
+      await fetchLoginData(accountReportId, transactionReportId, true);
   final cookie = loginData.cookie;
   const int categoryId = 1234;
 
-  setUpAll(() {
-  });
+  setUpAll(() {});
 
   tearDownAll(() async {
     await deleteCategory(cookie, categoryId);
@@ -65,6 +62,7 @@ main() async {
       ),
     ];
     Receipt receipt = Receipt(
+      id: 1,
       recipient: "ica",
       date: DateTime.utc(1970, 1, 1),
       items: items,
@@ -78,50 +76,50 @@ main() async {
     expect(fetchedReceipts, contains(postedReceipt));
   });
 
-  test ("Update image", () async {
+  test("Update image", () async {
     final image = XFile("../backend/tests/res/tsu.jpg");
 
     final receipts = await fetchReceipts(cookie);
-    final backendId = receipts[0].backendId!;
-    await updateImage(cookie, backendId, image);
+    final id = receipts[0].id!;
+    await updateImage(cookie, id, image);
 
-    final responseImage = await fetchImage(cookie, backendId);
+    final responseImage = await fetchImage(cookie, id);
     final expectedBytes = await image.readAsBytes();
     final responseBytes = await responseImage.readAsBytes();
 
     final equals = const ListEquality().equals;
     expect(equals(expectedBytes, responseBytes), true);
 
-    deleteImage(cookie, backendId);
+    deleteImage(cookie, id);
   });
 
-  test ("Update receipt", () async {
+  test("Update receipt", () async {
     final receipt = (await fetchReceipts(cookie))[0];
     receipt.items[0].itemName = "Snus";
-    await updateReceipt(cookie, receipt.backendId, receipt);
+    await updateReceipt(cookie, receipt.id, receipt);
     final responseReceipts = await fetchReceipts(cookie);
     expect(responseReceipts, contains(receipt));
   });
 
-  test ("Post category", () async {
-    final category = ReceiptCategory(
-        description: "Groceries",
-        color: const Color(0xFFFF7733),
-        id: categoryId,
+  test("Post category", () async {
+    final category = TransactionCategory(
+      description: "Groceries",
+      color: const Color(0xFFFF7733),
+      id: categoryId,
     );
 
     await postCategory(cookie, category);
 
-    List<ReceiptCategory> fetchedCategories = await fetchCategories(cookie);
+    List<TransactionCategory> fetchedCategories = await fetchCategories(cookie);
     expect(fetchedCategories, contains(category));
 
     await deleteCategory(cookie, categoryId);
   });
 
-  test ("Update category", () async {
+  test("Update category", () async {
     final originalDescription = "Explosives";
 
-    final category = ReceiptCategory(
+    final category = TransactionCategory(
       description: originalDescription,
       color: const Color(0xFFFF0000),
       id: categoryId,
@@ -146,6 +144,7 @@ main() async {
 
   test ("Can log in twice", () async {
     Receipt receipt = Receipt(
+      id: 6,
       recipient: "b",
       date: DateTime.utc(1987, 1, 1),
       items: [
@@ -163,7 +162,52 @@ main() async {
       accountReportId, transactionReportId, true
     );
     final otherCookie = otherLoginData.cookie;
-    final responseReceipts = await fetchReceipts(cookie);
+    final responseReceipts = await fetchReceipts(otherCookie);
     expect(responseReceipts, contains(receipt));
+  });
+
+  test("Post multiple receipts", () async {
+    List<Receipt> receipts = [
+      Receipt(
+        id: 3,
+        recipient: "ica",
+        date: DateTime.utc(2001, 9, 11),
+        items: [
+          ReceiptItem(
+            itemName: "Toalettpapper",
+            amount: 1,
+          ),
+          ReceiptItem(
+            itemName: "Fil",
+            amount: 3,
+          ),
+        ],
+        total: 99.0,
+        categoryID: 2,
+      ),
+      Receipt(
+        id: 4,
+        recipient: "gamestop",
+        date: DateTime.utc(2022, 2, 24),
+        items: [
+          ReceiptItem(
+            itemName: "Hollow Knight",
+            amount: 1
+          ),
+          ReceiptItem(
+            itemName: "Kerbal Space Program",
+            amount: 1
+          ),
+        ],
+        total: 300.0,
+        categoryID: 3,
+      ),
+    ];
+
+    final responseReceipts = await postManyReceipts(cookie, receipts);
+    final fetchedReceipts = await fetchReceipts(cookie);
+    for (Receipt receipt in responseReceipts) {
+      expect(fetchedReceipts, contains(receipt));
+    }
   });
 }

@@ -42,6 +42,27 @@ const String tinkReportEndpoint =
     ",SAVING_TRANSACTIONS"
     "&account_dialog_type=SINGLE";
 
+class UnexpectedResponseException implements Exception {
+  final http.Response response;
+  get statusCode => response.statusCode;
+  get message => "Unexpected $statusCode response\n${response.body}";
+
+  const UnexpectedResponseException(this.response);
+
+  @override
+  String toString() => "UnexpectedResponseException: $message";
+}
+
+class UnexpectedStatusCodeException implements Exception {
+  final int statusCode;
+  get message => "Unexpected status code $statusCode}";
+
+  const UnexpectedStatusCodeException(this.statusCode);
+
+  @override
+  String toString() => "UnexpectedStatusCodeException: $message";
+}
+
 Uri getUri(String path) {
   if (testMode) {
     return Uri.http(apiServer, path);
@@ -98,7 +119,7 @@ Future<LoginData> fetchLoginData(
   //print(uri);
   //print(response);
   if (response.statusCode != 200) {
-    throw Exception('http.get error: statusCode= ${response.statusCode}');
+    throw UnexpectedResponseException(response);
   }
   //print(response.body);
   return LoginData.fromResponse(response);
@@ -122,7 +143,7 @@ Future<List<BankTransaction>> fetchTransactions(String access_token) async {
 
     return resTrans;
   } else {
-    throw Exception("No transactions associated with user");
+    throw UnexpectedResponseException(response);
   }
 }
 
@@ -204,6 +225,7 @@ processImageWithAsprise(File imageFile) async {
       throw Exception(respJson['message']);
     }
   }
+  print(respJson);
   return respJson;
 }
 
@@ -215,8 +237,7 @@ fetchReceipts(Cookie cookie) async {
 
   final response = await http.get(getUri(path), headers: headers);
   if (response.statusCode != 200) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n{response.body}");
+    throw UnexpectedResponseException(response);
   }
   List<dynamic> receipts = convert.jsonDecode(response.body)["data"];
   List<Receipt> resultReceipts = [];
@@ -237,13 +258,27 @@ postReceipt(Cookie cookie, Receipt receipt) async {
   final body = convert.jsonEncode(receipt.toMap());
   final response = await http.post(uri, headers: headers, body: body);
   if (response.statusCode != 201) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${response.body}");
+    throw UnexpectedResponseException(response);
   }
   return Receipt.fromBackendJson(convert.jsonDecode(response.body)["data"]);
 }
 
-updateReceipt(Cookie cookie, String receiptId, Receipt receipt) async {
+postManyReceipts(Cookie cookie, List<Receipt> receipts) async {
+  final uri = Uri.http(apiServer, "/receipts");
+  final headers = {
+    "Content-type": "application/json",
+    "Cookie": cookie.toString(),
+  };
+  final receiptMaps = receipts.map((r) => r.toMap()).toList();
+  final body = convert.jsonEncode(receiptMaps);
+  final response = await http.post(uri, headers: headers, body: body);
+  if (response.statusCode != 201) {
+    throw UnexpectedResponseException(response);
+  }
+  return Receipt.fromBackendJsonList(convert.jsonDecode(response.body)["data"]);
+}
+
+updateReceipt(Cookie cookie, int receiptId, Receipt receipt) async {
   final uri = getUri("/receipts/$receiptId");
   final headers = {
     "Content-type": "application/json",
@@ -252,24 +287,22 @@ updateReceipt(Cookie cookie, String receiptId, Receipt receipt) async {
   final body = convert.jsonEncode(receipt.toMap());
   final response = await http.put(uri, headers: headers, body: body);
   if (response.statusCode != 200) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${response.body}");
+    throw UnexpectedResponseException(response);
   }
 }
 
 deleteReceipt(Cookie cookie, Receipt receipt) async {
-  final uri = getUri("/receipts/${receipt.backendId}");
+  final uri = getUri("/receipts/${receipt.id}");
   final Map<String, String> headers = {
     "Cookie": cookie.toString(),
   };
   final response = await http.delete(uri, headers: headers);
   if (response.statusCode != 204) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${response.body}");
+    throw UnexpectedResponseException(response);
   }
 }
 
-updateImage(Cookie cookie, String receiptId, XFile image) async {
+updateImage(Cookie cookie, int receiptId, XFile image) async {
   final uri = getUri("/receipts/$receiptId/image");
   final mimeType = image.mimeType ?? "application/octet-stream";
   final request = http.MultipartRequest("PUT", uri)
@@ -278,33 +311,30 @@ updateImage(Cookie cookie, String receiptId, XFile image) async {
   request.headers["Cookie"] = cookie.toString();
   final response = await request.send();
   if (response.statusCode != 204) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${await response.stream.bytesToString()}");
+    throw UnexpectedStatusCodeException(response.statusCode);
   }
 }
 
-fetchImage(Cookie cookie, String receiptId) async {
+fetchImage(Cookie cookie, int receiptId) async {
   final uri = getUri("/receipts/$receiptId/image");
   final Map<String, String> headers = {
     "Cookie": cookie.toString(),
   };
   final response = await http.get(uri, headers: headers);
   if (response.statusCode != 200) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${response.body}");
+    throw UnexpectedResponseException(response);
   }
   return XFile.fromData(response.bodyBytes);
 }
 
-deleteImage(Cookie cookie, String receiptId) async {
+deleteImage(Cookie cookie, int receiptId) async {
   final uri = getUri("/receipts/$receiptId/image");
   final Map<String, String> headers = {
     "Cookie": cookie.toString(),
   };
   final response = await http.delete(uri, headers: headers);
   if (response.statusCode != 204) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${response.body}");
+    throw UnexpectedResponseException(response);
   }
 }
 
@@ -315,15 +345,14 @@ fetchCategories(Cookie cookie) async {
   };
   final response = await http.get(uri, headers: headers);
   if (response.statusCode != 200) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${response.body}");
+    throw UnexpectedResponseException(response);
   }
 
   List<dynamic> categories = convert.jsonDecode(response.body)["data"];
-  return categories.map((e) => ReceiptCategory.fromJson(e)).toList();
+  return categories.map((e) => TransactionCategory.fromJson(e)).toList();
 }
 
-postCategory(Cookie cookie, ReceiptCategory category) async {
+postCategory(Cookie cookie, TransactionCategory category) async {
   final uri = getUri("/categories");
   final headers = {
     "Content-type": "application/json",
@@ -332,12 +361,11 @@ postCategory(Cookie cookie, ReceiptCategory category) async {
   final body = convert.jsonEncode(category.toJson(true));
   final response = await http.post(uri, headers: headers, body: body);
   if (response.statusCode != 201) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${response.body}");
+    throw UnexpectedResponseException(response);
   }
 }
 
-updateCategory(Cookie cookie, ReceiptCategory category) async {
+updateCategory(Cookie cookie, TransactionCategory category) async {
   final uri = getUri("/categories/${category.id!}");
   final headers = {
     "Content-type": "application/json",
@@ -346,8 +374,7 @@ updateCategory(Cookie cookie, ReceiptCategory category) async {
   final body = convert.jsonEncode(category.toJson(true));
   final response = await http.put(uri, headers: headers, body: body);
   if (response.statusCode != 200 && response.statusCode != 201) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${response.body}");
+    throw UnexpectedResponseException(response);
   }
 }
 
@@ -358,7 +385,6 @@ deleteCategory(Cookie cookie, int categoryId) async {
   };
   final response = await http.delete(uri, headers: headers);
   if (response.statusCode != 204) {
-    throw Exception(
-        "Unexpected status code ${response.statusCode}\n${response.body}");
+    throw UnexpectedResponseException(response);
   }
 }

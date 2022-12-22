@@ -21,6 +21,7 @@ def create_app(config):
     db = create_db(app)
     fs = GridFS(db)
 
+
     def make_unauthorized_response(message="Authentication required"):
         return make_response(message, unauthorized)
 
@@ -64,9 +65,10 @@ def create_app(config):
         transaction_report = get_transaction_data(transaction_report_id, access_token)
         print(account_report.status_code, flush=True);
         print(transaction_report.status_code, flush=True);
-        if account_report.status_code != 200 or transaction_report.status_code != 200:
-            return make_response("Dumbass", bad_request)
-        #HELLOSDSADS
+        if account_report.status_code != 200:
+            return make_response(f"Could not get account report, Tink returned status code {account_report.status_code}", bad_request)
+        if transaction_report.status_code != 200:
+            return make_response(f"Could not get transaction report, Tink returned status code {transaction_report.status_code}", bad_request)
 
         account_report = account_report.json()
         transaction_report = transaction_report.json()
@@ -197,8 +199,10 @@ def create_app(config):
         ssn = session["ssn"]
         if request.method == "GET":
             return get_receipts(ssn, request)
+        if type(request.json) == list:
+            return post_many_receipts(ssn, request)
         
-        return post_receipts(ssn, request)
+        return post_one_receipt(ssn, request)
 
 
     def get_receipts(bankId, request):
@@ -222,12 +226,12 @@ def create_app(config):
         return receipt
 
 
-    def post_receipts(bankId, request):
+    def post_one_receipt(bankId, request):
         required_type = "application/json"
         if request.content_type[:len(required_type)] != "application/json":
             return make_response(f"Expected content type application/json, not {request.content_type}", unsupported_media_type)
+
         receipt_dict = request.json
-        receipt_dict.pop("_id", None)
         receipt_dict.pop("imageId", None)
 
         receipt = parse_receipt_or_make_response(receipt_dict)
@@ -244,7 +248,38 @@ def create_app(config):
         return make_response(jsonify(data=receipt.to_dict(True)), created)
 
 
-    @app.route("/receipts/<ObjectId:receiptId>", methods=["PUT", "DELETE"])
+    def post_many_receipts(bankId, request):
+        required_type = "application/json"
+        if request.content_type[:len(required_type)] != "application/json":
+            return make_response(f"Expected content type application/json, not {request.content_type}", unsupported_media_type)
+
+        receipt_dicts = request.json
+
+        receipts = []
+        for receipt_dict in receipt_dicts:
+            receipt_dict.pop("imageId", None)
+
+            receipt = parse_receipt_or_make_response(receipt_dict)
+            if type(receipt) != Receipt:
+                return receipt
+
+            if len(receipt.items) == 0:
+                return make_response("Field \"items\" may not be an empty list", unprocessable_entity)
+
+            receipts.append(receipt)
+
+        receipt_dicts = [r.to_dict() for r in receipts]
+        user = db.users.find_one_or_404({"bankId": bankId})
+        update_action = {"$push": {"receipts": {"$each": receipt_dicts}}}
+        db.users.update_one({"_id": user["_id"]}, update_action)
+
+        for receipt_dict in receipt_dicts:
+            Receipt.make_json_serializable(receipt_dict)
+
+        return make_response(jsonify(data=receipt_dicts), created)
+
+
+    @app.route("/receipts/<int:receiptId>", methods=["PUT", "DELETE"])
     def user_receipt_by_id(receiptId):
         if not session_is_valid():
             return make_unauthorized_response()
@@ -267,23 +302,23 @@ def create_app(config):
         if type(new_receipt) != Receipt:
             return new_receipt
 
-        user = db.users.find_one_or_404({"bankId": bankId, "receipts._id": receiptId}, {"_id": 0, "receipts.$": 1})
+        user = db.users.find_one_or_404({"bankId": bankId, "receipts.id": receiptId}, {"_id": 0, "receipts.$": 1})
         old_receipt = user["receipts"][0]
-        new_receipt.id = old_receipt["_id"]
+        new_receipt.id = old_receipt["id"]
 
         new_receipt.image_id = old_receipt["imageId"] if "imageId" in old_receipt else None
 
-        db.users.find_one_and_update({"bankId": bankId, "receipts._id": receiptId}, {"$set": {"receipts.$": new_receipt.to_dict()}})
+        db.users.find_one_and_update({"bankId": bankId, "receipts.id": receiptId}, {"$set": {"receipts.$": new_receipt.to_dict()}})
         return jsonify(data=new_receipt.to_dict(True))
 
 
     def delete_receipt(bankId, receiptId, request):
         delete_image(bankId, receiptId, request)
-        db.users.find_one_and_update({"bankId": bankId, "receipts._id": receiptId}, {"$pull": {"receipts": {"_id": receiptId}}})
+        db.users.find_one_and_update({"bankId": bankId, "receipts.id": receiptId}, {"$pull": {"receipts": {"id": receiptId}}})
         return make_response("", no_content)
 
 
-    @app.route("/receipts/<ObjectId:receiptId>/image", methods=["GET", "PUT", "DELETE"])
+    @app.route("/receipts/<int:receiptId>/image", methods=["GET", "PUT", "DELETE"])
     def user_receipt_image(receiptId):
         if not session_is_valid():
             return make_unauthorized_response()
@@ -298,7 +333,7 @@ def create_app(config):
 
 
     def get_image(bankId, receiptId, request):
-        user = db.users.find_one_or_404({"bankId": bankId, "receipts._id": receiptId}, {"_id": 0, "receipts.$": 1})
+        user = db.users.find_one_or_404({"bankId": bankId, "receipts.id": receiptId}, {"_id": 0, "receipts.$": 1})
         receipt = user["receipts"][0]
         image_id = receipt["imageId"] if "imageId" in receipt else None
         image = fs.find_one(ObjectId(image_id)) if image_id is not None else None
@@ -312,13 +347,13 @@ def create_app(config):
         if len(request.files) == 0:
             return make_response("No file found in request", bad_request)
 
-        user = db.users.find_one_or_404({"bankId": bankId, "receipts._id": receiptId}, {"_id": 0, "receipts.$": 1})
+        user = db.users.find_one_or_404({"bankId": bankId, "receipts.id": receiptId}, {"_id": 0, "receipts.$": 1})
         receipt = user["receipts"][0]
         image_id = receipt["imageId"] if "imageId" in receipt else None
         image_id = ObjectId(image_id)
 
         if not "imageId" in receipt:
-            db.users.update_one({"bankId": bankId, "receipts._id": receiptId}, {"$set": {"receipts.$.imageId": image_id}})
+            db.users.update_one({"bankId": bankId, "receipts.id": receiptId}, {"$set": {"receipts.$.imageId": image_id}})
         else:
             fs.delete(image_id)
 
@@ -329,7 +364,7 @@ def create_app(config):
 
 
     def delete_image(bankId, receiptId, request):
-        user = db.users.find_one({"bankId": bankId, "receipts._id": receiptId}, {"_id": 0, "receipts.$": 1})
+        user = db.users.find_one({"bankId": bankId, "receipts.id": receiptId}, {"_id": 0, "receipts.$": 1})
         receipt = user["receipts"][0] if user is not None else None
         image_id = ObjectId(receipt["imageId"]) if receipt is not None and "imageId" in receipt else None
         if image_id is not None:

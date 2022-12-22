@@ -1,3 +1,4 @@
+import 'package:economicalc_client/components/drawer.dart';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/screens/results_screen.dart';
@@ -16,6 +17,7 @@ import 'package:intl/intl.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:month_year_picker/month_year_picker.dart';
 
 late BuildContext _context;
 
@@ -34,6 +36,7 @@ class _HomeScreen extends State<HomeScreen> {
   final SQFLite dbConnector = SQFLite.instance;
   bool showSearchBar = false;
   TextEditingController editingController = TextEditingController();
+  bool onlyReceipts = false;
 
   Map<String, dynamic> startDate = {
     "selected": DateTime(2022, 01, 01),
@@ -48,14 +51,14 @@ class _HomeScreen extends State<HomeScreen> {
   };
 
   Map<String, dynamic> category = {
-    "selected": ReceiptCategory.noneCategory,
-    "previous": ReceiptCategory.noneCategory,
-    "dialog": ReceiptCategory.noneCategory,
+    "selected": TransactionCategory.noneCategory,
+    "previous": TransactionCategory.noneCategory,
+    "dialog": TransactionCategory.noneCategory,
   };
 
   String dropdownValueCategory = 'None';
-  late List<ReceiptCategory> categories;
-  late Future<List<ReceiptCategory>> categoriesFutureBuilder;
+  late List<TransactionCategory> categories;
+  late Future<List<TransactionCategory>> categoriesFutureBuilder;
 
   @override
   void initState() {
@@ -76,174 +79,103 @@ class _HomeScreen extends State<HomeScreen> {
 
   Widget renderSearchField() {
     return Container(
-        color: Utils.backgroundColor,
-        padding: EdgeInsets.all(25),
+        color: Utils.lightColor,
+        padding: EdgeInsets.only(top: 20, right: 20, left: 20),
         child: TextField(
           onChanged: (value) {
             historyListStateKey.currentState!.search(value);
           },
           controller: editingController,
           decoration: InputDecoration(
+              labelStyle: TextStyle(color: Utils.mediumDarkColor),
+              hintStyle: TextStyle(color: Utils.textColor),
               labelText: "Search",
               hintText: "Search",
-              prefixIcon: Icon(Icons.search),
+              focusColor: Utils.mediumDarkColor,
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: Utils.mediumDarkColor,
+              ),
               suffixIcon: IconButton(
-                icon: Icon(Icons.clear),
+                icon: Icon(
+                  Icons.clear_rounded,
+                  color: Utils.mediumDarkColor,
+                ),
                 onPressed: (() {
                   setState(() {
                     showSearchBar = false;
+                    editingController.clear();
                   });
                 }),
               ),
               border: OutlineInputBorder(
+                  borderSide: BorderSide(color: Utils.darkColor),
+                  borderRadius: BorderRadius.all(Radius.circular(25.0))),
+              focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Utils.mediumDarkColor),
                   borderRadius: BorderRadius.all(Radius.circular(25.0)))),
         ));
   }
 
   Widget iconSection() {
     return Container(
-      color: Utils.backgroundColor,
-      padding: EdgeInsets.only(top: 10),
-      child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: <
-          Widget>[
-        IconButton(
-            icon: Icon(Icons.camera_alt_outlined),
-            onPressed: (() async {
-              final XFile? image =
-                  await ImagePicker().pickImage(source: ImageSource.camera);
-              //process()
-              if (image == null) return;
-              ImageGallerySaver.saveFile(image.path);
-              goToResults(image);
-            })),
-        IconButton(
-          icon: Icon(Icons.filter),
-          onPressed: (() async {
-            final XFile? image =
-                await ImagePicker().pickImage(source: ImageSource.gallery);
-            if (image == null) return;
-            goToResults(image);
-          }),
-        ),
-        IconButton(
-          icon: Icon(Icons.search),
-          onPressed: (() async {
-            setState(() {
-              showSearchBar = true;
-            });
-          }),
-        ),
-        IconButton(
-          icon: Icon(Icons.auto_graph),
-          onPressed: (() {
-            Navigator.push(_context,
-                MaterialPageRoute(builder: (_context) => StatisticsScreen()));
-          }),
-        ),
-        IconButton(
-          icon: Icon(Icons.filter_alt),
-          onPressed: (() {
-            startDate['previous'] = startDate['dialog'] = startDate['selected'];
-            endDate['previous'] = endDate['dialog'] = endDate['selected'];
-            category['previous'] = category['dialog'] = category['selected'];
-            dropdownValueCategory = category['selected'].description;
-            showDialog(
-                context: _context,
-                builder: (context) {
-                  return StatefulBuilder(builder: (context, setState) {
-                    return filterPopup(context, setState);
-                  });
+      padding: EdgeInsets.only(top: 10, bottom: 10),
+      color: Utils.mediumLightColor,
+      child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            IconButton(
+                iconSize: 30,
+                icon: Icon(Icons.camera_alt_outlined),
+                onPressed: (() async {
+                  final XFile? image =
+                      await ImagePicker().pickImage(source: ImageSource.camera);
+                  //process()
+                  if (image == null) return;
+                  ImageGallerySaver.saveFile(image.path);
+                  goToResults(image);
+                })),
+            IconButton(
+              iconSize: 30,
+              icon: Icon(Icons.filter_rounded),
+              onPressed: (() async {
+                final XFile? image =
+                    await ImagePicker().pickImage(source: ImageSource.gallery);
+                if (image == null) return;
+                goToResults(image);
+              }),
+            ),
+            IconButton(
+              iconSize: 30,
+              icon: Icon(Icons.search_rounded),
+              onPressed: (() async {
+                setState(() {
+                  showSearchBar = true;
                 });
-          }),
-        ),
-      ]),
+              }),
+            ),
+            IconButton(
+              iconSize: 30,
+              icon: Icon(Icons.filter_alt_rounded),
+              onPressed: (() {
+                startDate['previous'] =
+                    startDate['dialog'] = startDate['selected'];
+                endDate['previous'] = endDate['dialog'] = endDate['selected'];
+                category['previous'] =
+                    category['dialog'] = category['selected'];
+                dropdownValueCategory = category['selected'].description;
+                showDialog(
+                    context: _context,
+                    builder: (context) {
+                      return StatefulBuilder(builder: (context, setState) {
+                        return filterPopup(context, setState);
+                      });
+                    });
+              }),
+            ),
+          ]),
     );
   }
-
-  bool test = true;
-  Widget drawer = Drawer(
-    backgroundColor: Utils.drawerColor,
-    child: ListView(
-      padding: EdgeInsets.fromLTRB(0, 80, 0, 0),
-      itemExtent: 70.0,
-      children: [
-        ListTile(
-          tileColor: Utils.tileColor,
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: Utils.drawerColor, width: 10),
-          ),
-          title: Text('History',
-              style:
-                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
-          onTap: () {
-            Navigator.push(_context,
-                MaterialPageRoute(builder: (_context) => HomeScreen()));
-          },
-        ),
-        ListTile(
-          tileColor: Utils.tileColor,
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: Utils.drawerColor, width: 10),
-          ),
-          title: Text('Scan',
-              style:
-                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
-          onTap: () {
-            print("scan in hamburger");
-          },
-        ),
-        ListTile(
-          tileColor: Utils.tileColor,
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: Utils.drawerColor, width: 10),
-          ),
-          title: Text('Settings',
-              style:
-                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
-          onTap: () {
-            Navigator.of(_context)
-                .push(
-                    MaterialPageRoute(builder: (_context) => SettingsScreen()))
-                .then((value) {
-              Phoenix.rebirth(_context);
-            });
-          },
-        ),
-        ListTile(
-          tileColor: Utils.tileColor,
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: Utils.drawerColor, width: 10),
-          ),
-          title: Text('Login TEST',
-              style:
-                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
-          onTap: () {
-            Navigator.of(_context)
-                .push(MaterialPageRoute(builder: (_context) => OpenLink(true)))
-                .then((value) {
-              Phoenix.rebirth(_context);
-            });
-          },
-        ),
-        ListTile(
-          tileColor: Utils.tileColor,
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: Utils.drawerColor, width: 10),
-          ),
-          title: Text('Login BANKID',
-              style:
-                  GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold)),
-          onTap: () {
-            Navigator.of(_context)
-                .push(MaterialPageRoute(builder: (_context) => OpenLink(false)))
-                .then((value) {
-              Phoenix.rebirth(_context);
-            });
-          },
-        ),
-      ],
-    ),
-  );
 
   updateSelected(newStartDate, newEndDate, newCategory) {
     setState(() {
@@ -263,13 +195,14 @@ class _HomeScreen extends State<HomeScreen> {
             Text("Start date:"),
             TextButton(
               style: ButtonStyle(
-                foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
+                foregroundColor:
+                    MaterialStateProperty.all<Color>(Utils.textColor),
                 backgroundColor:
-                    MaterialStateProperty.all<Color>(Colors.black12),
+                    MaterialStateProperty.all<Color>(Utils.mediumLightColor),
               ),
-              child: Text(DateFormat('yyyy-MM-dd').format(startDate['dialog'])),
+              child: Text(DateFormat.yMMM().format(startDate['dialog'])),
               onPressed: () async {
-                DateTime? newStartDate = await showDatePicker(
+                DateTime? newStartDate = await showMonthYearPicker(
                     context: context,
                     initialDate: startDate['dialog'],
                     firstDate: DateTime(1900),
@@ -287,17 +220,21 @@ class _HomeScreen extends State<HomeScreen> {
               TextButton(
                 style: ButtonStyle(
                   foregroundColor:
-                      MaterialStateProperty.all<Color>(Colors.black),
+                      MaterialStateProperty.all<Color>(Utils.textColor),
                   backgroundColor:
-                      MaterialStateProperty.all<Color>(Colors.black12),
+                      MaterialStateProperty.all<Color>(Utils.mediumLightColor),
                 ),
-                child: Text(DateFormat('yyyy-MM-dd').format(endDate['dialog'])),
+                child: Text(DateFormat.yMMM().format(endDate['dialog'])),
                 onPressed: () async {
-                  DateTime? newEndDate = await showDatePicker(
+                  DateTime? newEndDate = await showMonthYearPicker(
                       context: context,
                       initialDate: endDate['dialog'],
                       firstDate: DateTime(1900),
                       lastDate: DateTime(2100));
+                  if (newEndDate != null) {
+                    newEndDate =
+                        DateTime(newEndDate.year, newEndDate.month + 1, 0);
+                  }
                   setState(() {
                     endDate['dialog'] = newEndDate ?? endDate['dialog'];
                   });
@@ -313,25 +250,56 @@ class _HomeScreen extends State<HomeScreen> {
                   const Text("Category:"),
                   dropDownCategory(context, setState),
                 ],
-              ))
+              )),
+          Container(
+              padding: EdgeInsets.only(top: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  const Text("Only receipts:"),
+                  Switch(
+                    value: onlyReceipts,
+                    onChanged: (bool newValue) {
+                      setState(() {
+                        onlyReceipts = newValue;
+                      });
+                    },
+                  )
+                ],
+              )),
         ],
       ),
       actions: [
         ElevatedButton(
           style: ButtonStyle(
-              backgroundColor:
-                  MaterialStateProperty.all<Color>(Utils.backgroundColor)),
+            foregroundColor: MaterialStateProperty.all<Color>(Utils.textColor),
+            backgroundColor:
+                MaterialStateProperty.all<Color>(Utils.mediumLightColor),
+          ),
           child: const Text('Apply'),
           onPressed: () async {
-            updateSelected(
-                startDate['dialog'], endDate['dialog'], category['dialog']);
-            Navigator.of(context).pop();
+            if (endDate['dialog'].compareTo(startDate['dialog']) < 0) {
+              final snackBar = SnackBar(
+                backgroundColor: Utils.errorColor,
+                content: Text(
+                  "Start date cannot be later than the end date",
+                  style: TextStyle(color: Colors.white),
+                ),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+            } else {
+              updateSelected(
+                  startDate['dialog'], endDate['dialog'], category['dialog']);
+              Navigator.of(context).pop();
+            }
           },
         ),
         ElevatedButton(
           style: ButtonStyle(
-              backgroundColor:
-                  MaterialStateProperty.all<Color>(Utils.backgroundColor)),
+            foregroundColor: MaterialStateProperty.all<Color>(Utils.textColor),
+            backgroundColor:
+                MaterialStateProperty.all<Color>(Utils.mediumLightColor),
+          ),
           child: const Text('Cancel'),
           onPressed: () async {
             updateSelected(startDate['previous'], endDate['previous'],
@@ -351,8 +319,8 @@ class _HomeScreen extends State<HomeScreen> {
             return Text("${snapshot.error}");
           } else if (snapshot.hasData) {
             categories = snapshot.data!;
-            if (!categories.contains(ReceiptCategory.noneCategory)) {
-              categories.insert(0, ReceiptCategory.noneCategory);
+            if (!categories.contains(TransactionCategory.noneCategory)) {
+              categories.insert(0, TransactionCategory.noneCategory);
             }
             return SizedBox(
                 width: 130,
@@ -362,22 +330,28 @@ class _HomeScreen extends State<HomeScreen> {
                     isExpanded: true,
                     value: dropdownValueCategory,
                     onChanged: (value) {
-                      ReceiptCategory newCategory =
-                          ReceiptCategory.getCategoryByDesc(value!, categories);
+                      TransactionCategory newCategory =
+                          TransactionCategory.getCategoryByDesc(
+                              value!, categories);
                       setState(() {
                         dropdownValueCategory = value;
                         category['dialog'] = newCategory;
                       });
                     },
-                    items: categories
-                        .map<DropdownMenuItem<String>>((ReceiptCategory category) {
+                    items: categories.map<DropdownMenuItem<String>>(
+                        (TransactionCategory category) {
                       return DropdownMenuItem<String>(
                         value: category.description,
-                        child: Text(category.description,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: category.color)),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Container(
+                                  padding: EdgeInsets.only(right: 10),
+                                  child: Icon(Icons.label_rounded,
+                                      color: category.color)),
+                              Text(category.description,
+                                  overflow: TextOverflow.ellipsis)
+                            ]),
                       );
                     }).toList()));
           } else {
@@ -389,41 +363,32 @@ class _HomeScreen extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     _context = context;
-    List<Widget> children = [
-      iconSection(),
-      Expanded(
-          child: HistoryList(historyListStateKey, startDate['selected'],
-              endDate['selected'], category['selected'])),
-    ];
-    if (showSearchBar) {
-      children = [
-        renderSearchField(),
-        Expanded(
-            child: HistoryList(historyListStateKey, startDate['selected'],
-                endDate['selected'], category['selected']))
-      ];
-    }
     return SafeArea(
         child: Scaffold(
             appBar: AppBar(
               toolbarHeight: 80,
               toolbarOpacity: 1,
-              backgroundColor: Utils.backgroundColor,
-              foregroundColor: Colors.black,
-              title: Column(children: const [
-                Text("EconomiCalc",
-                    style: TextStyle(
-                        color: Color(0xff000000),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 36.0)),
-              ]),
+              backgroundColor: Utils.mediumLightColor,
+              foregroundColor: Utils.textColor,
+              title: Text("EconomiCalc", style: TextStyle(fontSize: 36.0)),
               centerTitle: true,
-              elevation: 0,
+              elevation: 5,
             ),
             key: _globalKey,
-            drawer: drawer,
+            drawer: DrawerMenu(0),
+            resizeToAvoidBottomInset: false,
+            bottomNavigationBar: iconSection(),
             body: Column(
-              children: children,
+              children: [
+                showSearchBar ? renderSearchField() : Container(),
+                Expanded(
+                    child: HistoryList(
+                        historyListStateKey,
+                        startDate['selected'],
+                        endDate['selected'],
+                        category['selected'],
+                        onlyReceipts)),
+              ],
             )));
   }
 }

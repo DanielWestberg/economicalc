@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
+import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
 import 'package:economicalc_client/screens/transaction_details_screen.dart';
@@ -11,14 +12,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class HistoryList extends StatefulWidget {
   final DateTime startDate;
   final DateTime endDate;
-  final ReceiptCategory category;
+  final TransactionCategory category;
+  final bool onlyReceipts;
 
-  HistoryList(Key? key, this.startDate, this.endDate, this.category)
+  HistoryList(
+      Key? key, this.startDate, this.endDate, this.category, this.onlyReceipts)
       : super(key: key);
 
   @override
@@ -30,24 +34,25 @@ class HistoryListState extends State<HistoryList> {
   late List<Transaction> transactions = [];
   late List<Transaction> transactions_copy;
   bool initialized = false;
+  bool isLoading = false;
   final SQFLite dbConnector = SQFLite.instance;
 
-  late List<ReceiptCategory> categories = [];
+  late List<TransactionCategory> categories = [];
 
   @override
   void didUpdateWidget(covariant HistoryList oldWidget) {
     super.didUpdateWidget(oldWidget);
     dataFuture = dbConnector.getFilteredTransactions(
-        widget.startDate, widget.endDate, widget.category);
+        widget.startDate, widget.endDate, widget.category, widget.onlyReceipts);
   }
 
   @override
   void initState() {
     super.initState();
     initDB();
-    fetchBankTransactions();
+    updateData();
     dataFuture = dbConnector.getFilteredTransactions(
-        widget.startDate, widget.endDate, widget.category);
+        widget.startDate, widget.endDate, widget.category, widget.onlyReceipts);
   }
 
   void initDB() async {
@@ -80,14 +85,16 @@ class HistoryListState extends State<HistoryList> {
     });
   }
 
-  void fetchBankTransactions() async {
+  void updateData() async {
+    setState(() {
+      isLoading = true;
+    });
     categories = await dbConnector.getAllcategories();
-    await load_test_data(); // TODO: Replace with fetching from bank
-    await dbConnector.importMissingBankTransactions();
     var updatedDataFuture = dbConnector.getFilteredTransactions(
-        widget.startDate, widget.endDate, widget.category);
+        widget.startDate, widget.endDate, widget.category, widget.onlyReceipts);
     setState(() {
       dataFuture = updatedDataFuture;
+      isLoading = false;
     });
   }
 
@@ -115,101 +122,130 @@ class HistoryListState extends State<HistoryList> {
 
   @override
   Widget build(BuildContext context) {
+    initializeDateFormatting('sv_SE');
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Container(
-        color: Utils.backgroundColor,
-        padding: const EdgeInsets.all(20),
-        child: const Text(
-          "History",
-          textAlign: TextAlign.left,
-          style: TextStyle(
-              color: Colors.black, fontSize: 32, fontWeight: FontWeight.bold),
-        ),
-      ),
-      FutureBuilder(
-          future: dataFuture,
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return Text("${snapshot.error}");
-            } else if (snapshot.hasData) {
-              transactions = snapshot.data!;
-              if (!initialized) {
-                transactions_copy = snapshot.data!;
-              }
-              initialized = true;
-              sortByDate();
-              return Expanded(
-                  child: RefreshIndicator(
-                      onRefresh: () async => fetchBankTransactions(),
-                      backgroundColor: Color(0xFFB8D8D8),
-                      color: Colors.black,
-                      child: ListView.builder(
-                          padding: EdgeInsets.all(20.0),
-                          itemCount: transactions.length,
-                          itemBuilder: (BuildContext ctx, int index) {
-                            return Padding(
-                                padding: EdgeInsets.only(top: 5.0),
-                                child: ListTile(
-                                  tileColor: Color(0xffD4E6F3),
-                                  shape: const ContinuousRectangleBorder(
-                                      side: BorderSide(
-                                    width: 1.0,
-                                    color: Colors.transparent,
-                                  )),
-                                  title: Text(
-                                    transactions[index].store!,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 18),
-                                  ),
-                                  subtitle: Text(
-                                    "${transactions[index].totalAmount} kr",
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16),
-                                  ),
-                                  leading: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        Text(
-                                          DateFormat('yyyy-MM-dd')
-                                              .format(transactions[index].date),
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 16),
-                                        ),
-                                        Icon(
-                                          Icons.category,
-                                          color: ReceiptCategory.getCategory(
-                                                  transactions[index]
-                                                      .categoryID!,
-                                                  categories)
-                                              .color,
-                                        )
-                                      ]),
-                                  trailing: const Icon(
-                                    Icons.arrow_right_alt_sharp,
-                                    size: 50,
-                                  ),
-                                  onTap: () {
-                                    Navigator.of(context)
-                                        .push(MaterialPageRoute(
-                                            builder: (context) =>
-                                                TransactionDetailsScreen(
-                                                    null, transactions[index])))
-                                        .then((value) {
-                                      Phoenix.rebirth(context);
-                                    });
-                                  },
-                                ));
-                          })));
-            } else {
-              return Center(
-                  child: LoadingAnimationWidget.threeArchedCircle(
-                      color: Colors.black, size: 40));
-            }
-          })
+          color: Utils.lightColor,
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                "History",
+                style: TextStyle(color: Utils.textColor, fontSize: 32),
+              ),
+              Flexible(
+                  child: Text(
+                "${DateFormat.yMMMd('sv_SE').format(widget.startDate)} - ${DateFormat.yMMMd('sv_SE').format(widget.endDate)}",
+                style: TextStyle(color: Utils.textColor, fontSize: 18),
+              )),
+            ],
+          )),
+      isLoading
+          ? Center(
+              heightFactor: 10,
+              child: LoadingAnimationWidget.threeArchedCircle(
+                  color: Colors.black, size: 40))
+          : FutureBuilder(
+              future: dataFuture,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Text("${snapshot.error}");
+                } else if (snapshot.hasData) {
+                  transactions = snapshot.data!;
+                  if (!initialized) {
+                    transactions_copy = snapshot.data!;
+                  }
+                  initialized = true;
+                  sortByDate();
+                  return Expanded(
+                      child: RefreshIndicator(
+                          onRefresh: () async => updateData(),
+                          backgroundColor: Utils.mediumLightColor,
+                          color: Utils.textColor,
+                          child: ListView.builder(
+                              itemCount: transactions.length,
+                              itemBuilder: (BuildContext ctx, int index) {
+                                return Padding(
+                                    padding: EdgeInsets.only(top: 0.0),
+                                    child: ListTile(
+                                      style: ListTileStyle.list,
+                                      shape: Border(
+                                        left: BorderSide(
+                                            color:
+                                                TransactionCategory.getCategory(
+                                                        transactions[index]
+                                                            .categoryID!,
+                                                        categories)
+                                                    .color,
+                                            width: 20),
+                                        top: BorderSide(
+                                            color: Utils.mediumDarkColor,
+                                            width: 0.5),
+                                      ),
+                                      leading: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            Text(
+                                              DateFormat('yyyy-MM-dd').format(
+                                                  transactions[index].date),
+                                              style: TextStyle(
+                                                  color: Utils.textColor,
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 14),
+                                            ),
+                                            transactions[index].receiptID !=
+                                                    null
+                                                ? Icon(
+                                                    Icons.receipt_long_rounded,
+                                                    size: 15,
+                                                  )
+                                                : Text("")
+                                          ]),
+                                      title: Text(
+                                        transactions[index].store!,
+                                        style: TextStyle(
+                                            color: Utils.textColor,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 14),
+                                      ),
+                                      subtitle: Text(
+                                        NumberFormat.currency(
+                                          locale: 'sv_SE',
+                                        ).format(
+                                            transactions[index].totalAmount),
+                                        style: TextStyle(
+                                            color: Utils.textColor,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 12),
+                                      ),
+                                      trailing: Icon(
+                                        Icons.arrow_right_rounded,
+                                        size: 40,
+                                        color: Utils.textColor,
+                                      ),
+                                      onTap: () {
+                                        Navigator.of(context)
+                                            .push(MaterialPageRoute(
+                                                builder: (context) =>
+                                                    TransactionDetailsScreen(
+                                                        null,
+                                                        transactions[index])))
+                                            .then((value) {
+                                          updateData();
+                                        });
+                                      },
+                                    ));
+                              })));
+                } else {
+                  return Center(
+                      heightFactor: 10,
+                      child: LoadingAnimationWidget.threeArchedCircle(
+                          color: Colors.black, size: 40));
+                }
+              })
     ]);
   }
 }
