@@ -1,4 +1,4 @@
-import 'package:economicalc_client/components/drawer.dart';
+import 'package:economicalc_client/components/drawer_menu.dart';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
@@ -67,10 +67,11 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   late Future<List<TransactionCategory>> categoriesFutureBuilder;
 
   final columns = ["Items", "Sum"];
-  late Future<List<ReceiptItem>> dataFutureItems;
+  late Future<List<Map<String, Object>>> dataFutureItems;
   late Future<List<Map<String, Object>>> dataFutureCategorySums;
-  List<ReceiptItem> rowsItems = [];
-  List<Map<String, Object>> rowsTotals = [];
+  List<ReceiptItem> rowsItemsTable = [];
+  List<ItemsChartData> rowsItemsChart = [];
+  List<CategoryChartData> rowsTotals = [];
 
   @override
   void initState() {
@@ -116,6 +117,15 @@ class StatisticsScreenState extends State<StatisticsScreen> {
             child: Scaffold(
                 // drawer: DrawerMenu(1),
                 appBar: AppBar(
+                  flexibleSpace: Container(
+                      decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                              begin: Alignment.bottomLeft,
+                              end: Alignment.topRight,
+                              colors: [
+                        Utils.mediumLightColor,
+                        Utils.mediumDarkColor
+                      ]))),
                   leading: IconButton(
                       onPressed: (() {
                         Navigator.pop(context);
@@ -135,37 +145,46 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                   centerTitle: true,
                   elevation: 0,
                   actions: [
-                    IconButton(
-                      icon: Icon(
-                        Icons.filter_alt,
-                        color: Utils.textColor,
-                      ),
-                      alignment: Alignment.center,
-                      onPressed: () {
-                        startDate['previous'] =
-                            startDate['dialog'] = startDate['selected'];
-                        endDate['previous'] =
-                            endDate['dialog'] = endDate['selected'];
-                        category['previous'] =
-                            category['dialog'] = category['selected'];
-                        dropdownValueCategory =
-                            category['selected'].description;
-                        contentSelection['previous'] =
-                            contentSelection['dialog'] =
-                                contentSelection['selected'];
-                        expIncSelection['previous'] =
-                            expIncSelection['dialog'] =
-                                expIncSelection['selected'];
-                        showDialog(
-                            context: context,
-                            builder: (context) {
-                              return StatefulBuilder(
-                                  builder: (context, setState) {
-                                return filterPopup(context, setState);
-                              });
-                            });
-                      },
-                    )
+                    Container(
+                        width: 50,
+                        padding: EdgeInsets.only(top: 10, right: 5),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            shape: CircleBorder(),
+                            padding:
+                                EdgeInsets.all(0), // necessary for some reason
+                            alignment: Alignment.center,
+                            backgroundColor: Utils.lightColor
+                                .withOpacity(0.9), // <-- Button color
+                            foregroundColor:
+                                Utils.mediumDarkColor, // <-- Splash color
+                          ),
+                          child: Icon(Icons.filter_alt),
+                          onPressed: () {
+                            startDate['previous'] =
+                                startDate['dialog'] = startDate['selected'];
+                            endDate['previous'] =
+                                endDate['dialog'] = endDate['selected'];
+                            category['previous'] =
+                                category['dialog'] = category['selected'];
+                            dropdownValueCategory =
+                                category['selected'].description;
+                            contentSelection['previous'] =
+                                contentSelection['dialog'] =
+                                    contentSelection['selected'];
+                            expIncSelection['previous'] =
+                                expIncSelection['dialog'] =
+                                    expIncSelection['selected'];
+                            showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return StatefulBuilder(
+                                      builder: (context, setState) {
+                                    return filterPopup(context, setState);
+                                  });
+                                });
+                          },
+                        )),
                   ],
                   bottom: TabBar(
                     labelColor: Utils.darkColor,
@@ -318,8 +337,10 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      Text("Category:"),
-                      dropDownCategory(context, setState),
+                      Container(
+                          padding: EdgeInsets.only(right: 5),
+                          child: Text("Category:")),
+                      Flexible(child: dropDownCategory(context, setState)),
                     ],
                   ))
               : Container(
@@ -402,38 +423,39 @@ class StatisticsScreenState extends State<StatisticsScreen> {
             if (!categories.contains(noneCategory)) {
               categories.insert(0, noneCategory);
             }
-            return SizedBox(
-                width: 140,
-                height: 30,
-                child: DropdownButton<String>(
-                    isDense: true,
-                    isExpanded: true,
-                    value: dropdownValueCategory,
-                    onChanged: (value) {
-                      TransactionCategory newCategory =
-                          TransactionCategory.getCategoryByDesc(
-                              value!, categories);
-                      setState(() {
-                        dropdownValueCategory = value;
-                        category['dialog'] = newCategory;
-                      });
-                    },
-                    items: categories.map<DropdownMenuItem<String>>(
-                        (TransactionCategory category) {
-                      return DropdownMenuItem<String>(
-                        value: category.description,
-                        child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Container(
-                                  padding: EdgeInsets.only(right: 10),
-                                  child: Icon(Icons.label_rounded,
-                                      color: category.color)),
-                              Text(category.description,
-                                  overflow: TextOverflow.ellipsis)
-                            ]),
-                      );
-                    }).toList()));
+            return DropdownButton<String>(
+                isDense: true,
+                isExpanded: true,
+                value: dropdownValueCategory,
+                onChanged: (value) {
+                  TransactionCategory newCategory =
+                      TransactionCategory.getCategoryByDesc(value!, categories);
+                  setState(() {
+                    dropdownValueCategory = value;
+                    category['dialog'] = newCategory;
+                  });
+                },
+                items: categories.map<DropdownMenuItem<String>>(
+                    (TransactionCategory category) {
+                  return DropdownMenuItem<String>(
+                    value: category.description,
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Container(
+                              padding: EdgeInsets.only(right: 10),
+                              child: Icon(Icons.label_rounded,
+                                  color: category.color)),
+                          SizedBox(
+                              width: 100,
+                              child: Text(
+                                category.description,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 12),
+                              ))
+                        ]),
+                  );
+                }).toList());
           } else {
             return Text("Unexpected error");
           }
@@ -447,13 +469,16 @@ class StatisticsScreenState extends State<StatisticsScreen> {
           if (snapshot.hasError) {
             return Text("${snapshot.error}");
           } else if (snapshot.hasData) {
-            rowsItems = snapshot.data!;
+            rowsItemsTable = [];
+            for (var item in snapshot.data!) {
+              rowsItemsTable.add(item['receiptItem'] as ReceiptItem);
+            }
             return DataTable(
                 columnSpacing: 30,
                 sortAscending: isAscending,
                 sortColumnIndex: sortColumnIndex,
                 columns: getColumns(columns),
-                rows: getRows(rowsItems));
+                rows: getRows(rowsItemsTable));
           } else {
             return Text('Waiting....');
           }
@@ -478,10 +503,10 @@ class StatisticsScreenState extends State<StatisticsScreen> {
 
   void onSort(int columnIndex, bool ascending) {
     if (columnIndex == 0) {
-      rowsItems.sort((row1, row2) =>
+      rowsItemsTable.sort((row1, row2) =>
           Utils.compareString(ascending, row1.itemName, row2.itemName));
     } else if (columnIndex == 1) {
-      rowsItems.sort((row1, row2) =>
+      rowsItemsTable.sort((row1, row2) =>
           Utils.compareNumber(ascending, row1.amount, row2.amount));
     }
 
@@ -491,22 +516,24 @@ class StatisticsScreenState extends State<StatisticsScreen> {
     });
   }
 
-  double getMaxItemsSum(List<ReceiptItem> items) {
+  double getMaxItemsSum(List<ItemsChartData> items) {
+    if (items.isEmpty) return 0;
     var max = items.first;
     items.forEach((e) {
-      if (e.amount > max.amount) {
+      if (e.receiptItem.amount > max.receiptItem.amount) {
         max = e;
       }
     });
-    return max.amount.toDouble();
+    return max.receiptItem.amount;
   }
 
-  double getMaxCategorySum(List<Map<String, Object>> categorySums) {
-    double max = categorySums.first['totalSum'] as double;
+  double getMaxCategorySum(List<CategoryChartData> categorySums) {
+    if (categorySums.isEmpty) return 0;
+    double max = categorySums.first.totalSum as double;
     categorySums.forEach((e) {
-      double elementSum = e['totalSum']! as double;
+      double elementSum = e.totalSum;
       if (elementSum > max) {
-        max = e['totalSum'] as double;
+        max = e.totalSum;
       }
     });
     return max;
@@ -520,9 +547,19 @@ class StatisticsScreenState extends State<StatisticsScreen> {
           if (snapshot.hasError) {
             return Text("${snapshot.error}");
           } else if (snapshot.hasData) {
-            rowsItems = snapshot.data!;
-            rowsItems
-                .sort((a, b) => Utils.compareNumber(true, a.amount, b.amount));
+            rowsItemsChart = [];
+            for (var trans in snapshot.data!) {
+              ItemsChartData icd = ItemsChartData(
+                  trans['receiptItem'] as ReceiptItem,
+                  trans['category'] as TransactionCategory);
+              rowsItemsChart.add(icd);
+            }
+            rowsItemsChart.sort((a, b) => Utils.compareNumber(
+                true, a.receiptItem.amount, b.receiptItem.amount));
+            if (rowsItemsChart.length > 20) {
+              rowsItemsChart = rowsItemsChart.sublist(
+                  rowsItemsChart.length - 21, rowsItemsChart.length - 1);
+            }
             return Container(
                 child: SfCartesianChart(
                     backgroundColor: Utils.lightColor,
@@ -530,20 +567,23 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                         labelsExtent: 100, labelStyle: TextStyle(fontSize: 10)),
                     primaryYAxis: NumericAxis(
                         minimum: 0,
-                        maximum: getMaxItemsSum(rowsItems),
+                        maximum: getMaxItemsSum(rowsItemsChart),
                         interval: 100,
                         visibleMinimum: 0,
                         decimalPlaces: 2),
                     tooltipBehavior: TooltipBehavior(enable: true),
-                    series: <ChartSeries<ReceiptItem, String>>[
-                  BarSeries<ReceiptItem, String>(
-                      dataSource: rowsItems,
-                      xValueMapper: (ReceiptItem rowsItems, _) =>
-                          rowsItems.itemName,
-                      yValueMapper: (ReceiptItem rowsItems, _) =>
-                          rowsItems.amount,
+                    series: <BarSeries<ItemsChartData, String>>[
+                  BarSeries<ItemsChartData, String>(
+                      dataSource: rowsItemsChart,
+                      xValueMapper: (ItemsChartData item, _) =>
+                          item.receiptItem.itemName,
+                      yValueMapper: (ItemsChartData item, _) =>
+                          item.receiptItem.amount,
                       name: '',
+                      pointColorMapper: (ItemsChartData item, _) =>
+                          item.category.color,
                       dataLabelSettings: DataLabelSettings(isVisible: true),
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
                       color: Utils.darkColor)
                 ]));
           } else {
@@ -562,37 +602,49 @@ class StatisticsScreenState extends State<StatisticsScreen> {
           if (snapshot.hasError) {
             return Text("${snapshot.error}");
           } else if (snapshot.hasData) {
-            rowsTotals = snapshot.data!;
-            rowsTotals.sort((a, b) => Utils.compareNumber(
-                true, a['totalSum'] as double, b['totalSum'] as double));
+            rowsTotals = [];
+            for (var trans in snapshot.data!) {
+              CategoryChartData ccd = CategoryChartData(
+                  trans['totalSum'] as double,
+                  trans['category'] as TransactionCategory);
+              rowsTotals.add(ccd);
+            }
+
+            rowsTotals.sort(
+                (a, b) => Utils.compareNumber(true, a.totalSum, b.totalSum));
             return Container(
                 child: SfCartesianChart(
                     plotAreaBackgroundColor: Utils.lightColor,
                     primaryXAxis: CategoryAxis(
                         labelPosition: ChartDataLabelPosition.outside,
-                        labelsExtent: 80,
+                        labelsExtent: 100,
                         labelStyle: TextStyle(fontSize: 14)),
                     primaryYAxis: NumericAxis(
                         labelPosition: ChartDataLabelPosition.outside,
                         minimum: 0,
                         maximum: getMaxCategorySum(rowsTotals),
-                        interval: (getMaxCategorySum(rowsTotals) / 10),
-                        numberFormat: NumberFormat.compact(locale: "sv_SE"),
+                        interval: getMaxCategorySum(rowsTotals) == 0
+                            ? 100
+                            : (getMaxCategorySum(rowsTotals) / 10),
+                        numberFormat: NumberFormat.currency(
+                            locale: "sv_SE", decimalDigits: 0),
                         visibleMinimum: 0,
                         decimalPlaces: 2),
                     tooltipBehavior: TooltipBehavior(enable: true),
-                    series: [
-                  BarSeries(
-                      sortingOrder: SortingOrder.ascending,
-                      dataSource: rowsTotals,
-                      xValueMapper: (Map<String, Object> object, _) =>
-                          (object['category'] as TransactionCategory)
-                              .description,
-                      yValueMapper: (Map<String, Object> object, _) =>
-                          object['totalSum'] as double,
-                      name: '',
-                      dataLabelSettings: DataLabelSettings(isVisible: true),
-                      color: Utils.darkColor)
+                    series: <BarSeries<CategoryChartData, String>>[
+                  BarSeries<CategoryChartData, String>(
+                    sortingOrder: SortingOrder.ascending,
+                    dataSource: rowsTotals,
+                    xValueMapper: (CategoryChartData object, _) =>
+                        object.category.description,
+                    yValueMapper: (CategoryChartData object, _) =>
+                        object.totalSum,
+                    name: '',
+                    pointColorMapper: (CategoryChartData object, _) =>
+                        object.category.color,
+                    dataLabelSettings: DataLabelSettings(isVisible: true),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
                 ]));
           } else {
             return Center(
@@ -601,4 +653,16 @@ class StatisticsScreenState extends State<StatisticsScreen> {
           }
         });
   }
+}
+
+class ItemsChartData {
+  ItemsChartData(this.receiptItem, this.category);
+  final ReceiptItem receiptItem;
+  final TransactionCategory category;
+}
+
+class CategoryChartData {
+  CategoryChartData(this.totalSum, this.category);
+  final double totalSum;
+  final TransactionCategory category;
 }

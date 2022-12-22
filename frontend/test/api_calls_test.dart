@@ -143,7 +143,7 @@ main() async {
     deleteCategory(cookie, category.id!);
   });
 
-  test ("Can log in twice", () async {
+  test("Can log in twice", () async {
     Receipt receipt = Receipt(
       id: 6,
       recipient: "b",
@@ -156,12 +156,12 @@ main() async {
       ],
       total: 2,
       categoryID: 9,
+      ocrText: "",
     );
     receipt = await postReceipt(cookie, receipt);
 
-    final otherLoginData = await fetchLoginData(
-      accountReportId, transactionReportId, true
-    );
+    final otherLoginData =
+        await fetchLoginData(accountReportId, transactionReportId, true);
     final otherCookie = otherLoginData.cookie;
     final responseReceipts = await fetchReceipts(otherCookie);
     expect(responseReceipts, contains(receipt));
@@ -170,41 +170,33 @@ main() async {
   test("Post multiple receipts", () async {
     List<Receipt> receipts = [
       Receipt(
-        id: 3,
-        recipient: "ica",
-        date: DateTime.utc(2001, 9, 11),
-        items: [
-          ReceiptItem(
-            itemName: "Toalettpapper",
-            amount: 1,
-          ),
-          ReceiptItem(
-            itemName: "Fil",
-            amount: 3,
-          ),
-        ],
-        total: 99.0,
-        categoryID: 2,
-        ocrText: ""
-      ),
+          id: 3,
+          recipient: "ica",
+          date: DateTime.utc(2001, 9, 11),
+          items: [
+            ReceiptItem(
+              itemName: "Toalettpapper",
+              amount: 1,
+            ),
+            ReceiptItem(
+              itemName: "Fil",
+              amount: 3,
+            ),
+          ],
+          total: 99.0,
+          categoryID: 2,
+          ocrText: ""),
       Receipt(
-        id: 4,
-        recipient: "gamestop",
-        date: DateTime.utc(2022, 2, 24),
-        items: [
-          ReceiptItem(
-            itemName: "Hollow Knight",
-            amount: 1
-          ),
-          ReceiptItem(
-            itemName: "Kerbal Space Program",
-            amount: 1
-          ),
-        ],
-        total: 300.0,
-        categoryID: 3,
-        ocrText: ""
-      ),
+          id: 4,
+          recipient: "gamestop",
+          date: DateTime.utc(2022, 2, 24),
+          items: [
+            ReceiptItem(itemName: "Hollow Knight", amount: 1),
+            ReceiptItem(itemName: "Kerbal Space Program", amount: 1),
+          ],
+          total: 300.0,
+          categoryID: 3,
+          ocrText: ""),
     ];
 
     final responseReceipts = await postManyReceipts(cookie, receipts);

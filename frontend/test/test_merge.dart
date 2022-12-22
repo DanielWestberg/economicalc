@@ -15,10 +15,12 @@ void runTest(String sname1, String sname2, double amount1, double amount2,
       amount: -amount1, description: sname1, date: DateTime.parse(date2));
 
   Receipt receipt = Receipt(
-      recipient: sname2,
-      date: DateTime.parse(date1),
-      items: [],
-      total: amount2);
+    recipient: sname2,
+    date: DateTime.parse(date1),
+    items: [],
+    total: amount2,
+    ocrText: "",
+  );
 
   bool sameAmount = receipt.total == bankTransaction.amount!.abs();
 

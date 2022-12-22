@@ -380,16 +380,21 @@ class SQFLite {
     return items;
   }
 
-  Future<List<ReceiptItem>> getFilteredReceiptItems(
+  Future<List<Map<String, Object>>> getFilteredReceiptItems(
       startDate, endDate, category) async {
     final receipts = await getAllReceipts();
-    List<ReceiptItem> filteredItems = [];
+    List<Map<String, Object>> filteredItems = [];
 
     if (category.description == 'None') {
       for (var receipt in receipts) {
         if (receipt.date.compareTo(startDate) >= 0 &&
             receipt.date.compareTo(endDate) <= 0) {
-          receipt.items.forEach((item) => filteredItems.add(item));
+          TransactionCategory? category =
+              await getCategoryFromID(receipt.categoryID!);
+          receipt.items.forEach((item) => filteredItems.add({
+                "category": category!,
+                "receiptItem": item,
+              }));
         }
       }
     } else {
@@ -397,7 +402,12 @@ class SQFLite {
         if (receipt.date.compareTo(startDate) >= 0 &&
             receipt.date.compareTo(endDate) <= 0 &&
             receipt.categoryID == category.id) {
-          receipt.items.forEach((item) => filteredItems.add(item));
+          TransactionCategory? category =
+              await getCategoryFromID(receipt.categoryID!);
+          receipt.items.forEach((item) => filteredItems.add({
+                "category": category!,
+                "receiptItem": item,
+              }));
         }
       }
     }
@@ -414,15 +424,14 @@ class SQFLite {
     // Convert the List<Map<String, dynamic> into a List<receipts>.
     return List.generate(maps!.length, (i) {
       return Receipt(
-        id: maps[i]['id'],
-        recipient: maps[i]['recipient'],
-        date: DateTime.parse(maps[i]['date']),
-        total: maps[i]['total'],
-        items: parseReceiptItems(maps[i]['items']),
-        categoryDesc: maps[i]['categoryDesc'],
-        categoryID: maps[i]['categoryID'],
-        ocrText: maps[i]['ocrText']
-      );
+          id: maps[i]['id'],
+          recipient: maps[i]['recipient'],
+          date: DateTime.parse(maps[i]['date']),
+          total: maps[i]['total'],
+          items: parseReceiptItems(maps[i]['items']),
+          categoryDesc: maps[i]['categoryDesc'],
+          categoryID: maps[i]['categoryID'],
+          ocrText: maps[i]['ocrText']);
     });
   }
 
@@ -432,16 +441,14 @@ class SQFLite {
         await db?.rawQuery('SELECT * FROM receipts WHERE id = "${id}"');
 
     return Receipt(
-      id: maps![0]['id'],
-      recipient: maps[0]['recipient'],
-      date: DateTime.parse(maps[0]['date']),
-      total: maps[0]['total'],
-      items: parseReceiptItems(maps[0]['items']),
-      categoryDesc: maps[0]['categoryDesc'],
-      categoryID: maps[0]['categoryID'],
-      ocrText: maps[0]['ocrText']
-
-    );
+        id: maps![0]['id'],
+        recipient: maps[0]['recipient'],
+        date: DateTime.parse(maps[0]['date']),
+        total: maps[0]['total'],
+        items: parseReceiptItems(maps[0]['items']),
+        categoryDesc: maps[0]['categoryDesc'],
+        categoryID: maps[0]['categoryID'],
+        ocrText: maps[0]['ocrText']);
   }
 
   Future<void> updateReceipt(Receipt receipt) async {
@@ -507,7 +514,7 @@ class SQFLite {
     return obj![0]['id'] as int;
   }
 
-  static Future<String?> getCategoryDescriptionfromID(int id) async {
+  Future<String?> getCategoryDescriptionfromID(int id) async {
     final db = await instance.database;
     List<Map<String, Object?>>? obj = await db
         ?.rawQuery('SELECT description FROM categories WHERE id = "${id}"');

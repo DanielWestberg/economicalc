@@ -106,7 +106,6 @@ class OpenLinkState extends State<OpenLink> {
               data.transactionReport["transactions"].forEach((transaction) {
                 resTrans.add(BankTransaction.fromJson(transaction));
               });
-              resTrans = resTrans.reversed.toList();
 
               await dbConnector.postMissingBankTransactions(resTrans);
 
