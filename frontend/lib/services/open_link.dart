@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:core';
 
 import 'package:economicalc_client/helpers/sqlite.dart';
+import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/LoginData.dart';
 import 'package:economicalc_client/models/response.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
+import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/screens/home_screen.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
@@ -64,12 +66,12 @@ class OpenLinkState extends State<OpenLink> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
+          backgroundColor: Utils.mediumLightColor,
           title: Text(title),
         ),
         body: WebView(
           initialUrl: selectedUrl,
           navigationDelegate: (action) async {
-            print(action.url);
             if (action.url.contains("http://localhost:3000/callback") &&
                 action.url.contains("code")) {
               //{YOUR_CALLBACK_URI}?code={YOUR_CODE}&credentials_id={YOUR_CREDENTIALS_ID}
@@ -84,11 +86,9 @@ class OpenLinkState extends State<OpenLink> {
 
               response = await apiCaller.CodeToAccessToken(code, widget.test);
               transactions = await apiCaller.fetchTransactions(response.accessToken);
-              print(transactions);
-              for (var transaction in transactions) {
-                //print(transaction.descriptions.display);
-                dbConnector.postBankTransaction(transaction);
-              }
+
+              await dbConnector.postMissingBankTransactions(transactions);
+
               if (!mounted) return NavigationDecision.prevent;
               Navigator.of(context).popUntil((route) => route.isFirst);
               return NavigationDecision.prevent;
@@ -96,8 +96,6 @@ class OpenLinkState extends State<OpenLink> {
                 action.url.contains("account_verification_report_id") &&
                 action.url.contains("transaction_report_id")) {
               Map<String, String> params = Uri.splitQueryString(action.url);
-              print("PARAMS");
-              print(params);
 
               String transaction_report_id = params["transaction_report_id"]!;
               String account_report_id = params[
@@ -105,20 +103,24 @@ class OpenLinkState extends State<OpenLink> {
               LoginData data = await apiCaller.fetchLoginData(
                   account_report_id, transaction_report_id, widget.test);
 
-              print(data.transactionReport["transactions"]);
-              print(data.accountReport["userDataByProvider"][0]
-                  ["financialInstitutionName"]);
-              print(data.accountReport["userDataByProvider"][0]["identity"]
-                  ["name"]);
-
               List<BankTransaction> resTrans = [];
               data.transactionReport["transactions"].forEach((transaction) {
                 resTrans.add(BankTransaction.fromJson(transaction));
               });
+              resTrans = resTrans.reversed.toList();
 
-              for (var transaction in resTrans) {
-                dbConnector.postBankTransaction(transaction);
-              }
+              await dbConnector.postMissingBankTransactions(resTrans);
+
+              List<int> addedUpdated = await dbConnector.updateTransactions();
+
+              final snackBar = SnackBar(
+                backgroundColor: Utils.mediumDarkColor,
+                content: Text(
+                  "${addedUpdated[0]} transactions were added. ${addedUpdated[1]} transactions were updated.",
+                  style: TextStyle(color: Utils.lightColor),
+                ),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(snackBar);
 
               if (!mounted) return NavigationDecision.prevent;
               Navigator.of(context).popUntil((route) => route.isFirst);
@@ -129,20 +131,13 @@ class OpenLinkState extends State<OpenLink> {
               //NO CODE REETURNED == SOMETHING WENT WRONG
               return NavigationDecision.navigate;
             } else if (action.url.contains("bankid")) {
-              print(action.url);
               Map<String, String> params = Uri.splitQueryString(action.url);
-              print(params);
-              print(params["bankid:///?autostarttoken"]);
               String autostarttoken = params["bankid:///?autostarttoken"]!;
 
               String redirect = "null";
 
-              print(autostarttoken);
-              print(redirect);
-
               String bankIdUrl =
                   "https://app.bankid.com/?autostarttoken=$autostarttoken&redirect=$redirect";
-              print(bankIdUrl);
 
               AndroidIntent intent =
                   AndroidIntent(data: bankIdUrl, action: "action_view");

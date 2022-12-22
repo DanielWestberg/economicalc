@@ -170,7 +170,8 @@ class DrawerMenu extends StatelessWidget {
                   .push(
                       MaterialPageRoute(builder: (context) => OpenLink(false)))
                   .then((value) {
-                Phoenix.rebirth(context);
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => HomeScreen()));
               });
             },
           ),
