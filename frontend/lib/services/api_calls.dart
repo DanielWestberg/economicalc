@@ -26,7 +26,7 @@ import '../models/LoginData.dart';
  is useful in case anyone forgets to set this to false before attempting to
  deploy.
  */
-const testMode = kDebugMode && true;
+const testMode = kDebugMode && false;
 
 const apiServer = testMode ? "192.168.0.165:5000" : "api.economicalc.online";
 const String tinkReportEndpoint =

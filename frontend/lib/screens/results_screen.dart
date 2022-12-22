@@ -37,6 +37,7 @@ class ResultsScreenState extends State<ResultsScreen> {
   int? categoryID;
   String dropdownValue =
       "Uncategorized"; // TODO: replace with suggested category
+  int backupTotal = 0;
 
   @override
   void initState() {
@@ -63,12 +64,13 @@ class ResultsScreenState extends State<ResultsScreen> {
                   title: Text('Scan result'),
                   centerTitle: true,
                   elevation: 0,
+                  actions: [confirmButton()],
                 ),
-                body: ListView(children: [
+                body: ListView(scrollDirection: Axis.vertical, children: [
                   photoArea(),
                   headerInfo(),
                   buildDataTable(),
-                  confirmButton(),
+                  addButton(),
                 ])));
   }
 
@@ -86,54 +88,45 @@ class ResultsScreenState extends State<ResultsScreen> {
   }
 
   Widget confirmButton() {
-    return Container(
-      padding: EdgeInsets.all(40),
-      child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Utils.mediumLightColor,
-            foregroundColor: Utils.textColor,
-          ),
-          onPressed: () async {
-            int receiptID =
-                await dbConnector.insertReceipt(receipt, dropdownValue);
-            Transaction transaction = Transaction(
-              date: receipt.date,
-              totalAmount: -receipt.total!,
-              store: receipt.recipient,
-              receiptID: receiptID,
-              categoryID:
-                  await dbConnector.getCategoryIDfromDescription(dropdownValue),
-              categoryDesc: dropdownValue,
-            );
-            Transaction? alreadyExists =
-                await dbConnector.checkForExistingTransaction(transaction);
-            if (alreadyExists != null) {
-              alreadyExists.receiptID = receiptID;
-              alreadyExists.date = transaction.date;
-              alreadyExists.categoryDesc = transaction.categoryDesc;
-              alreadyExists.categoryID = transaction.categoryID;
-              await dbConnector.updateTransaction(alreadyExists);
-              final snackBar = SnackBar(
-                backgroundColor: Utils.mediumDarkColor,
-                content: Text(
-                  "Receipt was added to existing identical bank transaction",
-                  style: TextStyle(color: Utils.lightColor),
-                ),
-              );
-              ScaffoldMessenger.of(context).showSnackBar(snackBar);
-            } else {
-              await dbConnector.insertTransaction(transaction);
-            }
-            int? n = await dbConnector.numOfCategoriesWithSameName(transaction);
-            if (n > 0) {
-              showAlertDialog(context, n, transaction);
-            } else {
-              showConfirmationButton(context);
-            }
-          },
-          child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [Text("Confirm "), Icon(Icons.check)])),
+    return IconButton(
+      onPressed: () async {
+        int receiptID = await dbConnector.insertReceipt(receipt, dropdownValue);
+        Transaction transaction = Transaction(
+          date: receipt.date,
+          totalAmount: -receipt.total!,
+          store: receipt.recipient,
+          receiptID: receiptID,
+          categoryID:
+              await dbConnector.getCategoryIDfromDescription(dropdownValue),
+          categoryDesc: dropdownValue,
+        );
+        Transaction? alreadyExists =
+            await dbConnector.checkForExistingTransaction(transaction);
+        if (alreadyExists != null) {
+          alreadyExists.receiptID = receiptID;
+          alreadyExists.date = transaction.date;
+          alreadyExists.categoryDesc = transaction.categoryDesc;
+          alreadyExists.categoryID = transaction.categoryID;
+          await dbConnector.updateTransaction(alreadyExists);
+          final snackBar = SnackBar(
+            backgroundColor: Utils.mediumDarkColor,
+            content: Text(
+              "Receipt was added to existing identical bank transaction",
+              style: TextStyle(color: Utils.lightColor),
+            ),
+          );
+          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        } else {
+          await dbConnector.insertTransaction(transaction);
+        }
+        int? n = await dbConnector.numOfCategoriesWithSameName(transaction);
+        if (n > 0) {
+          showAlertDialog(context, n, transaction);
+        } else {
+          showConfirmationButton(context);
+        }
+      },
+      icon: Icon(Icons.check),
     );
   }
 
@@ -197,7 +190,6 @@ class ResultsScreenState extends State<ResultsScreen> {
       },
     );
     AlertDialog alert = AlertDialog(
-      
       content: Text("Receipt successfully added!"),
       actions: [
         confirmationButton,
@@ -311,7 +303,7 @@ class ResultsScreenState extends State<ResultsScreen> {
                         padding: EdgeInsets.only(left: 10),
                         child: Column(children: [
                           Icon(Icons.payment),
-                          Text("${receipt.total} kr",
+                          Text("${getTotal(receipt)} kr",
                               style: TextStyle(
                                   fontSize: fontSize,
                                   fontWeight: FontWeight.w600))
@@ -332,12 +324,76 @@ class ResultsScreenState extends State<ResultsScreen> {
             return Text("${snapshot.error}");
           } else if (snapshot.hasData) {
             receipt = snapshot.data!;
-            return DataTable(
-                columnSpacing: 30,
-                sortAscending: isAscending,
-                sortColumnIndex: sortColumnIndex,
-                columns: getColumns(columns),
-                rows: getRows(receipt.items as List<ReceiptItem>));
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: receipt.items.length,
+              itemBuilder: (BuildContext context, index) {
+                return Dismissible(
+                  direction: DismissDirection.endToStart,
+                  key: UniqueKey(),
+                  onDismissed: ((direction) {
+                    setState(() {
+                      receipt.total =
+                          receipt.total! - receipt.items[index].amount;
+                      receipt.total =
+                          double.parse((receipt.total)!.toStringAsFixed(2));
+                      receipt.items.removeAt(index);
+                    });
+                  }),
+                  background: Container(
+                    color: Colors.green,
+                  ),
+                  secondaryBackground: const ColoredBox(
+                    color: Colors.red,
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Icon(Icons.delete, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Flexible(
+                        flex: 6,
+                        child: TextFormField(
+                          initialValue: receipt.items[index].itemName,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          onFieldSubmitted: (value) {
+                            setState(() {
+                              receipt.items[index].itemName = value;
+                            });
+                          },
+                        ),
+                      ),
+                      Flexible(
+                        flex: 2,
+                        child: TextFormField(
+                          initialValue: receipt.items[index].amount.toString(),
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          onFieldSubmitted: (value) {
+                            double oldAmount = receipt.items[index].amount;
+                            setState(() {
+                              double.tryParse(value) == null
+                                  ? receipt.items[index].amount = 0
+                                  : receipt.items[index].amount =
+                                      double.parse(value);
+                              receipt.total = receipt.total! - oldAmount;
+                              receipt.total =
+                                  receipt.total! + double.parse(value);
+                              receipt.total = double.parse(
+                                  (receipt.total)!.toStringAsFixed(2));
+                            });
+                          },
+                        ),
+                      )
+                    ],
+                  ),
+                );
+              },
+            );
           } else {
             return Text("Unexpected error");
           }
@@ -444,5 +500,36 @@ class ResultsScreenState extends State<ResultsScreen> {
 
   Future<List<TransactionCategory>> getCategories(SQFLite dbConnector) async {
     return await dbConnector.getAllcategories();
+  }
+
+  Widget addButton() {
+    return Container(
+      padding: EdgeInsets.all(40),
+      child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Utils.mediumLightColor,
+            foregroundColor: Utils.textColor,
+          ),
+          onPressed: () async {
+            setState(() {
+              receipt.items.add(ReceiptItem(itemName: "", amount: 0));
+            });
+          },
+          child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [Text("Add item "), Icon(Icons.add)])),
+    );
+  }
+
+  double? getTotal(Receipt receipt) {
+    if (receipt.total != null) return receipt.total;
+    double? newTotal = 0;
+    for (var item in receipt.items) {
+      newTotal = newTotal! + item.amount;
+    }
+    setState(() {
+      receipt.total = newTotal;
+    });
+    return newTotal;
   }
 }
