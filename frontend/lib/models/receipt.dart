@@ -14,7 +14,6 @@ class Receipt {
   String? backendId;
   String ocrText;
 
-
   Receipt({
     this.id,
     required this.recipient,
@@ -52,7 +51,6 @@ class Receipt {
       categoryID.hashCode
   );
 
-
   Map<String, dynamic> toMap() {
     List<Map<String, dynamic>> items = [];
     for (ReceiptItem item in this.items) {
@@ -62,7 +60,7 @@ class Receipt {
     var result = {
       'recipient': recipient,
       'date': date.toIso8601String(),
-      'total': total,
+      'total': total ?? 0,
       'categoryDesc': categoryDesc,
       'items': items,
       'categoryID': categoryID,
@@ -97,6 +95,7 @@ class Receipt {
         categoryID: json["categoryID"],
         backendId: json["_id"],
         ocrText: json["ocr_text"]);
+
   }
 
   static List<Receipt>

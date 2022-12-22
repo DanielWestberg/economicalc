@@ -12,7 +12,7 @@
     "recognition_completed_on": 1669122694083,
     "receipts": [
       {
-        "merchant_name": "соор",
+        "merchant_name": "Ica Folkes Livs",
         "merchant_address": null,
         "merchant_phone": null,
         "merchant_website": null,
@@ -22,7 +22,7 @@
         "mall": null,
         "country": "US",
         "receipt_no": "0107412570",
-        "date": "2022-02-16",
+        "date": "2022-12-08",
         "time": "20:24",
         "items": [
           {
@@ -117,7 +117,7 @@
           }
         ],
         "currency": "USD",
-        "total": 72.4,
+        "total": 283.4,
         "subtotal": null,
         "tax": null,
         "service_charge": null,
