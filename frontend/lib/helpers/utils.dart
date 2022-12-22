@@ -43,7 +43,7 @@ class Utils {
 
   static Receipt cleanReceipt(Receipt receipt) {
     var result = receipt;
-
+    
     List<String> discounts_swe = [
       "Prisnedsättning",
       "Rabatt",
@@ -52,7 +52,7 @@ class Utils {
       "Mottaget",
       "Kontokort",
       "öresavrundning",
-      "avrudning"
+      "avrundning"
     ];
     List<String> invalidCharacters = ["%", ",", "#", "!", ".", "?"];
     List<ReceiptItem> items = result.items;

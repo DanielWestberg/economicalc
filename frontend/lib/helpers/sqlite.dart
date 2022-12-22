@@ -65,6 +65,7 @@ class SQFLite {
         items               TEXT,
         categoryDesc        TEXT,
         categoryID          INTEGER,
+        ocrText             TEXT,
         FOREIGN KEY (categoryID) REFERENCES category (id) )''',
     );
 
