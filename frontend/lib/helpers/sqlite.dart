@@ -65,6 +65,7 @@ class SQFLite {
         items               TEXT,
         categoryDesc        TEXT,
         categoryID          INTEGER,
+        ocrText             TEXT,
         FOREIGN KEY (categoryID) REFERENCES category (id) )''',
     );
 
@@ -420,6 +421,7 @@ class SQFLite {
         items: parseReceiptItems(maps[i]['items']),
         categoryDesc: maps[i]['categoryDesc'],
         categoryID: maps[i]['categoryID'],
+        ocrText: maps[i]['ocrText']
       );
     });
   }
@@ -437,6 +439,8 @@ class SQFLite {
       items: parseReceiptItems(maps[0]['items']),
       categoryDesc: maps[0]['categoryDesc'],
       categoryID: maps[0]['categoryID'],
+      ocrText: maps[0]['ocrText']
+
     );
   }
 

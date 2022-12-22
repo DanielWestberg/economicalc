@@ -68,6 +68,7 @@ main() async {
       items: items,
       total: 100.0,
       categoryID: 1,
+      ocrText: "",
     );
 
     final postedReceipt = await postReceipt(cookie, receipt);
@@ -184,6 +185,7 @@ main() async {
         ],
         total: 99.0,
         categoryID: 2,
+        ocrText: ""
       ),
       Receipt(
         id: 4,
@@ -201,6 +203,7 @@ main() async {
         ],
         total: 300.0,
         categoryID: 3,
+        ocrText: ""
       ),
     ];
 
