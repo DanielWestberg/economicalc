@@ -126,6 +126,7 @@ class _HomeScreen extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             IconButton(
+                color: Utils.textColor,
                 iconSize: 30,
                 icon: Icon(Icons.camera_alt_outlined),
                 onPressed: (() async {
@@ -136,6 +137,7 @@ class _HomeScreen extends State<HomeScreen> {
                   goToResults(image);
                 })),
             IconButton(
+              color: Utils.textColor,
               iconSize: 30,
               icon: Icon(Icons.filter_rounded),
               onPressed: (() async {
@@ -146,6 +148,7 @@ class _HomeScreen extends State<HomeScreen> {
               }),
             ),
             IconButton(
+              color: Utils.textColor,
               iconSize: 30,
               icon: Icon(Icons.search_rounded),
               onPressed: (() async {
@@ -155,6 +158,7 @@ class _HomeScreen extends State<HomeScreen> {
               }),
             ),
             IconButton(
+              color: Utils.textColor,
               iconSize: 30,
               icon: Icon(Icons.filter_alt_rounded),
               onPressed: (() {

@@ -16,8 +16,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Utils.lightColor,
-        foregroundColor: Colors.black,
+        backgroundColor: Utils.mediumLightColor,
+        foregroundColor: Utils.textColor,
         title: Text("Settings"),
         centerTitle: true,
         leading: IconButton(
