@@ -53,6 +53,7 @@ class HistoryListState extends State<HistoryList> {
     updateData();
     dataFuture = dbConnector.getFilteredTransactions(
         widget.startDate, widget.endDate, widget.category, widget.onlyReceipts);
+    print(dataFuture);
   }
 
   void initDB() async {

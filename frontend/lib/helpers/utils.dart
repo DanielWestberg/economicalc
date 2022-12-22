@@ -46,10 +46,10 @@ class Utils {
     });
     return isExpenses ? -sum : sum;
   }
-  
+
   static Receipt cleanReceipt(Receipt receipt) {
     var result = receipt;
-    
+
     List<String> discounts_swe = [
       "Prisnedsättning",
       "Rabatt",
@@ -109,7 +109,8 @@ class Utils {
       }
     }
     return result;
-}
+  }
+
   static bool isSimilarDate(DateTime receiptDate, DateTime bankTransDate) {
     return receiptDate.add(const Duration(days: 3)).compareTo(bankTransDate) >=
         0;
@@ -125,13 +126,13 @@ class Utils {
     return word;
   }
 
-  static bool isSimilarStoreName(String name1, String name2) {
+  static bool isSimilarStoreName(String name1, String name2, double threshold) {
     print(StringSimilarity.compareTwoStrings(
         name1.toLowerCase(), name2.toLowerCase()));
 
     return StringSimilarity.compareTwoStrings(
             name1.toLowerCase().trim(), name2.toLowerCase().trim()) >
-        0.4;
+        threshold;
   }
 
   static Future<bool> isReceiptAndTransactionEqual(
@@ -155,7 +156,7 @@ class Utils {
       String result = Utils.removeStopWords(desc, list);
       String result1 = Utils.removeStopWords(desc1, list);
 
-      if (Utils.isSimilarStoreName(result, result1)) return true;
+      if (Utils.isSimilarStoreName(result, result1, 0.4)) return true;
     }
     return false;
   }
@@ -180,8 +181,30 @@ class Utils {
       String result = Utils.removeStopWords(desc, list);
       String result1 = Utils.removeStopWords(desc1, list);
 
-      if (Utils.isSimilarStoreName(result, result1)) return true;
+      if (Utils.isSimilarStoreName(result, result1, 0.4)) return true;
     }
+    return false;
+  }
+
+  static Future<bool> categoricalSimilarity(
+      Transaction trans1, Transaction trans2) async {
+    String response =
+        await rootBundle.loadString('assets/swedish_municipalities.json');
+    List<dynamic> sweMuni = json.decode(response);
+
+    List<String> list = [];
+
+    sweMuni.forEach((element) {
+      list.add(element);
+    });
+
+    String desc = trans1.store!;
+    String desc1 = trans2.store!;
+    list.sort((a, b) => b.length.compareTo(a.length));
+    String result = Utils.removeStopWords(desc, list);
+    String result1 = Utils.removeStopWords(desc1, list);
+
+    if (Utils.isSimilarStoreName(result, result1, 0.2)) return true;
     return false;
   }
 
@@ -205,7 +228,7 @@ class Utils {
       String result = Utils.removeStopWords(desc, list);
       String result1 = Utils.removeStopWords(desc1, list);
 
-      if (Utils.isSimilarStoreName(result, result1)) return true;
+      if (Utils.isSimilarStoreName(result, result1, 0.4)) return true;
     }
     return false;
   }

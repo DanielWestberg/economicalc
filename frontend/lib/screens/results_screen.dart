@@ -272,14 +272,18 @@ class ResultsScreenState extends State<ResultsScreen> {
                             Padding(
                                 padding: EdgeInsets.only(left: 5),
                                 child: SizedBox(
-                                    width: sizedBoxWidth,
-                                    height: sizedBoxHeight,
-                                    child: Text(
-                                      receipt.recipient,
-                                      style: TextStyle(
-                                          fontSize: fontSize,
-                                          fontWeight: FontWeight.w600),
-                                    ))),
+                                  width: sizedBoxWidth,
+                                  height: sizedBoxHeight,
+                                  child: TextFormField(
+                                      initialValue: receipt.recipient,
+                                      autovalidateMode:
+                                          AutovalidateMode.onUserInteraction,
+                                      onFieldSubmitted: (value) {
+                                        setState(() {
+                                          receipt.recipient = value;
+                                        });
+                                      }),
+                                ))
                           ],
                         ),
                         Row(
@@ -522,12 +526,13 @@ class ResultsScreenState extends State<ResultsScreen> {
   }
 
   double? getTotal(Receipt receipt) {
-    if (receipt.total != null) return receipt.total;
+    //if (receipt.total != null) return receipt.total;
     double? newTotal = 0;
     for (var item in receipt.items) {
       newTotal = newTotal! + item.amount;
     }
-    setState(() {
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       receipt.total = newTotal;
     });
     return newTotal;

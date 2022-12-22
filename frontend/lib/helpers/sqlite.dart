@@ -103,8 +103,7 @@ class SQFLite {
     int n = 0;
     List<Transaction> transactionsInLocalDb = await getAllTransactions();
     for (Transaction tran in transactionsInLocalDb) {
-      if (tran.store!.toLowerCase().trim() ==
-          transaction.store!.toLowerCase().trim()) {
+      if (await Utils.categoricalSimilarity(tran, transaction)) {
         n++;
       }
     }
@@ -414,15 +413,14 @@ class SQFLite {
     // Convert the List<Map<String, dynamic> into a List<receipts>.
     return List.generate(maps!.length, (i) {
       return Receipt(
-        id: maps[i]['id'],
-        recipient: maps[i]['recipient'],
-        date: DateTime.parse(maps[i]['date']),
-        total: maps[i]['total'],
-        items: parseReceiptItems(maps[i]['items']),
-        categoryDesc: maps[i]['categoryDesc'],
-        categoryID: maps[i]['categoryID'],
-        ocrText: maps[i]['ocrText']
-      );
+          id: maps[i]['id'],
+          recipient: maps[i]['recipient'],
+          date: DateTime.parse(maps[i]['date']),
+          total: maps[i]['total'],
+          items: parseReceiptItems(maps[i]['items']),
+          categoryDesc: maps[i]['categoryDesc'],
+          categoryID: maps[i]['categoryID'],
+          ocrText: maps[i]['ocrText']);
     });
   }
 
@@ -432,16 +430,14 @@ class SQFLite {
         await db?.rawQuery('SELECT * FROM receipts WHERE id = "${id}"');
 
     return Receipt(
-      id: maps![0]['id'],
-      recipient: maps[0]['recipient'],
-      date: DateTime.parse(maps[0]['date']),
-      total: maps[0]['total'],
-      items: parseReceiptItems(maps[0]['items']),
-      categoryDesc: maps[0]['categoryDesc'],
-      categoryID: maps[0]['categoryID'],
-      ocrText: maps[0]['ocrText']
-
-    );
+        id: maps![0]['id'],
+        recipient: maps[0]['recipient'],
+        date: DateTime.parse(maps[0]['date']),
+        total: maps[0]['total'],
+        items: parseReceiptItems(maps[0]['items']),
+        categoryDesc: maps[0]['categoryDesc'],
+        categoryID: maps[0]['categoryID'],
+        ocrText: maps[0]['ocrText']);
   }
 
   Future<void> updateReceipt(Receipt receipt) async {
