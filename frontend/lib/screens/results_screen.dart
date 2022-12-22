@@ -102,7 +102,7 @@ class ResultsScreenState extends State<ResultsScreen> {
               store: receipt.recipient,
               receiptID: receiptID,
               categoryID:
-                  await SQFLite.getCategoryIDfromDescription(dropdownValue),
+                  await dbConnector.getCategoryIDfromDescription(dropdownValue),
               categoryDesc: dropdownValue,
             );
             Transaction? alreadyExists =

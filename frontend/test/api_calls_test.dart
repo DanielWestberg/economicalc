@@ -143,9 +143,34 @@ main() async {
     deleteCategory(cookie, category.id!);
   });
 
+  test ("Can log in twice", () async {
+    Receipt receipt = Receipt(
+      id: 6,
+      recipient: "b",
+      date: DateTime.utc(1987, 1, 1),
+      items: [
+        ReceiptItem(
+          itemName: "d",
+          amount: 1,
+        ),
+      ],
+      total: 2,
+      categoryID: 9,
+    );
+    receipt = await postReceipt(cookie, receipt);
+
+    final otherLoginData = await fetchLoginData(
+      accountReportId, transactionReportId, true
+    );
+    final otherCookie = otherLoginData.cookie;
+    final responseReceipts = await fetchReceipts(otherCookie);
+    expect(responseReceipts, contains(receipt));
+  });
+
   test("Post multiple receipts", () async {
     List<Receipt> receipts = [
       Receipt(
+        id: 3,
         recipient: "ica",
         date: DateTime.utc(2001, 9, 11),
         items: [
@@ -163,6 +188,7 @@ main() async {
         ocrText: ""
       ),
       Receipt(
+        id: 4,
         recipient: "gamestop",
         date: DateTime.utc(2022, 2, 24),
         items: [

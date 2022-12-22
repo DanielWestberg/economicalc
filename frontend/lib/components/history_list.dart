@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
+import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
 import 'package:economicalc_client/screens/transaction_details_screen.dart';
@@ -33,6 +34,7 @@ class HistoryListState extends State<HistoryList> {
   late List<Transaction> transactions = [];
   late List<Transaction> transactions_copy;
   bool initialized = false;
+  bool isLoading = false;
   final SQFLite dbConnector = SQFLite.instance;
 
   late List<TransactionCategory> categories = [];
@@ -84,13 +86,15 @@ class HistoryListState extends State<HistoryList> {
   }
 
   void updateData() async {
+    setState(() {
+      isLoading = true;
+    });
     categories = await dbConnector.getAllcategories();
-    // await load_test_data(); // TODO: Replace with fetching from bank
-    await dbConnector.importMissingBankTransactions();
     var updatedDataFuture = dbConnector.getFilteredTransactions(
         widget.startDate, widget.endDate, widget.category, widget.onlyReceipts);
     setState(() {
       dataFuture = updatedDataFuture;
+      isLoading = false;
     });
   }
 
@@ -138,100 +142,110 @@ class HistoryListState extends State<HistoryList> {
               )),
             ],
           )),
-      FutureBuilder(
-          future: dataFuture,
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return Text("${snapshot.error}");
-            } else if (snapshot.hasData) {
-              transactions = snapshot.data!;
-              if (!initialized) {
-                transactions_copy = snapshot.data!;
-              }
-              initialized = true;
-              sortByDate();
-              return Expanded(
-                  child: RefreshIndicator(
-                      onRefresh: () async => updateData(),
-                      backgroundColor: Utils.mediumLightColor,
-                      color: Utils.textColor,
-                      child: ListView.builder(
-                          itemCount: transactions.length,
-                          itemBuilder: (BuildContext ctx, int index) {
-                            return Padding(
-                                padding: EdgeInsets.only(top: 0.0),
-                                child: ListTile(
-                                  style: ListTileStyle.list,
-                                  shape: Border(
-                                    left: BorderSide(
-                                        color: TransactionCategory.getCategory(
-                                                transactions[index].categoryID!,
-                                                categories)
-                                            .color,
-                                        width: 20),
-                                    top: BorderSide(
-                                        color: Utils.mediumDarkColor,
-                                        width: 0.5),
-                                  ),
-                                  leading: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        Text(
-                                          DateFormat('yyyy-MM-dd')
-                                              .format(transactions[index].date),
-                                          style: TextStyle(
-                                              color: Utils.textColor,
-                                              fontWeight: FontWeight.w500,
-                                              fontSize: 14),
-                                        ),
-                                        transactions[index].receiptID != null
-                                            ? Icon(
-                                                Icons.receipt_long_rounded,
-                                                size: 15,
-                                              )
-                                            : Text("")
-                                      ]),
-                                  title: Text(
-                                    transactions[index].store!,
-                                    style: TextStyle(
+      isLoading
+          ? Center(
+              heightFactor: 10,
+              child: LoadingAnimationWidget.threeArchedCircle(
+                  color: Colors.black, size: 40))
+          : FutureBuilder(
+              future: dataFuture,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Text("${snapshot.error}");
+                } else if (snapshot.hasData) {
+                  transactions = snapshot.data!;
+                  if (!initialized) {
+                    transactions_copy = snapshot.data!;
+                  }
+                  initialized = true;
+                  sortByDate();
+                  return Expanded(
+                      child: RefreshIndicator(
+                          onRefresh: () async => updateData(),
+                          backgroundColor: Utils.mediumLightColor,
+                          color: Utils.textColor,
+                          child: ListView.builder(
+                              itemCount: transactions.length,
+                              itemBuilder: (BuildContext ctx, int index) {
+                                return Padding(
+                                    padding: EdgeInsets.only(top: 0.0),
+                                    child: ListTile(
+                                      style: ListTileStyle.list,
+                                      shape: Border(
+                                        left: BorderSide(
+                                            color:
+                                                TransactionCategory.getCategory(
+                                                        transactions[index]
+                                                            .categoryID!,
+                                                        categories)
+                                                    .color,
+                                            width: 20),
+                                        top: BorderSide(
+                                            color: Utils.mediumDarkColor,
+                                            width: 0.5),
+                                      ),
+                                      leading: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            Text(
+                                              DateFormat('yyyy-MM-dd').format(
+                                                  transactions[index].date),
+                                              style: TextStyle(
+                                                  color: Utils.textColor,
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 14),
+                                            ),
+                                            transactions[index].receiptID !=
+                                                    null
+                                                ? Icon(
+                                                    Icons.receipt_long_rounded,
+                                                    size: 15,
+                                                  )
+                                                : Text("")
+                                          ]),
+                                      title: Text(
+                                        transactions[index].store!,
+                                        style: TextStyle(
+                                            color: Utils.textColor,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 14),
+                                      ),
+                                      subtitle: Text(
+                                        NumberFormat.currency(
+                                          locale: 'sv_SE',
+                                        ).format(
+                                            transactions[index].totalAmount),
+                                        style: TextStyle(
+                                            color: Utils.textColor,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 12),
+                                      ),
+                                      trailing: Icon(
+                                        Icons.arrow_right_rounded,
+                                        size: 40,
                                         color: Utils.textColor,
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 14),
-                                  ),
-                                  subtitle: Text(
-                                    NumberFormat.currency(
-                                      locale: 'sv_SE',
-                                    ).format(transactions[index].totalAmount),
-                                    style: TextStyle(
-                                        color: Utils.textColor,
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 12),
-                                  ),
-                                  trailing: Icon(
-                                    Icons.arrow_right_rounded,
-                                    size: 40,
-                                    color: Utils.textColor,
-                                  ),
-                                  onTap: () {
-                                    Navigator.of(context)
-                                        .push(MaterialPageRoute(
-                                            builder: (context) =>
-                                                TransactionDetailsScreen(
-                                                    null, transactions[index])))
-                                        .then((value) {
-                                      updateData();
-                                    });
-                                  },
-                                ));
-                          })));
-            } else {
-              return Center(
-                  heightFactor: 10,
-                  child: LoadingAnimationWidget.threeArchedCircle(
-                      color: Colors.black, size: 40));
-            }
-          })
+                                      ),
+                                      onTap: () {
+                                        Navigator.of(context)
+                                            .push(MaterialPageRoute(
+                                                builder: (context) =>
+                                                    TransactionDetailsScreen(
+                                                        null,
+                                                        transactions[index])))
+                                            .then((value) {
+                                          updateData();
+                                        });
+                                      },
+                                    ));
+                              })));
+                } else {
+                  return Center(
+                      heightFactor: 10,
+                      child: LoadingAnimationWidget.threeArchedCircle(
+                          color: Colors.black, size: 40));
+                }
+              })
     ]);
   }
 }
