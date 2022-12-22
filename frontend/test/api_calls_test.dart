@@ -62,6 +62,7 @@ main() async {
       ),
     ];
     Receipt receipt = Receipt(
+      id: 1,
       recipient: "ica",
       date: DateTime.utc(1970, 1, 1),
       items: items,
@@ -79,23 +80,23 @@ main() async {
     final image = XFile("../backend/tests/res/tsu.jpg");
 
     final receipts = await fetchReceipts(cookie);
-    final backendId = receipts[0].backendId!;
-    await updateImage(cookie, backendId, image);
+    final id = receipts[0].id!;
+    await updateImage(cookie, id, image);
 
-    final responseImage = await fetchImage(cookie, backendId);
+    final responseImage = await fetchImage(cookie, id);
     final expectedBytes = await image.readAsBytes();
     final responseBytes = await responseImage.readAsBytes();
 
     final equals = const ListEquality().equals;
     expect(equals(expectedBytes, responseBytes), true);
 
-    deleteImage(cookie, backendId);
+    deleteImage(cookie, id);
   });
 
   test("Update receipt", () async {
     final receipt = (await fetchReceipts(cookie))[0];
     receipt.items[0].itemName = "Snus";
-    await updateReceipt(cookie, receipt.backendId, receipt);
+    await updateReceipt(cookie, receipt.id, receipt);
     final responseReceipts = await fetchReceipts(cookie);
     expect(responseReceipts, contains(receipt));
   });
@@ -139,5 +140,48 @@ main() async {
     expect(fetchedCategories, isNot(contains(category)));
 
     deleteCategory(cookie, category.id!);
+  });
+
+  test("Post multiple receipts", () async {
+    List<Receipt> receipts = [
+      Receipt(
+        recipient: "ica",
+        date: DateTime.utc(2001, 9, 11),
+        items: [
+          ReceiptItem(
+            itemName: "Toalettpapper",
+            amount: 1,
+          ),
+          ReceiptItem(
+            itemName: "Fil",
+            amount: 3,
+          ),
+        ],
+        total: 99.0,
+        categoryID: 2,
+      ),
+      Receipt(
+        recipient: "gamestop",
+        date: DateTime.utc(2022, 2, 24),
+        items: [
+          ReceiptItem(
+            itemName: "Hollow Knight",
+            amount: 1
+          ),
+          ReceiptItem(
+            itemName: "Kerbal Space Program",
+            amount: 1
+          ),
+        ],
+        total: 300.0,
+        categoryID: 3,
+      ),
+    ];
+
+    final responseReceipts = await postManyReceipts(cookie, receipts);
+    final fetchedReceipts = await fetchReceipts(cookie);
+    for (Receipt receipt in responseReceipts) {
+      expect(fetchedReceipts, contains(receipt));
+    }
   });
 }
