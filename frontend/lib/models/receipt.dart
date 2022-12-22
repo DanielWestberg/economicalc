@@ -11,31 +11,40 @@ class Receipt {
   String? categoryDesc;
   List<ReceiptItem> items;
   int? categoryID;
+  String? backendId;
+  String ocrText;
 
-  Receipt({this.id,
+
+  Receipt({
+    this.id,
     required this.recipient,
     required this.date,
     this.total,
     required this.items,
     this.categoryDesc,
     this.categoryID,
+
+    this.backendId,
+    required this.ocrText,
+
   });
 
   @override
-  operator ==(Object? other) => (
-      other is Receipt &&
+  operator ==(Object? other) => (other is Receipt &&
       id == other.id &&
       recipient == other.recipient &&
       date == other.date &&
       total == other.total &&
       categoryDesc == other.categoryDesc &&
       items.every((item) => other.items.contains(item)) &&
-      categoryID == other.categoryID
+      categoryID == other.categoryID &&
+      backendId == other.backendId &&
+      ocrText == other.ocrText
   );
 
+
   @override
-  get hashCode => (
-      id.hashCode |
+  get hashCode => (id.hashCode |
       recipient.hashCode |
       date.hashCode |
       total.hashCode |
@@ -44,20 +53,20 @@ class Receipt {
       categoryID.hashCode
   );
 
-
   Map<String, dynamic> toMap() {
     List<Map<String, dynamic>> items = [];
     for (ReceiptItem item in this.items) {
       items.add(item.toJson());
     }
 
-    var result =  {
+    var result = {
       'recipient': recipient,
       'date': date.toIso8601String(),
-      'total': total,
+      'total': total ?? 0,
       'categoryDesc': categoryDesc,
       'items': items,
-      'categoryID': categoryID
+      'categoryID': categoryID,
+      'ocrText': ocrText
     };
 
     if (id != null) {
@@ -80,13 +89,13 @@ class Receipt {
         .cast<ReceiptItem>();
 
     return Receipt(
-      id: json["id"],
-      recipient: json["recipient"],
-      date: DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'").parseUtc(json["date"]),
-      total: json["total"],
-      items: items,
-      categoryID: json["categoryID"],
-    );
+        recipient: json["recipient"],
+        date: DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'")
+            .parseUtc(json["date"]),
+        total: json["total"],
+        items: items,
+        categoryID: json["categoryID"],
+        ocrText: json["ocr_text"]);
   }
 
   static List<Receipt>
@@ -103,7 +112,8 @@ class Receipt {
         recipient: json['receipts'][0]['merchant_name'],
         date: DateFormat('yyyy-MM-dd').parse(json['receipts'][0]['date']),
         total: json['receipts'][0]['total'],
-        items: items);
+        items: items,
+        ocrText: json['receipts'][0]["ocr_text"]);
   }
 }
 
@@ -120,19 +130,13 @@ class ReceiptItem {
   }
 
   @override
-  operator ==(Object? other) => (
-      other is ReceiptItem &&
+  operator ==(Object? other) => (other is ReceiptItem &&
       itemId == other.itemId &&
       itemName == other.itemName &&
-      amount == other.amount
-  );
+      amount == other.amount);
 
   @override
-  get hashCode => (
-      itemId.hashCode |
-      itemName.hashCode |
-      amount.hashCode
-  );
+  get hashCode => (itemId.hashCode | itemName.hashCode | amount.hashCode);
 
   Map<String, dynamic> toJson() {
     return {'itemName': itemName, 'amount': amount, 'itemId': itemId};

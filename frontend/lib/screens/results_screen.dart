@@ -116,8 +116,12 @@ class ResultsScreenState extends State<ResultsScreen> {
   Widget confirmButton() {
     return Container(
       padding: EdgeInsets.all(40),
-      child: GestureDetector(
-          onTap: () async {
+      child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Utils.mediumLightColor,
+            foregroundColor: Utils.textColor,
+          ),
+          onPressed: () async {
             int receiptID =
                 await dbConnector.insertReceipt(receipt, dropdownValue);
             if (widget.existingTransaction != null) {
@@ -151,12 +155,30 @@ class ResultsScreenState extends State<ResultsScreen> {
                 date: receipt.date,
                 totalAmount: -receipt.total!,
                 store: receipt.recipient,
-                bankTransactionID: null,
                 receiptID: receiptID,
-                categoryID: receipt.categoryID,
-                categoryDesc: receipt.categoryDesc,
+                categoryID: await dbConnector
+                    .getCategoryIDfromDescription(dropdownValue),
+                categoryDesc: dropdownValue,
               );
-              await dbConnector.insertTransaction(transaction);
+              Transaction? alreadyExists =
+                  await dbConnector.checkForExistingTransaction(transaction);
+              if (alreadyExists != null) {
+                alreadyExists.receiptID = receiptID;
+                alreadyExists.date = transaction.date;
+                alreadyExists.categoryDesc = transaction.categoryDesc;
+                alreadyExists.categoryID = transaction.categoryID;
+                await dbConnector.updateTransaction(alreadyExists);
+                final snackBar = SnackBar(
+                  backgroundColor: Utils.mediumDarkColor,
+                  content: Text(
+                    "Receipt was added to existing identical bank transaction",
+                    style: TextStyle(color: Utils.lightColor),
+                  ),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(snackBar);
+              } else {
+                await dbConnector.insertTransaction(transaction);
+              }
               int? n =
                   await dbConnector.numOfCategoriesWithSameName(transaction);
               if (n > 0) {
@@ -231,7 +253,6 @@ class ResultsScreenState extends State<ResultsScreen> {
       },
     );
     AlertDialog alert = AlertDialog(
-      
       content: Text("Receipt successfully added!"),
       actions: [
         confirmationButton,
@@ -428,8 +449,8 @@ class ResultsScreenState extends State<ResultsScreen> {
     final imageFile = File(image.path);
     try {
       var response = await processImageWithAsprise(imageFile);
-      Map<String, dynamic> filteredJson = removeJitter(response);
-      Receipt receipt = Receipt.fromJson(filteredJson);
+      Receipt receipt = Receipt.fromJson(response);
+      receipt = Utils.cleanReceipt(receipt);
 
       setState(() {
         isLoading = false;
@@ -459,47 +480,6 @@ class ResultsScreenState extends State<ResultsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
       rethrow;
     }
-  }
-
-  Map<String, dynamic> removeJitter(Map<String, dynamic> respJson) {
-    var items = respJson['receipts'][0]['items'];
-
-    List<String> discountTerms = ["rabatt", "discount"];
-    List<String> redundantItems = ["öresavrundning", "avrundning"];
-
-    for (var i = 0; i < items.length; i++) {
-      var item = items[i];
-      bool containsDiscount = false;
-
-      for (var discountTerm in discountTerms) {
-        if (item['description'].toLowerCase().contains(discountTerm)) {
-          containsDiscount = true;
-        }
-      }
-
-      for (var redundantItem in redundantItems) {
-        if (item['description'].toLowerCase().contains(redundantItem)) {
-          items.remove(item);
-          containsDiscount = false;
-        }
-      }
-
-      if (item['description'].toLowerCase().contains("pant")) {
-        items[i - 1]['amount'] += item['amount'];
-        items.remove(item);
-      }
-      if (containsDiscount) {
-        if (item['amount'] > 0) {
-          items[i - 1]['amount'] -= item['amount'];
-        } else if (item['amount'] < 0) {
-          items[i - 1]['amount'] += item['amount'];
-        }
-        items.remove(item);
-      }
-    }
-
-    respJson['receipts'][0]['items'] = items;
-    return respJson;
   }
 
   Future<List<TransactionCategory>> getCategories(SQFLite dbConnector) async {

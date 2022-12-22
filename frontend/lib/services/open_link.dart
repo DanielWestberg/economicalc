@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:core';
 
 import 'package:economicalc_client/helpers/sqlite.dart';
+import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/LoginData.dart';
 import 'package:economicalc_client/models/response.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
+import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/screens/home_screen.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
@@ -63,6 +65,7 @@ class OpenLinkState extends State<OpenLink> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
+          backgroundColor: Utils.mediumLightColor,
           title: Text(title),
         ),
         body: WebView(
@@ -82,9 +85,9 @@ class OpenLinkState extends State<OpenLink> {
 
               response = await CodeToAccessToken(code, widget.test);
               transactions = await fetchTransactions(response.accessToken);
-              for (var transaction in transactions) {
-                dbConnector.postBankTransaction(transaction);
-              }
+
+              await dbConnector.postMissingBankTransactions(transactions);
+
               if (!mounted) return NavigationDecision.prevent;
               Navigator.of(context).popUntil((route) => route.isFirst);
               return NavigationDecision.prevent;
@@ -104,9 +107,18 @@ class OpenLinkState extends State<OpenLink> {
                 resTrans.add(BankTransaction.fromJson(transaction));
               });
 
-              for (var transaction in resTrans) {
-                dbConnector.postBankTransaction(transaction);
-              }
+              await dbConnector.postMissingBankTransactions(resTrans);
+
+              List<int> addedUpdated = await dbConnector.updateTransactions();
+
+              final snackBar = SnackBar(
+                backgroundColor: Utils.mediumDarkColor,
+                content: Text(
+                  "${addedUpdated[0]} transactions were added. ${addedUpdated[1]} transactions were updated.",
+                  style: TextStyle(color: Utils.lightColor),
+                ),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(snackBar);
 
               if (!mounted) return NavigationDecision.prevent;
               Navigator.of(context).popUntil((route) => route.isFirst);
