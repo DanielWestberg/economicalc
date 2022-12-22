@@ -462,12 +462,18 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   deleteAlertDialog(BuildContext context) {
     // set up the buttons
     Widget cancelButton = TextButton(
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
       child: Text("No"),
       onPressed: () {
         Navigator.of(context).pop();
       },
     );
     Widget continueButton = TextButton(
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
       child: Text("Yes"),
       onPressed: () async {
         await dbConnector.deleteReceipt(widget.transaction.receiptID!);
@@ -486,7 +492,8 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     AlertDialog alert = AlertDialog(
       title: Text("Delete receipt"),
       content: Text(
-          "Are you sure you want to delete this receipt? This action cannot be undone."),
+          """Are you sure you want to delete the receipt? This action cannot be undone.
+          \nCorresponding bank transaction will not be removed if it exists."""),
       actions: [
         cancelButton,
         continueButton,

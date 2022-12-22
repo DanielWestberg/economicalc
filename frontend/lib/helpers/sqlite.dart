@@ -147,7 +147,7 @@ class SQFLite {
           transaction.store?.toLowerCase().trim()) {
         tran.categoryID = transaction.categoryID;
         tran.categoryDesc = transaction.categoryDesc;
-        updateTransaction(tran);
+        await updateTransaction(tran);
       }
     }
   }
