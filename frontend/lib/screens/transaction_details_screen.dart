@@ -116,74 +116,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                 )
               ],
               flexibleSpace: headerInfo(),
-              // FlexibleSpaceBar(
-              //   background: Container(
-              //       decoration: BoxDecoration(
-              //           gradient: LinearGradient(
-              //               begin: Alignment.bottomLeft,
-              //               end: Alignment.topRight,
-              //               colors: [
-              //         Utils.mediumLightColor,
-              //         Utils.mediumDarkColor
-              //       ]))),
-              //   title: headerInfo(),
-              //   titlePadding: EdgeInsets.all(0),
-              // )
             ),
-            // body: NestedScrollView(
-            //     headerSliverBuilder: ((context, innerBoxIsScrolled) => [
-            //           SliverAppBar(
-            //             expandedHeight: 250,
-            //             backgroundColor: Utils.mediumDarkColor,
-            //             foregroundColor: Utils.textColor,
-            //             leading: Container(
-            //                 padding: EdgeInsets.only(top: 10, left: 10),
-            //                 child: ElevatedButton(
-            //                     style: ElevatedButton.styleFrom(
-            //                         shape: CircleBorder(),
-            //                         alignment: Alignment.topCenter,
-            //                         backgroundColor: Utils.lightColor,
-            //                         foregroundColor: Utils.mediumDarkColor),
-            //                     onPressed: (() {
-            //                       Navigator.of(context)
-            //                           .popUntil((route) => route.isFirst);
-            //                     }),
-            //                     child: Icon(Icons.arrow_back))),
-            //             actions: [
-            //               Container(
-            //                 padding: EdgeInsets.only(top: 10, right: 5),
-            //                 child: ElevatedButton(
-            //                     style: ElevatedButton.styleFrom(
-            //                       shape: CircleBorder(),
-            //                       alignment: Alignment.center,
-            //                       backgroundColor: Utils.lightColor,
-            //                       foregroundColor: Utils.mediumDarkColor,
-            //                     ),
-            //                     onPressed: (() {
-            //                       widget.transaction.receiptID != null
-            //                           ? Text("TODO: Show image")
-            //                           : receiptBtnAlertDialog(context);
-            //                     }),
-            //                     child: Icon(Icons.receipt_long_rounded)),
-            //               )
-            //             ],
-            //             flexibleSpace: FlexibleSpaceBar(
-            //               background: Container(
-            //                 color: Utils.mediumDarkColor,
-            //                 // decoration: BoxDecoration(
-            //                 //     gradient: LinearGradient(
-            //                 //         begin: Alignment.bottomLeft,
-            //                 //         end: Alignment.topRight,
-            //                 //         colors: [
-            //                 //   Utils.mediumLightColor,
-            //                 //   Utils.mediumDarkColor
-            //                 // ]))
-            //               ),
-            //               title: headerInfo(),
-            //               titlePadding: EdgeInsets.all(0),
-            //             ),
-            //           )
-            //         ]),
             body:
                 ListView(children: [buildDataTable(), deleteButton(context)])));
   }
@@ -205,7 +138,6 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                 elevation: 0,
                 underline: SizedBox(),
                 value: dropdownValue,
-                // iconEnabledColor: Utils.lightColor,
                 onChanged: (value) async {
                   setState(() {
                     dropdownValue = value;
@@ -432,7 +364,6 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(30),
                     color: Utils.lightColor),
-                // color: Utils.lightColor,
                 padding: EdgeInsets.only(left: 5, right: 10),
                 child: Expanded(child: dropDown()),
               )

@@ -117,15 +117,6 @@ class StatisticsScreenState extends State<StatisticsScreen> {
             child: Scaffold(
                 // drawer: DrawerMenu(1),
                 appBar: AppBar(
-                  // flexibleSpace: Container(
-                  //     decoration: BoxDecoration(
-                  //         gradient: LinearGradient(
-                  //             begin: Alignment.bottomLeft,
-                  //             end: Alignment.topRight,
-                  //             colors: [
-                  //       Utils.mediumLightColor,
-                  //       Utils.mediumDarkColor
-                  //     ]))),
                   leading: Container(
                       alignment: Alignment.topCenter,
                       padding: EdgeInsets.only(top: 10, left: 10),
