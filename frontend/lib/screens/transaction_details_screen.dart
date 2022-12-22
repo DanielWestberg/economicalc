@@ -89,7 +89,10 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                           backgroundColor: Utils.lightColor,
                           foregroundColor: Utils.mediumDarkColor),
                       onPressed: (() {
-                        Navigator.pop(context);
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => HomeScreen()));
                       }),
                       child: Icon(Icons.arrow_back))),
               actions: [
@@ -244,7 +247,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                               child: Icon(Icons.label_rounded,
                                   color: category.color)),
                           SizedBox(
-                              width: 100,
+                              width: 250,
                               child: Text(
                                 category.description,
                                 overflow: TextOverflow.ellipsis,
