@@ -640,6 +640,13 @@ class SQFLite {
     );
   }
 
+  Future<bool> doesCategoryAlreadyExist(String description) async {
+    List<TransactionCategory> categoriesInDB = await getAllcategories();
+    return categoriesInDB
+        .where((category) => category.description == description)
+        .isNotEmpty;
+  }
+
   Future<List<TransactionCategory>> getAllcategories() async {
     final db = await database;
     final List<Map<String, dynamic?>>? maps = await db?.query('categories');

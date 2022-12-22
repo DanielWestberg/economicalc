@@ -157,14 +157,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         ElevatedButton(
           child: const Text('Save'),
           onPressed: () async {
-            if (description.length > 0) {
-              TransactionCategory newCategory = new TransactionCategory(
-                  description: description, color: pickerColor);
-              await dbConnector.insertCategory(newCategory);
-              await updateCategories();
-              Navigator.of(context).pop();
-              setState(() {});
-            } else {
+            if (description.length == 0) {
               final snackBar = SnackBar(
                 backgroundColor: Utils.errorColor,
                 content: Text(
@@ -173,6 +166,24 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 ),
               );
               ScaffoldMessenger.of(context).showSnackBar(snackBar);
+            } else if (await dbConnector
+                    .doesCategoryAlreadyExist(description) ||
+                description.toLowerCase() == 'none') {
+              final snackBar = SnackBar(
+                backgroundColor: Utils.errorColor,
+                content: Text(
+                  "Category already exist. Please choose a different description.",
+                  style: TextStyle(color: Utils.lightColor),
+                ),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+            } else {
+              TransactionCategory newCategory = new TransactionCategory(
+                  description: description, color: pickerColor);
+              await dbConnector.insertCategory(newCategory);
+              await updateCategories();
+              Navigator.of(context).pop();
+              setState(() {});
             }
           },
         ),
