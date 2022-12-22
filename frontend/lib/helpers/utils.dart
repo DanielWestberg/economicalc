@@ -41,15 +41,20 @@ class Utils {
     return isExpenses ? -sum : sum;
   }
 
-  Receipt cleanReceipt(Receipt receipt) {
+  static Receipt cleanReceipt(Receipt receipt) {
     var result = receipt;
 
     List<String> discounts_swe = [
       "Prisnedsättning",
       "Rabatt",
     ];
-    List<String> stopwords = ["Mottaget", "Kontokort"];
-
+    List<String> stopwords = [
+      "Mottaget",
+      "Kontokort",
+      "öresavrundning",
+      "avrudning"
+    ];
+    List<String> invalidCharacters = ["%", ",", "#", "!", ".", "?"];
     List<ReceiptItem> items = result.items;
     String ocr_text = result.ocrText;
     List<String> ocr = ocr_text.split("\n");
@@ -76,7 +81,7 @@ class Utils {
       for (String stopword in discounts_swe) {
         String desc = items[i].itemName;
         double amount = items[i].amount;
-        if (desc.contains(stopword)) {
+        if (desc.toLowerCase().trim().contains(stopword.toLowerCase().trim())) {
           items[i - 1].itemName += " $desc";
           items[i - 1].amount += amount;
           items.removeAt(i);
@@ -85,14 +90,16 @@ class Utils {
       }
       for (String stopword in stopwords) {
         String desc = items[i].itemName;
-        if (desc.contains(stopword)) {
+        if (desc.toLowerCase().trim().contains(stopword.toLowerCase().trim())) {
           items.removeAt(i);
           i--;
         }
       }
-      if (double.tryParse(desc.replaceAll(",", "")) != null) {
-        items.removeAt(i);
-        i--;
+      for (String invalidChar in invalidCharacters) {
+        if (double.tryParse(desc.replaceAll(invalidChar, "")) != null) {
+          items.removeAt(i);
+          i--;
+        }
       }
     }
     return result;

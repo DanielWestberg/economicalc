@@ -38,7 +38,8 @@ class Receipt {
       categoryDesc == other.categoryDesc &&
       items.every((item) => other.items.contains(item)) &&
       categoryID == other.categoryID &&
-      backendId == other.backendId);
+      backendId == other.backendId &&
+      ocrText == other.ocrText
   );
 
 
