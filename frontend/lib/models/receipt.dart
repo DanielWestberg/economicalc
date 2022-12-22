@@ -89,13 +89,14 @@ class Receipt {
         .cast<ReceiptItem>();
 
     return Receipt(
+        id: json["id"],
         recipient: json["recipient"],
         date: DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'")
             .parseUtc(json["date"]),
         total: json["total"],
         items: items,
         categoryID: json["categoryID"],
-        ocrText: json["ocr_text"]);
+        ocrText: json["ocrText"]);
   }
 
   static List<Receipt>
