@@ -43,9 +43,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           } else if (snapshot.hasData) {
             categories = snapshot.data!;
             return Scaffold(
+                backgroundColor: Utils.lightColor.withOpacity(0.95),
                 appBar: AppBar(
-                  foregroundColor: Colors.black,
-                  backgroundColor: Utils.lightColor,
+                  backgroundColor: Utils.mediumLightColor,
+                  foregroundColor: Utils.textColor,
                   title: Text("Categories", style: TextStyle(fontSize: 30)),
                   centerTitle: true,
                 ),
@@ -54,6 +55,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   Padding(
                       padding: EdgeInsets.only(top: 10, right: 10, left: 10),
                       child: Card(
+                        color: Utils.lightColor,
                         child: ListTile(
                             title: Text("Add category"),
                             trailing: IconButton(
@@ -77,50 +79,53 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                             itemCount: categories.length,
                             itemBuilder: ((context, index) {
                               return Card(
+                                  color: Utils.lightColor,
                                   child: ListTile(
-                                leading: IconButton(
-                                    icon: Icon(Icons.circle,
-                                        color: categories[index].color),
-                                    onPressed: () {
-                                      pickerColor = categories[index].color;
-                                      showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return popUpEditCategoryColor(
-                                                context, index);
-                                          });
-                                    }),
-                                title: Text(categories[index].description),
-                                trailing: categories[index].description !=
-                                        'Uncategorized'
-                                    ? PopupMenuButton(
-                                        icon: Icon(Icons.delete),
-                                        itemBuilder: (context) => [
-                                              PopupMenuItem(
-                                                child: Text("Delete"),
-                                                onTap: () async {
-                                                  await dbConnector
-                                                      .deleteCategoryByID(
-                                                          categories[index]
-                                                              .id!);
-                                                  final snackBar = SnackBar(
-                                                    backgroundColor:
-                                                        Utils.mediumDarkColor,
-                                                    content: Text(
-                                                      "Category '${categories[index].description}' was deleted",
-                                                      style: TextStyle(
-                                                          color:
-                                                              Utils.lightColor),
-                                                    ),
-                                                  );
-                                                  ScaffoldMessenger.of(context)
-                                                      .showSnackBar(snackBar);
-                                                  await updateCategories();
-                                                },
-                                              )
-                                            ])
-                                    : Text(""),
-                              ));
+                                    leading: IconButton(
+                                        icon: Icon(Icons.circle,
+                                            color: categories[index].color),
+                                        onPressed: () {
+                                          pickerColor = categories[index].color;
+                                          showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return popUpEditCategoryColor(
+                                                    context, index);
+                                              });
+                                        }),
+                                    title: Text(categories[index].description),
+                                    trailing: categories[index].description !=
+                                            'Uncategorized'
+                                        ? PopupMenuButton(
+                                            icon: Icon(Icons.delete),
+                                            itemBuilder: (context) => [
+                                                  PopupMenuItem(
+                                                    child: Text("Delete"),
+                                                    onTap: () async {
+                                                      await dbConnector
+                                                          .deleteCategoryByID(
+                                                              categories[index]
+                                                                  .id!);
+                                                      final snackBar = SnackBar(
+                                                        backgroundColor: Utils
+                                                            .mediumDarkColor,
+                                                        content: Text(
+                                                          "Category '${categories[index].description}' was deleted",
+                                                          style: TextStyle(
+                                                              color: Utils
+                                                                  .lightColor),
+                                                        ),
+                                                      );
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                              snackBar);
+                                                      await updateCategories();
+                                                    },
+                                                  )
+                                                ])
+                                        : Text(""),
+                                  ));
                             }),
                           )))
                 ])));
@@ -132,16 +137,17 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   Widget popUpAddCategory(context, categoriesPopUpCategory) {
     return AlertDialog(
-      title: Text("Add new category"),
-      icon: Icon(Icons.category),
+      title: Center(child: Text("Add new category")),
       content: SingleChildScrollView(
           child: Column(children: [
         Text("Enter description:"),
         TextField(onChanged: (value) => setState(() => description = value)),
-        Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
+        Container(
+            padding: EdgeInsets.symmetric(vertical: 5),
             child: Text("Pick a color:")),
         ColorPicker(
+            pickerAreaHeightPercent: 0.4,
+            pickerAreaBorderRadius: BorderRadius.circular(10),
             pickerColor: pickerColor,
             onColorChanged: ((pickedColor) => setState(() {
                   pickerColor = pickedColor;

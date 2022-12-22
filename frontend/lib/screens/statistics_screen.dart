@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:month_year_picker/month_year_picker.dart';
 
 const List<String> dropdownList = <String>['Table', 'Chart'];
@@ -117,23 +118,33 @@ class StatisticsScreenState extends State<StatisticsScreen> {
             child: Scaffold(
                 // drawer: DrawerMenu(1),
                 appBar: AppBar(
-                  flexibleSpace: Container(
-                      decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                              begin: Alignment.bottomLeft,
-                              end: Alignment.topRight,
-                              colors: [
-                        Utils.mediumLightColor,
-                        Utils.mediumDarkColor
-                      ]))),
-                  leading: IconButton(
-                      onPressed: (() {
-                        Navigator.pop(context);
-                      }),
-                      icon: Icon(Icons.arrow_back)),
+                  // flexibleSpace: Container(
+                  //     decoration: BoxDecoration(
+                  //         gradient: LinearGradient(
+                  //             begin: Alignment.bottomLeft,
+                  //             end: Alignment.topRight,
+                  //             colors: [
+                  //       Utils.mediumLightColor,
+                  //       Utils.mediumDarkColor
+                  //     ]))),
+                  leading: Container(
+                      alignment: Alignment.topCenter,
+                      padding: EdgeInsets.only(top: 10, left: 10),
+                      child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              shape: CircleBorder(),
+                              padding: EdgeInsets.all(0),
+                              alignment: Alignment.center,
+                              backgroundColor: Utils.lightColor,
+                              foregroundColor: Utils.mediumDarkColor),
+                          onPressed: (() {
+                            Navigator.of(context)
+                                .popUntil((route) => route.isFirst);
+                          }),
+                          child: Icon(Icons.arrow_back))),
                   toolbarHeight: 100,
                   backgroundColor: Utils.mediumLightColor,
-                  foregroundColor: Colors.black,
+                  foregroundColor: Utils.textColor,
                   title: Column(children: [
                     Container(
                         padding: EdgeInsets.all(5),
@@ -146,18 +157,15 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                   elevation: 0,
                   actions: [
                     Container(
-                        width: 50,
-                        padding: EdgeInsets.only(top: 10, right: 5),
+                        alignment: Alignment.topCenter,
+                        padding: EdgeInsets.only(top: 10, right: 10),
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             shape: CircleBorder(),
-                            padding:
-                                EdgeInsets.all(0), // necessary for some reason
+                            padding: EdgeInsets.all(0),
                             alignment: Alignment.center,
-                            backgroundColor: Utils.lightColor
-                                .withOpacity(0.9), // <-- Button color
-                            foregroundColor:
-                                Utils.mediumDarkColor, // <-- Splash color
+                            backgroundColor: Utils.lightColor,
+                            foregroundColor: Utils.mediumDarkColor,
                           ),
                           child: Icon(Icons.filter_alt),
                           onPressed: () {
@@ -187,7 +195,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                         )),
                   ],
                   bottom: TabBar(
-                    labelColor: Utils.darkColor,
+                    labelColor: Utils.textColor,
                     indicatorColor: Utils.mediumDarkColor,
                     tabs: contentSelection['selected'][0]
                         ? [
@@ -556,10 +564,6 @@ class StatisticsScreenState extends State<StatisticsScreen> {
             }
             rowsItemsChart.sort((a, b) => Utils.compareNumber(
                 true, a.receiptItem.amount, b.receiptItem.amount));
-            if (rowsItemsChart.length > 20) {
-              rowsItemsChart = rowsItemsChart.sublist(
-                  rowsItemsChart.length - 21, rowsItemsChart.length - 1);
-            }
             return Container(
                 child: SfCartesianChart(
                     backgroundColor: Utils.lightColor,
@@ -571,6 +575,11 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                         interval: 100,
                         visibleMinimum: 0,
                         decimalPlaces: 2),
+                    zoomPanBehavior: ZoomPanBehavior(
+                      enablePanning: true,
+                      enablePinching: true,
+                      zoomMode: ZoomMode.y,
+                    ),
                     tooltipBehavior: TooltipBehavior(enable: true),
                     series: <BarSeries<ItemsChartData, String>>[
                   BarSeries<ItemsChartData, String>(
@@ -630,6 +639,11 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                             locale: "sv_SE", decimalDigits: 0),
                         visibleMinimum: 0,
                         decimalPlaces: 2),
+                    zoomPanBehavior: ZoomPanBehavior(
+                      enablePanning: true,
+                      enablePinching: true,
+                      zoomMode: ZoomMode.y,
+                    ),
                     tooltipBehavior: TooltipBehavior(enable: true),
                     series: <BarSeries<CategoryChartData, String>>[
                   BarSeries<CategoryChartData, String>(

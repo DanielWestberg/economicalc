@@ -65,6 +65,7 @@ class OpenLinkState extends State<OpenLink> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
+          foregroundColor: Utils.textColor,
           backgroundColor: Utils.mediumLightColor,
           title: Text(title),
         ),

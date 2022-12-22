@@ -26,7 +26,7 @@ class TransactionDetailsScreen extends StatefulWidget {
 class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   int? sortColumnIndex;
   bool isAscending = false;
-  double fontSize = 12;
+  double fontSize = 16;
   double sizedBoxWidth = 240;
   double sizedBoxHeight = 30;
   final columns = ["Items", "Sum"];
@@ -74,57 +74,115 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
         child: Scaffold(
-            body: NestedScrollView(
-                headerSliverBuilder: ((context, innerBoxIsScrolled) => [
-                      SliverAppBar(
-                        expandedHeight: 250,
-                        backgroundColor: Utils.mediumLightColor,
-                        foregroundColor: Colors.black,
-                        leading: Container(
-                            padding: EdgeInsets.only(top: 10, left: 10),
-                            child: IconButton(
-                                alignment: Alignment.topCenter,
-                                onPressed: (() {
-                                  Navigator.of(context)
-                                      .popUntil((route) => route.isFirst);
-                                }),
-                                icon: Icon(Icons.arrow_back))),
-                        actions: [
-                          Container(
-                            padding: EdgeInsets.only(top: 10, right: 5),
-                            child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  shape: CircleBorder(),
-                                  alignment: Alignment.center,
-                                  backgroundColor:
-                                      Utils.lightColor.withOpacity(0.9),
-                                  foregroundColor: Utils.darkColor,
-                                ),
-                                onPressed: (() {
-                                  widget.transaction.receiptID != null
-                                      ? Text("TODO: Show image")
-                                      : receiptBtnAlertDialog(context);
-                                }),
-                                child: Icon(Icons.receipt_long_rounded)),
-                          )
-                        ],
-                        flexibleSpace: FlexibleSpaceBar(
-                          background: Container(
-                              decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                      begin: Alignment.bottomLeft,
-                                      end: Alignment.topRight,
-                                      colors: [
-                                Utils.mediumLightColor,
-                                Utils.mediumDarkColor
-                              ]))),
-                          title: headerInfo(),
-                          titlePadding: EdgeInsets.all(10),
-                        ),
-                      )
-                    ]),
-                body: ListView(
-                    children: [buildDataTable(), deleteButton(context)]))));
+            appBar: AppBar(
+              toolbarHeight: 230,
+              backgroundColor: Utils.mediumLightColor,
+              foregroundColor: Utils.lightColor,
+              leading: Container(
+                  alignment: Alignment.topCenter,
+                  padding: EdgeInsets.only(top: 10, left: 10),
+                  child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                          shape: CircleBorder(),
+                          padding: EdgeInsets.all(0),
+                          alignment: Alignment.center,
+                          backgroundColor: Utils.lightColor,
+                          foregroundColor: Utils.mediumDarkColor),
+                      onPressed: (() {
+                        Navigator.pop(context);
+                      }),
+                      child: Icon(Icons.arrow_back))),
+              actions: [
+                Container(
+                  alignment: Alignment.topCenter,
+                  padding: EdgeInsets.only(top: 10, right: 10),
+                  child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        shape: CircleBorder(),
+                        padding: EdgeInsets.all(0),
+                        alignment: Alignment.center,
+                        backgroundColor: Utils.lightColor,
+                        foregroundColor: Utils.mediumDarkColor,
+                      ),
+                      onPressed: (() {
+                        widget.transaction.receiptID != null
+                            ? Text("TODO: Show image")
+                            : receiptBtnAlertDialog(context);
+                      }),
+                      child: Icon(Icons.receipt_long_rounded)),
+                )
+              ],
+              flexibleSpace: headerInfo(),
+              // FlexibleSpaceBar(
+              //   background: Container(
+              //       decoration: BoxDecoration(
+              //           gradient: LinearGradient(
+              //               begin: Alignment.bottomLeft,
+              //               end: Alignment.topRight,
+              //               colors: [
+              //         Utils.mediumLightColor,
+              //         Utils.mediumDarkColor
+              //       ]))),
+              //   title: headerInfo(),
+              //   titlePadding: EdgeInsets.all(0),
+              // )
+            ),
+            // body: NestedScrollView(
+            //     headerSliverBuilder: ((context, innerBoxIsScrolled) => [
+            //           SliverAppBar(
+            //             expandedHeight: 250,
+            //             backgroundColor: Utils.mediumDarkColor,
+            //             foregroundColor: Utils.textColor,
+            //             leading: Container(
+            //                 padding: EdgeInsets.only(top: 10, left: 10),
+            //                 child: ElevatedButton(
+            //                     style: ElevatedButton.styleFrom(
+            //                         shape: CircleBorder(),
+            //                         alignment: Alignment.topCenter,
+            //                         backgroundColor: Utils.lightColor,
+            //                         foregroundColor: Utils.mediumDarkColor),
+            //                     onPressed: (() {
+            //                       Navigator.of(context)
+            //                           .popUntil((route) => route.isFirst);
+            //                     }),
+            //                     child: Icon(Icons.arrow_back))),
+            //             actions: [
+            //               Container(
+            //                 padding: EdgeInsets.only(top: 10, right: 5),
+            //                 child: ElevatedButton(
+            //                     style: ElevatedButton.styleFrom(
+            //                       shape: CircleBorder(),
+            //                       alignment: Alignment.center,
+            //                       backgroundColor: Utils.lightColor,
+            //                       foregroundColor: Utils.mediumDarkColor,
+            //                     ),
+            //                     onPressed: (() {
+            //                       widget.transaction.receiptID != null
+            //                           ? Text("TODO: Show image")
+            //                           : receiptBtnAlertDialog(context);
+            //                     }),
+            //                     child: Icon(Icons.receipt_long_rounded)),
+            //               )
+            //             ],
+            //             flexibleSpace: FlexibleSpaceBar(
+            //               background: Container(
+            //                 color: Utils.mediumDarkColor,
+            //                 // decoration: BoxDecoration(
+            //                 //     gradient: LinearGradient(
+            //                 //         begin: Alignment.bottomLeft,
+            //                 //         end: Alignment.topRight,
+            //                 //         colors: [
+            //                 //   Utils.mediumLightColor,
+            //                 //   Utils.mediumDarkColor
+            //                 // ]))
+            //               ),
+            //               title: headerInfo(),
+            //               titlePadding: EdgeInsets.all(0),
+            //             ),
+            //           )
+            //         ]),
+            body:
+                ListView(children: [buildDataTable(), deleteButton(context)])));
   }
 
   Widget dropDown() {
@@ -136,66 +194,65 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
           } else if (snapshot.hasData) {
             categories = snapshot.data!;
 
-            return Container(
-                padding: EdgeInsets.only(right: 5),
-                child: DropdownButton<String>(
-                    isDense: true,
-                    itemHeight: null,
-                    isExpanded: true,
-                    value: dropdownValue,
-                    icon: Icon(Icons.arrow_drop_down_circle_outlined),
-                    iconEnabledColor: Utils.darkColor,
-                    onChanged: (value) async {
-                      setState(() {
-                        dropdownValue = value;
-                      });
-                      if (widget.transaction.receiptID != null) {
-                        Receipt receipt = await dbConnector
-                            .getReceiptfromID(widget.transaction.receiptID!);
-                        receipt.categoryDesc = dropdownValue;
-                        await dbConnector.updateReceipt(receipt);
-                      }
-                      widget.transaction.categoryDesc = dropdownValue;
-                      widget.transaction.categoryID = await dbConnector
-                          .getCategoryIDfromDescription(dropdownValue!);
-                      await dbConnector.updateTransaction(widget.transaction);
-                      int? n = await dbConnector
-                          .numOfCategoriesWithSameName(widget.transaction);
-                      if (n > 0) {
-                        showAlertDialog(context, n, dropdownValue!);
-                      } else {
-                        final snackBar = SnackBar(
-                          backgroundColor: Utils.darkColor,
-                          content: Text(
-                            'Category was updated to $dropdownValue.',
-                            style: GoogleFonts.roboto(color: Utils.lightColor),
-                          ),
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                      }
-                    },
-                    items: categories.map<DropdownMenuItem<String>>(
-                        (TransactionCategory category) {
-                      return DropdownMenuItem<String>(
-                        value: category.description,
-                        child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Container(
-                                  padding: EdgeInsets.only(right: 5),
-                                  child: Icon(Icons.label_rounded,
-                                      color: category.color)),
-                              SizedBox(
-                                  width: 100,
-                                  child: Text(
-                                    category.description,
-                                    overflow: TextOverflow.ellipsis,
-                                    style:
-                                        GoogleFonts.roboto(fontSize: fontSize),
-                                  ))
-                            ]),
-                      );
-                    }).toList()));
+            return DropdownButton<String>(
+                dropdownColor: Utils.lightColor,
+                isDense: true,
+                itemHeight: null,
+                isExpanded: true,
+                elevation: 0,
+                underline: SizedBox(),
+                value: dropdownValue,
+                // iconEnabledColor: Utils.lightColor,
+                onChanged: (value) async {
+                  setState(() {
+                    dropdownValue = value;
+                  });
+                  if (widget.transaction.receiptID != null) {
+                    Receipt receipt = await dbConnector
+                        .getReceiptfromID(widget.transaction.receiptID!);
+                    receipt.categoryDesc = dropdownValue;
+                    await dbConnector.updateReceipt(receipt);
+                  }
+                  widget.transaction.categoryDesc = dropdownValue;
+                  widget.transaction.categoryID = await dbConnector
+                      .getCategoryIDfromDescription(dropdownValue!);
+                  await dbConnector.updateTransaction(widget.transaction);
+                  int? n = await dbConnector
+                      .numOfCategoriesWithSameName(widget.transaction);
+                  if (n > 0) {
+                    showAlertDialog(context, n, dropdownValue!);
+                  } else {
+                    final snackBar = SnackBar(
+                      backgroundColor: Utils.darkColor,
+                      content: Text(
+                        'Category was updated to $dropdownValue.',
+                        style: GoogleFonts.roboto(color: Utils.lightColor),
+                      ),
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                  }
+                },
+                items: categories.map<DropdownMenuItem<String>>(
+                    (TransactionCategory category) {
+                  return DropdownMenuItem<String>(
+                    value: category.description,
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Container(
+                              padding: EdgeInsets.only(right: 5),
+                              child: Icon(Icons.label_rounded,
+                                  color: category.color)),
+                          SizedBox(
+                              width: 100,
+                              child: Text(
+                                category.description,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.roboto(fontSize: fontSize),
+                              ))
+                        ]),
+                  );
+                }).toList());
           } else {
             return Text("Unexpected error");
           }
@@ -324,56 +381,61 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   }
 
   Widget headerInfo() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Center(
-          child: Text(
-              widget.transaction.receiptID != null
-                  ? "Receipt"
-                  : "Bank transaction",
-              style: GoogleFonts.roboto(
-                  color: Utils.textColor, fontSize: fontSize * 1.2)),
-        ),
-        Container(
-            padding: EdgeInsets.only(top: 20),
-            child: Text(
-              widget.transaction.store!,
-              style: GoogleFonts.roboto(
-                  color: Utils.textColor, fontSize: fontSize),
-            )),
-        Container(
-            padding: EdgeInsets.only(top: 0),
-            child: Text(
-              DateFormat("yyyy-MM-dd").format(widget.transaction.date),
-              style: GoogleFonts.roboto(
-                  color: Utils.textColor, fontSize: fontSize),
-            )),
-        Container(
-            padding: EdgeInsets.only(top: 0),
-            child: Text(
-                NumberFormat.currency(
-                  locale: 'sv_SE',
-                ).format(widget.transaction.totalAmount),
-                style: GoogleFonts.roboto(
-                    color: Utils.textColor, fontSize: fontSize))),
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(
-            padding: EdgeInsets.only(top: 15),
-            child: Text(
-              'Set category for transaction:',
-              style: GoogleFonts.roboto(
-                  color: Utils.textColor, fontSize: fontSize),
+    return Container(
+        padding: EdgeInsets.only(top: 10, left: 20, right: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Container(
+              padding: EdgeInsets.only(top: 20),
+              alignment: Alignment.center,
+              child: Text(
+                  widget.transaction.receiptID != null
+                      ? "Receipt"
+                      : "Bank transaction",
+                  style: GoogleFonts.roboto(fontSize: fontSize * 1.6)),
             ),
-          ),
-          Container(
-            padding: EdgeInsets.only(top: 5),
-            child: Expanded(child: dropDown()),
-          )
-        ]),
-      ],
-    );
+            Container(
+                padding: EdgeInsets.only(top: 15),
+                child: Text(
+                  widget.transaction.store!,
+                  style: GoogleFonts.roboto(fontSize: fontSize),
+                )),
+            Container(
+                padding: EdgeInsets.only(top: 5),
+                child: Text(
+                  DateFormat("yyyy-MM-dd").format(widget.transaction.date),
+                  style: GoogleFonts.roboto(fontSize: fontSize),
+                )),
+            Container(
+                padding: EdgeInsets.only(top: 5),
+                child: Text(
+                    NumberFormat.currency(
+                      locale: 'sv_SE',
+                    ).format(widget.transaction.totalAmount),
+                    style: GoogleFonts.roboto(fontSize: fontSize))),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Container(
+                padding: EdgeInsets.only(top: 15, bottom: 5),
+                child: Text(
+                  'Set category for transaction:',
+                  style: GoogleFonts.roboto(fontSize: fontSize),
+                ),
+              ),
+              Container(
+                alignment: Alignment.center,
+                height: 40,
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(30),
+                    color: Utils.lightColor),
+                // color: Utils.lightColor,
+                padding: EdgeInsets.only(left: 5, right: 10),
+                child: Expanded(child: dropDown()),
+              )
+            ]),
+          ],
+        ));
   }
 
   Widget buildDataTable() {

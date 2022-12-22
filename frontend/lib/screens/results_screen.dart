@@ -62,10 +62,10 @@ class ResultsScreenState extends State<ResultsScreen> {
             : Scaffold(
                 appBar: AppBar(
                   backgroundColor: Utils.mediumLightColor,
-                  foregroundColor: Colors.black,
+                  foregroundColor: Utils.textColor,
                   title: Text(
                     'Scan result',
-                    style: GoogleFonts.roboto(color: Utils.textColor),
+                    style: GoogleFonts.roboto(),
                   ),
                   centerTitle: true,
                   elevation: 10,
@@ -115,12 +115,18 @@ class ResultsScreenState extends State<ResultsScreen> {
 
   Widget confirmButton() {
     return Container(
-      padding: EdgeInsets.all(40),
+      padding: EdgeInsets.symmetric(vertical: 40, horizontal: 100),
       child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Utils.mediumLightColor,
-            foregroundColor: Utils.textColor,
-          ),
+          style: ButtonStyle(
+              shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                ),
+              ),
+              backgroundColor:
+                  MaterialStateProperty.all<Color>(Utils.mediumLightColor),
+              foregroundColor:
+                  MaterialStateProperty.all<Color>(Utils.textColor)),
           onPressed: () async {
             int receiptID =
                 await dbConnector.insertReceipt(receipt, dropdownValue);
@@ -130,7 +136,7 @@ class ResultsScreenState extends State<ResultsScreen> {
                   backgroundColor: Utils.errorColor,
                   content: Text(
                     "Total amount of scanned receipt and existing transaction don't match. Please scan the correct receipt or edit the results.",
-                    style: GoogleFonts.roboto(color: Utils.lightColor),
+                    style: GoogleFonts.roboto(),
                   ),
                 );
                 ScaffoldMessenger.of(context).showSnackBar(snackBar);
@@ -206,6 +212,7 @@ class ResultsScreenState extends State<ResultsScreen> {
             return SizedBox(
                 width: 300,
                 child: DropdownButton<String>(
+                    dropdownColor: Utils.lightColor,
                     isDense: true,
                     isExpanded: true,
                     value: dropdownValue,
