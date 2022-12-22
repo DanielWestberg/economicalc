@@ -156,7 +156,7 @@ class ResultsScreenState extends State<ResultsScreen> {
                     onChanged: (
                       String? value,
                     ) async {
-                      int? categoryID = await SQFLite
+                      int? categoryID = await dbConnector
                           .getCategoryIDfromDescription(dropdownValue);
                       setState(() {
                         dropdownValue = value!;

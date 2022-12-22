@@ -615,6 +615,4 @@ class SQFLite {
           id: maps[i]['id']);
     });
   }
-
-  checkForExistingTransaction(Transaction transaction) {}
 }
