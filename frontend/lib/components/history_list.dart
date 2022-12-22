@@ -77,7 +77,6 @@ class HistoryListState extends State<HistoryList> {
         return;
       } else {
         setState(() {
-          print(transactions_copy);
           transactions.clear();
           transactions.addAll(transactions_copy);
         });

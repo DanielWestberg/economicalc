@@ -1,4 +1,4 @@
-import 'package:economicalc_client/components/drawer.dart';
+import 'package:economicalc_client/components/drawer_menu.dart';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/screens/results_screen.dart';
@@ -72,7 +72,8 @@ class _HomeScreen extends State<HomeScreen> {
             builder: (context) => ResultsScreen(image: image)))
         .then((value) {
       if (value != false) {
-        Phoenix.rebirth(_context);
+        Navigator.push(
+            _context, MaterialPageRoute(builder: (context) => HomeScreen()));
       }
     });
   }
@@ -130,7 +131,6 @@ class _HomeScreen extends State<HomeScreen> {
                 onPressed: (() async {
                   final XFile? image =
                       await ImagePicker().pickImage(source: ImageSource.camera);
-                  //process()
                   if (image == null) return;
                   ImageGallerySaver.saveFile(image.path);
                   goToResults(image);
@@ -247,8 +247,10 @@ class _HomeScreen extends State<HomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  const Text("Category:"),
-                  dropDownCategory(context, setState),
+                  Container(
+                      padding: EdgeInsets.only(right: 5),
+                      child: Text("Category:")),
+                  Expanded(child: dropDownCategory(context, setState)),
                 ],
               )),
           Container(
@@ -349,8 +351,13 @@ class _HomeScreen extends State<HomeScreen> {
                                   padding: EdgeInsets.only(right: 10),
                                   child: Icon(Icons.label_rounded,
                                       color: category.color)),
-                              Text(category.description,
-                                  overflow: TextOverflow.ellipsis)
+                              SizedBox(
+                                  width: 100,
+                                  child: Text(
+                                    category.description,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(fontSize: 12),
+                                  ))
                             ]),
                       );
                     }).toList()));

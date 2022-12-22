@@ -46,7 +46,8 @@ def receipts(items, images) -> List[Receipt]:
             datetime(2022, 6, 30),
             163.,
             1,
-            images[1][1]
+            "",
+            images[1][1],
         ), Receipt(
             2,
             "Coop",
@@ -54,6 +55,7 @@ def receipts(items, images) -> List[Receipt]:
             datetime(2022, 7, 1),
             141.3,
             2,
+            "",
         ), Receipt(
             3,
             "Willy's",
@@ -61,7 +63,8 @@ def receipts(items, images) -> List[Receipt]:
             datetime(2021, 12, 13),
             101.5,
             3,
-            images[0][1]
+            "",
+            images[0][1],
         )
     ]
 
@@ -130,6 +133,7 @@ def receipts_to_post(users, users_to_post) -> List[Tuple[User, List[Receipt]]]:
                     datetime(2022, 2, 24),
                     1337.5,
                     1,
+                    "",
                 ),
                 Receipt(
                     2,
@@ -138,6 +142,7 @@ def receipts_to_post(users, users_to_post) -> List[Tuple[User, List[Receipt]]]:
                     datetime(2021, 1, 2),
                     1.,
                     1,
+                    "",
                 ),
             ],
         ), (
@@ -150,6 +155,7 @@ def receipts_to_post(users, users_to_post) -> List[Tuple[User, List[Receipt]]]:
                     datetime(1970, 1, 1),
                     1.1,
                     5,
+                    "",
                 ),
             ],
         ),

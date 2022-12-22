@@ -11,6 +11,9 @@ class Receipt {
   String? categoryDesc;
   List<ReceiptItem> items;
   int? categoryID;
+  String? backendId;
+  String ocrText;
+
 
   Receipt({
     this.id,
@@ -20,6 +23,10 @@ class Receipt {
     required this.items,
     this.categoryDesc,
     this.categoryID,
+
+    this.backendId,
+    required this.ocrText,
+
   });
 
   @override
@@ -30,8 +37,11 @@ class Receipt {
       total == other.total &&
       categoryDesc == other.categoryDesc &&
       items.every((item) => other.items.contains(item)) &&
-      categoryID == other.categoryID
+      categoryID == other.categoryID &&
+      backendId == other.backendId &&
+      ocrText == other.ocrText
   );
+
 
   @override
   get hashCode => (id.hashCode |
@@ -55,7 +65,8 @@ class Receipt {
       'total': total ?? 0,
       'categoryDesc': categoryDesc,
       'items': items,
-      'categoryID': categoryID
+      'categoryID': categoryID,
+      'ocrText': ocrText
     };
 
     if (id != null) {
@@ -78,14 +89,14 @@ class Receipt {
         .cast<ReceiptItem>();
 
     return Receipt(
-      id: json["id"],
-      recipient: json["recipient"],
-      date:
-          DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'").parseUtc(json["date"]),
-      total: json["total"],
-      items: items,
-      categoryID: json["categoryID"],
-    );
+        id: json["id"],
+        recipient: json["recipient"],
+        date: DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'")
+            .parseUtc(json["date"]),
+        total: json["total"],
+        items: items,
+        categoryID: json["categoryID"],
+        ocrText: json["ocrText"]);
   }
 
   static List<Receipt>
@@ -102,7 +113,8 @@ class Receipt {
         recipient: json['receipts'][0]['merchant_name'],
         date: DateFormat('yyyy-MM-dd').parse(json['receipts'][0]['date']),
         total: json['receipts'][0]['total'],
-        items: items);
+        items: items,
+        ocrText: json['receipts'][0]["ocr_text"]);
   }
 }
 

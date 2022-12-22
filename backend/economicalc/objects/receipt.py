@@ -9,14 +9,15 @@ from .type_check import check_type
 
 
 class Receipt:
-    def __init__(self, id: int, recipient: str, items: List[Item], date: datetime, total: float, category_id: int, image_id: Optional[ObjectId] = None) -> None:
-        check_type(id, int, "receipt._id")
+    def __init__(self, id: int, recipient: str, items: List[Item], date: datetime, total: float, category_id: int, ocr_text: str, image_id: Optional[ObjectId] = None) -> None:
+        check_type(id, int, "receipt.id")
         check_type(recipient, str, "receipt.recipient")
         check_type(items, list, "receipt.items")
         check_type(date, datetime, "receipt.date")
         check_type(total, float, "receipt.total")
         check_type(category_id, int, "receipt.categoryID")
         check_type(image_id, [type(None), ObjectId], "receipt.imageId")
+        check_type(ocr_text, str, "receipt.ocrText")
 
         self.id = id
         self.recipient = recipient
@@ -24,6 +25,7 @@ class Receipt:
         self.total = total
         self.category_id = category_id
         self.image_id = image_id
+        self.ocr_text = ocr_text
 
         self.date = datetime(date.year, date.month, date.day, tzinfo=timezone.utc)
 
@@ -36,7 +38,8 @@ class Receipt:
             self.total == other.total and
             self.image_id == other.image_id and
             self.category_id == other.category_id and
-            self.date == other.date
+            self.date == other.date and
+            self.ocr_text == other.ocr_text
         )
 
     def to_dict(self, json_serializable=False) -> Dict[str, Any]:
@@ -47,6 +50,7 @@ class Receipt:
             "date": self.date,
             "total": self.total,
             "categoryID": self.category_id,
+            "ocrText": self.ocr_text,
         }
 
         if self.image_id is not None:
@@ -66,8 +70,9 @@ class Receipt:
         category_id = d["categoryID"]
         image_id = ObjectId(d["imageId"]) if "imageId" in d else None
         id = d["id"]
+        ocr_text = d["ocrText"]
 
-        return Receipt(id, recipient, items, date, total, category_id, image_id)
+        return Receipt(id, recipient, items, date, total, category_id, ocr_text, image_id)
 
     @staticmethod
     def make_json_serializable(receipt_dict: Dict[str, Any]):

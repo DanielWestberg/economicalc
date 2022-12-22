@@ -80,6 +80,7 @@ main() async {
       items: items,
       total: 100.0,
       categoryID: 1,
+      ocrText: "",
     );
 
     final postedReceipt = await apiCaller.postReceipt(receipt);
@@ -154,6 +155,28 @@ main() async {
     apiCaller.deleteCategory(category.id!);
   });
 
+  test("Can log in twice", () async {
+    Receipt receipt = Receipt(
+      id: 6,
+      recipient: "b",
+      date: DateTime.utc(1987, 1, 1),
+      items: [
+        ReceiptItem(
+          itemName: "d",
+          amount: 1,
+        ),
+      ],
+      total: 2,
+      categoryID: 9,
+      ocrText: "",
+    );
+    receipt = await apiCaller.postReceipt(receipt);
+
+    await apiCaller.fetchLoginData(accountReportId, transactionReportId, true);
+    final responseReceipts = await apiCaller.fetchReceipts();
+    expect(responseReceipts, contains(receipt));
+  });
+
   test("Post multiple receipts", () async {
     List<Receipt> receipts = [
       Receipt(
@@ -172,6 +195,7 @@ main() async {
         ],
         total: 99.0,
         categoryID: 2,
+        ocrText: "",
       ),
       Receipt(
         id: 4,
@@ -189,6 +213,7 @@ main() async {
         ],
         total: 300.0,
         categoryID: 3,
+        ocrText: "",
       ),
     ];
 

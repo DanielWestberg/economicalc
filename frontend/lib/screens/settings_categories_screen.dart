@@ -45,7 +45,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             return Scaffold(
                 appBar: AppBar(
                   foregroundColor: Colors.black,
-                  backgroundColor: Utils.mediumLightColor,
+                  backgroundColor: Utils.lightColor,
                   title: Text("Categories", style: TextStyle(fontSize: 30)),
                   centerTitle: true,
                 ),
@@ -159,7 +159,14 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               Navigator.of(context).pop();
               setState(() {});
             } else {
-              print("Description is empty");
+              final snackBar = SnackBar(
+                backgroundColor: Utils.errorColor,
+                content: Text(
+                  "Description is empty. Please try again.",
+                  style: TextStyle(color: Utils.lightColor),
+                ),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(snackBar);
             }
           },
         ),

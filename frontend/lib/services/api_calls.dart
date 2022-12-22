@@ -168,32 +168,25 @@ class ApiCaller {
     String path = ('tink_user_data/$testString');
     var uri = getUri(path);
     var response =
-    await http.post(uri, headers: headers, body: json.encode(data));
-    //print(uri);
-    //print(response);
+        await http.post(uri, headers: headers, body: json.encode(data));
     if (response.statusCode != 200) {
-      throw Exception('http.get error: statusCode= ${response.statusCode}');
+      throw UnexpectedResponseException(response);
     }
-    //print(response.body);
     cookie = Cookie.fromSetCookieValue(response.headers["set-cookie"] ?? "");
     return LoginData.fromResponse(response);
   }
 
   Future<List<BankTransaction>> fetchTransactions(String access_token) async {
-    //print("INSIDE TRANSACTIOn");
     String path = '/tink_transaction_history/';
     path += access_token;
     final response = await http.get(getUri(path));
     if (response.statusCode == 200) {
       List<dynamic> transactions =
-      convert.jsonDecode(response.body)["transactions"];
-      //print(transactions);
+          convert.jsonDecode(response.body)["transactions"];
       List<BankTransaction> resTrans = [];
       transactions.forEach((transaction) {
         resTrans.add(BankTransaction.fromJson(transaction));
       });
-      //print("RESTRANSACT");
-      //print(resTrans);
 
       return resTrans;
     } else {
@@ -208,15 +201,8 @@ class ApiCaller {
       path += '/T';
     else
       path += '/F';
-    print("PATH: " + path);
-    print("APISERVER: " + apiServer);
-    print("URIU PÅATH");
-    print(getUri(path));
     final response = await http.get(getUri(path));
-    print("Hej");
-    print("response: ${response.body}");
     Response accessToken = Response.fromJson(convert.jsonDecode(response.body));
-    print("after response convert");
     return accessToken;
   }
 

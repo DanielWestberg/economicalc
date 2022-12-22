@@ -1,4 +1,5 @@
 from datetime import timedelta
+import hashlib
 import os
 from flask import Flask, request, jsonify, make_response, send_file, session
 from flask_pymongo import PyMongo
@@ -31,6 +32,7 @@ def create_app(config):
 
 
     def initiate_session(access_token, ssn):
+        ssn = hashlib.sha256(bytes(ssn, "utf-8")).digest()
         session["access_token"] = access_token
         session["ssn"] = ssn
 
