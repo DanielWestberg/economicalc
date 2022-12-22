@@ -24,7 +24,7 @@ class Utils {
 
   // COLORS
   static Color textColor = Colors.black87;
-  static Color lightColor = Color(0xffD4E6F3);
+  static Color lightColor = Color(0xffFFFAFA);
   static Color mediumLightColor = Color(0xFFB8D8D8);
   static Color mediumDarkColor = Color(0xff7a9e9f);
   static Color darkColor = Color.fromARGB(255, 68, 104, 107);
