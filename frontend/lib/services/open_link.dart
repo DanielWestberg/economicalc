@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:core';
 
+import 'package:collection/collection.dart';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/LoginData.dart';
+import 'package:economicalc_client/models/account.dart';
+import 'package:economicalc_client/models/bank.dart';
 import 'package:economicalc_client/models/response.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
 import 'package:economicalc_client/models/transaction.dart';
@@ -106,11 +109,73 @@ class OpenLinkState extends State<OpenLink> {
               List<BankTransaction> resTrans = [];
               data.transactionReport["transactions"].forEach((transaction) {
                 resTrans.add(BankTransaction.fromJson(transaction));
+                print(transaction);
               });
+              print("len ${resTrans.length}");
 
               await dbConnector.postMissingBankTransactions(resTrans);
 
               List<int> addedUpdated = await dbConnector.updateTransactions();
+
+              String bankName = data.accountReport["userDataByProvider"][0]
+                  ["financialInstitutionName"];
+              String name = data.accountReport["userDataByProvider"][0]
+                  ["identity"]["name"];
+
+              String ssn = data.accountReport["userDataByProvider"][0]
+                  ["identity"]["ssn"];
+              String providerName =
+                  data.accountReport["userDataByProvider"][0]["providerName"];
+
+              Bank bank = Bank(
+                  ssn: ssn,
+                  bankName: bankName,
+                  name: name,
+                  providerName: providerName);
+
+              dbConnector.insertBank(bank);
+              List<Account> accounts = [];
+
+              for (var account in IterableZip<dynamic>([
+                data.accountReport["userDataByProvider"][0]["accounts"],
+                data.transactionReport["accounts"]
+              ])) {
+                String iban = account[0]["iban"];
+                String id = account[0]["id"];
+                String holderName = account[0]["holderName"];
+                String accountName = account[0]["name"];
+                String currencyCode = account[0]["currencyCode"];
+                double unscaled = double.parse(account[1]["balances"]["booked"]
+                    ["amount"]["value"]["unscaledValue"]);
+                double scale = double.parse(account[1]["balances"]["booked"]
+                    ["amount"]["value"]["scale"]);
+                print(accountName);
+                print("NUMBERS");
+                print(unscaled);
+                print(scale);
+                double balance = unscaled;
+                if (scale != 0.0) balance = unscaled / scale;
+                print("BALANCE");
+                print(balance);
+                //bankName
+                List<String> parties = [];
+                for (var person in account[0]["parties"]) {
+                  parties.add(person["identity"]["name"]);
+                }
+                Account acc = Account(
+                    id: id,
+                    accountName: accountName,
+                    currencyCode: currencyCode,
+                    holderName: holderName,
+                    iban: iban,
+                    parties: parties,
+                    balance: balance,
+                    ssn: ssn,
+                    bankName: bankName);
+                accounts.add(acc);
+                print(acc);
+                dbConnector.insertAccount(acc);
+              }
 
               final snackBar = SnackBar(
                 backgroundColor: Utils.mediumDarkColor,

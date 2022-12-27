@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:economicalc_client/helpers/utils.dart';
+import 'package:economicalc_client/models/account.dart';
+import 'package:economicalc_client/models/bank.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
@@ -74,7 +76,9 @@ class SQFLite {
       ,amountvalueunscaledValue VARCHAR(32) NOT NULL
       ,descriptionsdisplay      VARCHAR(32) NOT NULL
       ,datesbooked              DATE  NOT NULL
-        ); ''');
+      ,accountId                VARCHAR(32) NOT NULL
+      ,FOREIGN KEY (accountId) REFERENCES account (id)
+        ) ''');
 
     await db.execute(
       '''CREATE TABLE categories(
@@ -83,7 +87,95 @@ class SQFLite {
         color INTEGER)''',
     );
 
+    await db.execute('''CREATE TABLE banks(
+        ssn                       VARCHAR(32) NOT NULL UNIQUE PRIMARY KEY,
+        name                      VARCHAR(32) NOT NULL,
+        bankName                  VARCHAR(32) NOT NULL,
+        providerName              VARCHAR(32) NOT NULL)''');
+
+    await db.execute('''CREATE TABLE accounts(
+        id                         VARCHAR(32) NOT NULL UNIQUE PRIMARY KEY,
+        iban                       VARCHAR(32) NOT NULL,
+        holderName                 VARCHAR(32) NOT NULL,
+        accountName                VARCHAR(32) NOT NULL,
+        balance                    VARCHAR(32) NOT NULL,
+        currencyCode               VARCHAR(32) NOT NULL,
+        ssn                        VARCHAR(32) NOT NULL,
+        bankName                   VARCHAR(32) NOT NULL,
+        FOREIGN KEY (ssn, bankName) REFERENCES bank (ssn, bankName))''');
+
+    await db.execute('''CREATE TABLE parties(
+        name                       VARCHAR(32) NOT NULL UNIQUE PRIMARY KEY,
+        accountId                  VARCHAR(32) NOT NULL,
+        FOREIGN KEY (accountId) REFERENCES account (id)
+        )''');
+
     await insertDefaultCategories(db);
+  }
+
+  /****************************MULTIBANKING *******************************/
+
+  Future<void> insertBank(Bank bank) async {
+    final db = await instance.database;
+    await db?.insert(
+      'banks',
+      bank.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<Bank>> getBanks() async {
+    final db = await instance.database;
+
+    final List<Map<String, dynamic?>>? maps = await db?.query('banks');
+
+    // Convert the List<Map<String, dynamic> into a List<transaction>.
+    return List.generate(maps!.length, (i) {
+      return Bank(
+          ssn: maps[i]['ssn'],
+          bankName: maps[i]['bankName'],
+          providerName: maps[i]['providerName'],
+          name: maps[i]['name']);
+    });
+  }
+
+  Future<void> insertAccount(Account account) async {
+    final db = await instance.database;
+    await db?.insert(
+      'accounts',
+      account.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<Account>> getAccounts(String ssn, String bankName) async {
+    final db = await instance.database;
+    List<Map<String, dynamic?>>? accounts = await db?.rawQuery(
+        'SELECT * FROM accounts WHERE ssn = "$ssn" AND bankName = "$bankName"');
+
+    List<List<String>> parties = [[]];
+
+    for (int i = 0; i < accounts!.length; i++) {
+      String id = accounts[i]['id'];
+      List<Map<String, dynamic?>>? partiesAcc =
+          await db?.rawQuery('SELECT * FROM parties WHERE accountId = "$id"');
+      partiesAcc?.forEach((element) {
+        parties[i].add(element["name"]);
+      });
+    }
+
+    return List.generate(accounts!.length, (i) {
+      return Account(
+          id: accounts[i]['id'],
+          accountName: accounts[i]['accountname'],
+          currencyCode: accounts[i]['currencyCode'],
+          holderName: accounts[i]['holderName'],
+          iban: accounts[i]['iban'],
+          parties: parties[i],
+          balance: accounts[i]['balance'],
+          bankName: accounts[i]['bankName'],
+          ssn: accounts[i]['ssn']);
+    });
   }
 
   /*************************** TRANSACTIONS *******************************/
