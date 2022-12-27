@@ -7,10 +7,13 @@ import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:month_year_picker/month_year_picker.dart';
 import '../services/api_calls.dart';
+import 'package:flutter_date_pickers/flutter_date_pickers.dart';
 
 class ResultsScreen extends StatefulWidget {
   final XFile? image;
@@ -289,16 +292,18 @@ class ResultsScreenState extends State<ResultsScreen> {
                         Row(
                           children: [
                             Icon(Icons.date_range),
-                            Padding(
-                                padding: EdgeInsets.only(left: 5),
-                                child: Text(
-                                  DateFormat("yyyy-MM-dd")
-                                      .format(receipt.date)
-                                      .toString(),
-                                  style: TextStyle(
-                                      fontSize: fontSize,
-                                      fontWeight: FontWeight.w600),
-                                )),
+                            RichText(
+                                text: TextSpan(
+                                    style: TextStyle(
+                                        fontSize: fontSize,
+                                        fontWeight: FontWeight.w600),
+                                    children: <TextSpan>[
+                                  TextSpan(
+                                    text: "${receipt.date}",
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () => pickDate(),
+                                  )
+                                ])),
                           ],
                         )
                       ],
@@ -318,6 +323,20 @@ class ResultsScreenState extends State<ResultsScreen> {
             return Text("Unexpected error");
           }
         });
+  }
+
+  pickDate() async {
+    DateTime startDate = receipt.date;
+    DateTime? date = await showDatePicker(
+        context: context,
+        initialDate: startDate,
+        firstDate: DateTime(1900),
+        lastDate: DateTime.now());
+    if (date != null) {
+      setState(() {
+        receipt.date = date;
+      });
+    }
   }
 
   Widget buildDataTable() {
