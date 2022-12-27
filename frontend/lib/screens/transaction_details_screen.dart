@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
@@ -70,6 +72,17 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     });
   }
 
+  showReceiptImage(context) async {
+    // If logged in, fetch image from backend
+    //
+    //
+
+    // else, fetch from local image path
+    Receipt receipt =
+        await dbConnector.getReceiptfromID(widget.transaction.receiptID!);
+    return showImageViewer(context, FileImage(File(receipt.imagePath!)));
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -107,9 +120,9 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                         backgroundColor: Utils.lightColor,
                         foregroundColor: Utils.mediumDarkColor,
                       ),
-                      onPressed: (() {
+                      onPressed: (() async {
                         widget.transaction.receiptID != null
-                            ? Text("TODO: Show image")
+                            ? await showReceiptImage(context)
                             : receiptBtnAlertDialog(context);
                       }),
                       child: Icon(Icons.receipt_long_rounded)),

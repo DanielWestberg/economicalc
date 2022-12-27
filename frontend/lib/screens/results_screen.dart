@@ -458,6 +458,7 @@ class ResultsScreenState extends State<ResultsScreen> {
     try {
       var response = await apiCaller.processImageWithAsprise(imageFile);
       Receipt receipt = Receipt.fromJson(response);
+      receipt.imagePath = image.path;
       receipt = Utils.cleanReceipt(receipt);
 
       setState(() {
