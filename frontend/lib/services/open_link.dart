@@ -49,7 +49,7 @@ class OpenLinkState extends State<OpenLink> {
   late final Response response;
   late final List<BankTransaction> transactions;
   final SQFLite dbConnector = SQFLite.instance;
-  final apiCaller = ApiCaller();
+  final apiCaller = ApiCaller(false);
 
   @override
   void initState() {
@@ -86,7 +86,8 @@ class OpenLinkState extends State<OpenLink> {
               credential_id = credential_id.split("=")[1];
 
               response = await apiCaller.CodeToAccessToken(code, widget.test);
-              transactions = await apiCaller.fetchTransactions(response.accessToken);
+              transactions =
+                  await apiCaller.fetchTransactions(response.accessToken);
 
               await dbConnector.postMissingBankTransactions(transactions);
 
@@ -109,9 +110,15 @@ class OpenLinkState extends State<OpenLink> {
                 resTrans.add(BankTransaction.fromJson(transaction));
               });
 
+              print(resTrans[0]);
+              Stopwatch stopwatch = Stopwatch()..start();
               await dbConnector.postMissingBankTransactions(resTrans);
+              print(stopwatch.elapsed);
+
+              stopwatch = Stopwatch()..start();
 
               List<int> addedUpdated = await dbConnector.updateTransactions();
+              print(stopwatch.elapsed);
 
               final snackBar = SnackBar(
                 backgroundColor: Utils.mediumDarkColor,

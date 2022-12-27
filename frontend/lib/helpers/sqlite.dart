@@ -25,9 +25,9 @@ class SQFLite {
   static Future<String> _defaultPath() async =>
       join(await getDatabasesPath(), _databaseName);
 
-  SQFLite({DatabaseFactory? dbFactory, Future<String> Function()? path}):
-      _dbFactory = dbFactory ?? databaseFactory,
-      _path = path ?? _defaultPath;
+  SQFLite({DatabaseFactory? dbFactory, Future<String> Function()? path})
+      : _dbFactory = dbFactory ?? databaseFactory,
+        _path = path ?? _defaultPath;
 
   static SQFLite? _instance;
   static SQFLite get instance {
@@ -47,13 +47,11 @@ class SQFLite {
   }
 
   initDatabase() async {
-    return await _dbFactory.openDatabase(
-        await _path(),
+    return await _dbFactory.openDatabase(await _path(),
         options: OpenDatabaseOptions(
-            version: _databaseVersion,
-            onCreate: _onCreate,
-        )
-    );
+          version: _databaseVersion,
+          onCreate: _onCreate,
+        ));
   }
 
   Future<void> wipeDB() async {
@@ -108,8 +106,7 @@ class SQFLite {
     await db.execute('''CREATE TABLE cookies(
       id INTEGER PRIMARY KEY CHECK (id = $cookieId)
       ,cookie VARCHAR(128)
-      );'''
-    );
+      );''');
 
     await setCookie(null);
   }
@@ -343,12 +340,13 @@ class SQFLite {
   Future<void> postMissingBankTransactions(
       List<BankTransaction> updatedBankTransactions) async {
     List<BankTransaction> bankTransactionsInDB = await getAllBankTransactions();
-
+    print("ONE");
     if (bankTransactionsInDB.isEmpty) {
       for (BankTransaction bankTransaction in updatedBankTransactions) {
         await postBankTransaction(bankTransaction);
       }
     } else {
+      print("TWO");
       bankTransactionsInDB.sort(((a, b) => b.date.compareTo(a.date)));
       updatedBankTransactions.sort(((a, b) => b.date.compareTo(a.date)));
 
@@ -664,10 +662,7 @@ class SQFLite {
   }
 
   Future<void> setCookie(Cookie? cookie) async {
-    final value = {
-      'id': cookieId,
-      'cookie': cookie.toString()
-    };
+    final value = {'id': cookieId, 'cookie': cookie.toString()};
 
     final db = await database;
     await db?.insert(

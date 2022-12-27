@@ -21,9 +21,7 @@ import '../models/LoginData.dart';
 
 class UnauthorizedException implements Exception {
   final String message;
-  const UnauthorizedException([
-    this.message = "Login via bank required"
-  ]);
+  const UnauthorizedException([this.message = "Login via bank required"]);
 
   @override
   String toString() => "UnauthorizedException: $message";
@@ -77,22 +75,22 @@ class ApiCaller {
       "&account_dialog_type=SINGLE";
   String get tinkReportEndpoint => _tinkReportEndpoint;
 
-  ApiCaller._privateConstructor(this.testMode, this._dbConnector):
-      apiServer = testMode ? "192.168.0.165:5000" : "api.economicalc.online";
+  ApiCaller._privateConstructor(this.testMode, this._dbConnector)
+      : apiServer = testMode ? "192.168.0.165:5000" : "api.economicalc.online";
 
   static ApiCaller nonTestInstance =
       ApiCaller._privateConstructor(false, SQFLite.instance);
-  static ApiCaller testInstance =
-      kDebugMode ?
-      ApiCaller._privateConstructor(true, SQFLite.instance) : nonTestInstance;
+  static ApiCaller testInstance = kDebugMode
+      ? ApiCaller._privateConstructor(true, SQFLite.instance)
+      : nonTestInstance;
 
   // Preferred constructor
   factory ApiCaller([bool testMode = true]) =>
-    testMode ? testInstance : nonTestInstance;
+      testMode ? testInstance : nonTestInstance;
 
   // Primarily for testing
   factory ApiCaller.withDb(SQFLite dbConnector, [bool testMode = true]) =>
-    ApiCaller._privateConstructor(testMode, dbConnector);
+      ApiCaller._privateConstructor(testMode, dbConnector);
 
   Uri getUri(String path) {
     if (testMode) {
@@ -104,7 +102,7 @@ class ApiCaller {
 
   Future<List<Receipt>> fetchMockedTransactions() async {
     final String response =
-    await rootBundle.loadString('assets/ocr_outputs.json');
+        await rootBundle.loadString('assets/ocr_outputs.json');
 
     return (json.decode(response) as List)
         .map((e) => Receipt.fromJson(e))
@@ -114,7 +112,7 @@ class ApiCaller {
 
   Future<Receipt> fetchOneMockedTransaction() async {
     final String response =
-    await rootBundle.loadString('assets/ocr_outputs.json');
+        await rootBundle.loadString('assets/ocr_outputs.json');
 
     Receipt transaction = Receipt.fromJson(json.decode(response)[0]);
     return transaction;
@@ -122,7 +120,7 @@ class ApiCaller {
 
   Future<List<ReceiptItem>> fetchMockedReceiptItems() async {
     final String response =
-    await rootBundle.loadString('assets/ocr_outputs.json');
+        await rootBundle.loadString('assets/ocr_outputs.json');
 
     return (json.decode(response) as List)
         .map((e) => Receipt.fromJson(e))
@@ -134,7 +132,7 @@ class ApiCaller {
   Future<List<ReceiptItem>> fetchMockedReceiptItemsBetweenDates(
       DateTime startDate, DateTime endDate) async {
     final String response =
-    await rootBundle.loadString('assets/ocr_outputs.json');
+        await rootBundle.loadString('assets/ocr_outputs.json');
 
     List<Receipt> transactions = (json.decode(response) as List)
         .map((e) => Receipt.fromJson(e))
@@ -320,7 +318,8 @@ class ApiCaller {
     if (response.statusCode != 201) {
       throw UnexpectedResponseException(response);
     }
-    return Receipt.fromBackendJsonList(convert.jsonDecode(response.body)["data"]);
+    return Receipt.fromBackendJsonList(
+        convert.jsonDecode(response.body)["data"]);
   }
 
   updateReceipt(int receiptId, Receipt receipt) async {
