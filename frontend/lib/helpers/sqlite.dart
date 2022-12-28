@@ -110,8 +110,6 @@ class SQFLite {
       ,cookie VARCHAR(128)
       );'''
     );
-
-    await setCookie(null);
   }
 
   /*************************** TRANSACTIONS *******************************/
