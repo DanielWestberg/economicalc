@@ -75,4 +75,28 @@ main() async {
     expect(filtered.length, equals(matching.length));
     expect(filtered, containsAll(matching));
   });
+
+  test("Filter transactions from receipts", () async {
+    final DateTime date = DateTime(2022, 1, 1);
+    final TransactionCategory category = TransactionCategory(
+      description: "None", color: const Color(0x00000000),
+    );
+
+    final List<Transaction> matching = [
+      Transaction(date: date, receiptID: 2),
+    ];
+
+    final List<Transaction> nonMatching = [
+      Transaction(date: date,),
+    ];
+
+    final List<Transaction> unfiltered = matching + nonMatching;
+    final List<Transaction> filtered = db.filterTransactions(
+      unfiltered,
+      date,
+      date,
+      category,
+      true,
+    ).toList();
+  });
 }
