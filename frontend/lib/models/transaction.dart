@@ -15,6 +15,9 @@ class TransactionFilter {
     required this.category,
     required this.onlyReceipts,
   });
+
+  Iterable<Transaction> call(Iterable<Transaction> transactions) =>
+      transactions.where((Transaction t) => t.matches(this));
 }
 
 class Transaction {

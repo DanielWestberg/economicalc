@@ -195,15 +195,6 @@ class SQFLite {
     return filteredTransactions;
   }
 
-  Iterable<Transaction> filterTransactions(
-      Iterable<Transaction> transactions,
-      TransactionFilter filter,
-      ) {
-    return transactions.where((Transaction transaction) =>
-        transaction.matches(filter)
-    );
-  }
-
   Future<Transaction?> getTransactionByReceiptID(int receiptID) async {
     final db = await instance.database;
     List<Map<String, dynamic?>>? maps = await db
