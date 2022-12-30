@@ -45,4 +45,34 @@ main() async {
     expect(filtered.length, equals(matching.length));
     expect(filtered, containsAll(matching));
   });
+
+  test("Filter transactions by Category", () async {
+    final DateTime date = DateTime(2022, 1, 1);
+    final TransactionCategory matchingCategory = TransactionCategory(
+        description: "", color: const Color(0x12345678), id: 3
+    );
+    final TransactionCategory wrongCategory = TransactionCategory(
+      description: "", color: const Color(0x12345678), id: 4
+    );
+
+    final List<Transaction> matching = [
+      Transaction(date: date, categoryID: matchingCategory.id),
+    ];
+
+    final List<Transaction> nonMatching = [
+      Transaction(date: date, categoryID: wrongCategory.id),
+    ];
+
+    final List<Transaction> unfiltered = matching + nonMatching;
+    final List<Transaction> filtered = db.filterTransactions(
+      unfiltered,
+      date,
+      date,
+      matchingCategory,
+      false,
+    ).toList();
+
+    expect(filtered.length, equals(matching.length));
+    expect(filtered, containsAll(matching));
+  });
 }
