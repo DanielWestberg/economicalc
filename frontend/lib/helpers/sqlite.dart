@@ -654,7 +654,9 @@ class SQFLite {
       where: 'id = $cookieId',
     );
 
-    return Cookie.fromSetCookieValue(result?[0]["cookie"]);
+    String cookieString = result?[0]["cookie"];
+    return cookieString == "null" ? null :
+        Cookie.fromSetCookieValue(cookieString);
   }
 
   Future<void> _setCookie(Cookie? cookie, Database db) async {
