@@ -391,7 +391,10 @@ class SQFLite {
     );
   }
 
-  Future<List<ReceiptItem>> getAllReceiptItems(startDate, endDate) async {
+  Future<List<ReceiptItem>> getAllReceiptItems(
+      DateTime startDate,
+      DateTime endDate,
+      ) async {
     final receipts = await getAllReceipts();
     List<ReceiptItem> items = [];
 
@@ -403,7 +406,10 @@ class SQFLite {
   }
 
   Future<List<Map<String, Object>>> getFilteredReceiptItems(
-      startDate, endDate, category) async {
+      DateTime startDate,
+      DateTime endDate,
+      TransactionCategory category,
+      ) async {
     final receipts = await getAllReceipts();
     List<Map<String, Object>> filteredItems = [];
 
@@ -551,7 +557,10 @@ class SQFLite {
   }
 
   Future<List<Map<String, Object>>> getFilteredCategoryTotals(
-      startDate, endDate, isExpenses) async {
+      DateTime startDate,
+      DateTime endDate,
+      bool isExpenses,
+      ) async {
     final categories = await getAllcategories();
 
     List<Map<String, Object>> categoryTotals = [];
