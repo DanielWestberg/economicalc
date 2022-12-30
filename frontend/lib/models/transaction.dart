@@ -1,6 +1,21 @@
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
+import 'package:economicalc_client/models/category.dart';
 import 'package:intl/intl.dart';
+
+class TransactionFilter {
+  final DateTime startDate;
+  final DateTime endDate;
+  final TransactionCategory category;
+  final bool onlyReceipts;
+
+  TransactionFilter({
+    required this.startDate,
+    required this.endDate,
+    required this.category,
+    required this.onlyReceipts,
+  });
+}
 
 class Transaction {
   int? id;

@@ -17,8 +17,14 @@ main() async {
   );
 
   test("Filter transactions by date", () async {
-    final DateTime startDate = DateTime(2022, 1, 1);
-    final DateTime endDate = DateTime(2022, 12, 31);
+    final TransactionFilter filter = TransactionFilter(
+      startDate: DateTime(2022, 1, 1),
+      endDate: DateTime(2022, 12, 31),
+      category: TransactionCategory(
+        description: "None", color: const Color(0x00000000),
+      ),
+      onlyReceipts: false,
+    );
 
     final List<Transaction> matching = [
       Transaction(date: DateTime(2022, 1, 1)),
@@ -36,10 +42,7 @@ main() async {
     final List<Transaction> unfiltered = matching + nonMatching;
     final List<Transaction> filtered = db.filterTransactions(
       unfiltered,
-      startDate,
-      endDate,
-      TransactionCategory(description: "None", color: const Color(0x00000000)),
-      false,
+      filter,
     ).toList();
 
     expect(filtered.length, equals(matching.length));
@@ -55,6 +58,13 @@ main() async {
       description: "", color: const Color(0x12345678), id: 4
     );
 
+    final TransactionFilter filter = TransactionFilter(
+      startDate: date,
+      endDate: date,
+      category: matchingCategory,
+      onlyReceipts: false,
+    );
+
     final List<Transaction> matching = [
       Transaction(date: date, categoryID: matchingCategory.id),
     ];
@@ -66,10 +76,7 @@ main() async {
     final List<Transaction> unfiltered = matching + nonMatching;
     final List<Transaction> filtered = db.filterTransactions(
       unfiltered,
-      date,
-      date,
-      matchingCategory,
-      false,
+      filter,
     ).toList();
 
     expect(filtered.length, equals(matching.length));
@@ -80,6 +87,13 @@ main() async {
     final DateTime date = DateTime(2022, 1, 1);
     final TransactionCategory category = TransactionCategory(
       description: "None", color: const Color(0x00000000),
+    );
+
+    final TransactionFilter filter = TransactionFilter(
+      startDate: date,
+      endDate: date,
+      category: category,
+      onlyReceipts: true,
     );
 
     final List<Transaction> matching = [
@@ -93,10 +107,7 @@ main() async {
     final List<Transaction> unfiltered = matching + nonMatching;
     final List<Transaction> filtered = db.filterTransactions(
       unfiltered,
-      date,
-      date,
-      category,
-      true,
+      filter,
     ).toList();
   });
 }

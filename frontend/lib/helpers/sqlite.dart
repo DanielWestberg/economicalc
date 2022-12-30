@@ -197,18 +197,15 @@ class SQFLite {
 
   Iterable<Transaction> filterTransactions(
       Iterable<Transaction> transactions,
-      DateTime startDate,
-      DateTime endDate,
-      TransactionCategory category,
-      bool onlyReceipts,
+      TransactionFilter filter,
       ) {
     return transactions.where((Transaction transaction) =>
-        transaction.date.compareTo(startDate) >= 0 &&
-        transaction.date.compareTo(endDate) <= 0 &&
-        (!onlyReceipts || transaction.receiptID != null) &&
+        transaction.date.compareTo(filter.startDate) >= 0 &&
+        transaction.date.compareTo(filter.endDate) <= 0 &&
+        (!filter.onlyReceipts || transaction.receiptID != null) &&
         (
-            category.description == 'None' ||
-            transaction.categoryID == category.id
+            filter.category.description == 'None' ||
+            transaction.categoryID == filter.category.id
         )
     );
   }
