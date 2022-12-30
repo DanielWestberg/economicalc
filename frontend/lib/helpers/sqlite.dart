@@ -175,24 +175,14 @@ class SQFLite {
 
   Future<List<Transaction>> getFilteredTransactions(
       startDate, endDate, category, onlyReceipts) async {
-    final transactions = await getAllTransactions();
-    List<Transaction> filteredTransactions = [];
+    final TransactionFilter filter = TransactionFilter(
+      startDate: startDate,
+      endDate: endDate,
+      category: category,
+      onlyReceipts: onlyReceipts,
+    );
 
-    for (var transaction in transactions) {
-      bool dateCondition = transaction.date.compareTo(startDate) >= 0 &&
-          transaction.date.compareTo(endDate) <= 0;
-      bool onlyReceiptsCondition =
-          ((onlyReceipts == true) && (transaction.receiptID != null)) ||
-              (onlyReceipts == false);
-      bool isNone = category.description == 'None';
-
-      if (dateCondition &&
-          onlyReceiptsCondition &&
-          (isNone || !isNone && transaction.categoryID == category.id)) {
-        filteredTransactions.add(transaction);
-      }
-    }
-    return filteredTransactions;
+    return filter(await getAllTransactions()).toList();
   }
 
   Future<Transaction?> getTransactionByReceiptID(int receiptID) async {
