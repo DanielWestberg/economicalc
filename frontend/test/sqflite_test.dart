@@ -23,12 +23,12 @@ main() async {
     final List<Transaction> matching = [
       Transaction(date: DateTime(2022, 1, 1)),
       Transaction(date: DateTime(2022, 2, 24)),
-      Transaction(date: DateTime(2022, 7, 10)),
+      Transaction(date: DateTime(2022, 7, 10), receiptID: 5),
       Transaction(date: DateTime(2022, 12, 31)),
     ];
     final List<Transaction> nonMatching = [
       Transaction(date: DateTime(1970, 1, 1)),
-      Transaction(date: DateTime(2021, 12, 31)),
+      Transaction(date: DateTime(2021, 12, 31), receiptID: 8),
       Transaction(date: DateTime(2023, 1, 1)),
       Transaction(date: DateTime(2038, 1, 18)),
     ];
