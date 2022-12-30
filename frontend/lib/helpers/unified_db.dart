@@ -8,17 +8,17 @@ import 'package:economicalc_client/models/bank_transaction.dart';
 
 // Acts as common interface for local db and backend db.
 class UnifiedDb implements SQFLite {
-  SQFLite? _localDb;
-  SQFLite get localDb {
-    _localDb ??= SQFLite.instance;
-    return _localDb!;
+  SQFLite? __localDb;
+  SQFLite get _localDb {
+    __localDb ??= SQFLite.instance;
+    return __localDb!;
   }
 
   @override
-  initDatabase() async => localDb.initDatabase();
+  initDatabase() async => _localDb.initDatabase();
 
   @override
-  Future<void> wipeDB() async => localDb.wipeDB();
+  Future<void> wipeDB() async => _localDb.wipeDB();
 
   /********** TRANSACTIONS **********/
 
@@ -27,11 +27,11 @@ class UnifiedDb implements SQFLite {
 
   @override
   Future<int> numOfCategoriesWithSameName(Transaction transaction) async =>
-      localDb.numOfCategoriesWithSameName(transaction);
+      _localDb.numOfCategoriesWithSameName(transaction);
 
   @override
   Future<void> assignCategories(Transaction transaction) async =>
-      localDb.assignCategories(transaction);
+      _localDb.assignCategories(transaction);
 
   //@override
   //Future<List<Transaction>> getAllTransactions() async {}
@@ -56,7 +56,7 @@ class UnifiedDb implements SQFLite {
 
   @override
   Future<Transaction?> getTransactionByReceiptID(int receiptID) async =>
-      localDb.getTransactionByReceiptID(receiptID);
+      _localDb.getTransactionByReceiptID(receiptID);
 
   //@override
   //Future<void> updateTransaction(Transaction transaction) async {}
@@ -69,15 +69,15 @@ class UnifiedDb implements SQFLite {
 
   @override
   Map<String, dynamic> encodeTransaction(Transaction transaction) =>
-      localDb.encodeTransaction(transaction);
+      _localDb.encodeTransaction(transaction);
 
   @override
   Future<Receipt?> checkForExistingReceipt(Transaction transaction) =>
-      localDb.checkForExistingReceipt(transaction);
+      _localDb.checkForExistingReceipt(transaction);
 
   @override
   Future<Transaction?> checkForExistingTransaction(Transaction transaction) =>
-      localDb.checkForExistingTransaction(transaction);
+      _localDb.checkForExistingTransaction(transaction);
 
   //@override
   //Future<List<int>> updateTransactions() {}
@@ -86,7 +86,7 @@ class UnifiedDb implements SQFLite {
 
   @override
   Future<List<BankTransaction>> getAllBankTransactions() =>
-      localDb.getAllBankTransactions();
+      _localDb.getAllBankTransactions();
 
   //@override
   //Future<void> postBankTransaction(BankTransaction bankTransaction) {}
@@ -101,7 +101,7 @@ class UnifiedDb implements SQFLite {
 
   @override
   Future<BankTransaction> getBankTransactionfromID(int id) =>
-      localDb.getBankTransactionfromID(id);
+      _localDb.getBankTransactionfromID(id);
 
   /********** RECEIPTS **********/
 
@@ -113,7 +113,7 @@ class UnifiedDb implements SQFLite {
       DateTime startDate,
       DateTime endDate,
       ) =>
-      localDb.getAllReceiptItems(startDate, endDate);
+      _localDb.getAllReceiptItems(startDate, endDate);
 
   @override
   Future<List<Map<String, Object>>> getFilteredReceiptItems(
@@ -121,13 +121,13 @@ class UnifiedDb implements SQFLite {
       DateTime endDate,
       TransactionCategory category,
       ) =>
-      localDb.getFilteredReceiptItems(startDate, endDate, category);
+      _localDb.getFilteredReceiptItems(startDate, endDate, category);
 
   @override
-  Future<List<Receipt>> getAllReceipts() => localDb.getAllReceipts();
+  Future<List<Receipt>> getAllReceipts() => _localDb.getAllReceipts();
 
   @override
-  Future<Receipt> getReceiptfromID(int id) => localDb.getReceiptfromID(id);
+  Future<Receipt> getReceiptfromID(int id) => _localDb.getReceiptfromID(id);
 
   //@override
   //Future<void> updateReceipt(Receipt receipt) {}
@@ -140,32 +140,32 @@ class UnifiedDb implements SQFLite {
 
   @override
   Map<String, dynamic> encodeReceipt(Receipt receipt) =>
-      localDb.encodeReceipt(receipt);
+      _localDb.encodeReceipt(receipt);
 
   @override
   List<ReceiptItem> parseReceiptItems(String decodedString) =>
-      localDb.parseReceiptItems(decodedString);
+      _localDb.parseReceiptItems(decodedString);
 
   /********** CATEGORIES **********/
 
   @override
   Future<int?> getCategoryIDfromDescription(String description) =>
-      localDb.getCategoryIDfromDescription(description);
+      _localDb.getCategoryIDfromDescription(description);
 
   @override
   Future<String?> getCategoryDescriptionFromID(int id) =>
-      localDb.getCategoryDescriptionfromID(id);
+      _localDb.getCategoryDescriptionfromID(id);
 
   @override
   Future<TransactionCategory?> getCategoryFromID(int id) =>
-      localDb.getCategoryFromID(id);
+      _localDb.getCategoryFromID(id);
 
   @override
   Future<List<Map<String, Object>>> getFilteredCategoryTotals(
       DateTime startDate,
       DateTime endDate,
       bool isExpenses,
-      ) => localDb.getFilteredCategoryTotals(startDate, endDate, isExpenses);
+      ) => _localDb.getFilteredCategoryTotals(startDate, endDate, isExpenses);
 
   //@override
   //Future<void> insertDefaultCategories(Database db) {}
@@ -181,13 +181,13 @@ class UnifiedDb implements SQFLite {
 
   @override
   Future<List<TransactionCategory>> getAllcategories() =>
-      localDb.getAllcategories();
+      _localDb.getAllcategories();
 
   /********** COOKIES **********/
 
   @override
-  Future<Cookie?> getCookie() => localDb.getCookie();
+  Future<Cookie?> getCookie() => _localDb.getCookie();
 
   @override
-  Future<void> setCookie(Cookie? cookie) => localDb.setCookie(cookie);
+  Future<void> setCookie(Cookie? cookie) => _localDb.setCookie(cookie);
 }
