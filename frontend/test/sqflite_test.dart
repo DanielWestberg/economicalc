@@ -100,5 +100,8 @@ main() async {
 
     final List<Transaction> unfiltered = matching + nonMatching;
     final List<Transaction> filtered = filter(unfiltered).toList();
+
+    expect(filtered.length, equals(matching.length));
+    expect(filtered, containsAll(matching));
   });
 }
