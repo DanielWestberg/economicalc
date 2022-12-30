@@ -5,6 +5,7 @@ import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
+import 'package:economicalc_client/services/api_calls.dart';
 
 // Acts as common interface for local db and backend db.
 class UnifiedDb implements SQFLite {
@@ -13,6 +14,7 @@ class UnifiedDb implements SQFLite {
     __localDb ??= SQFLite.instance;
     return __localDb!;
   }
+  ApiCaller _apiCaller = ApiCaller();
 
   @override
   initDatabase() async => _localDb.initDatabase();
@@ -22,8 +24,9 @@ class UnifiedDb implements SQFLite {
 
   /********** TRANSACTIONS **********/
 
-  //@override
-  //Future<void> insertTransaction(Transaction transaction) async {}
+  @override
+  Future<void> insertTransaction(Transaction transaction) async =>
+      _localDb.insertTransaction(transaction);
 
   @override
   Future<int> numOfCategoriesWithSameName(Transaction transaction) async =>
