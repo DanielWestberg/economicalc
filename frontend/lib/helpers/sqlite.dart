@@ -174,7 +174,11 @@ class SQFLite {
   }
 
   Future<List<Transaction>> getFilteredTransactions(
-      startDate, endDate, category, onlyReceipts) async {
+      DateTime startDate,
+      DateTime endDate,
+      TransactionCategory category,
+      bool onlyReceipts,
+      ) async {
     final TransactionFilter filter = TransactionFilter(
       startDate: startDate,
       endDate: endDate,
