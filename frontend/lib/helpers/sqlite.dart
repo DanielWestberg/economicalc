@@ -200,13 +200,7 @@ class SQFLite {
       TransactionFilter filter,
       ) {
     return transactions.where((Transaction transaction) =>
-        transaction.date.compareTo(filter.startDate) >= 0 &&
-        transaction.date.compareTo(filter.endDate) <= 0 &&
-        (!filter.onlyReceipts || transaction.receiptID != null) &&
-        (
-            filter.category.description == 'None' ||
-            transaction.categoryID == filter.category.id
-        )
+        transaction.matches(filter)
     );
   }
 

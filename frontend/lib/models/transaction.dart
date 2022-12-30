@@ -60,4 +60,13 @@ class Transaction {
       categoryDesc: json['categoryDesc'],
     );
   }
+
+  bool matches(TransactionFilter filter) =>
+      date.compareTo(filter.startDate) >= 0 &&
+      date.compareTo(filter.endDate) <= 0 &&
+      (!filter.onlyReceipts || receiptID != null) &&
+      (
+          filter.category.description == 'None' ||
+              categoryID == filter.category.id
+      );
 }
