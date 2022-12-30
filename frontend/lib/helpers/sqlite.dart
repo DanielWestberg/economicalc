@@ -195,6 +195,24 @@ class SQFLite {
     return filteredTransactions;
   }
 
+  Iterable<Transaction> filterTransactions(
+      Iterable<Transaction> transactions,
+      DateTime startDate,
+      DateTime endDate,
+      TransactionCategory category,
+      bool onlyReceipts,
+      ) {
+    return transactions.where((Transaction transaction) =>
+        transaction.date.compareTo(startDate) >= 0 &&
+        transaction.date.compareTo(endDate) <= 0 &&
+        (!onlyReceipts || transaction.receiptID != null) &&
+        (
+            category.description == 'None' ||
+            transaction.categoryID == category.id
+        )
+    );
+  }
+
   Future<Transaction?> getTransactionByReceiptID(int receiptID) async {
     final db = await instance.database;
     List<Map<String, dynamic?>>? maps = await db
