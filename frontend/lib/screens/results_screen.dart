@@ -8,11 +8,11 @@ import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
+import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import '../services/api_calls.dart';
 
 class ResultsScreen extends StatefulWidget {
   final XFile? image;
@@ -131,6 +131,10 @@ class ResultsScreenState extends State<ResultsScreen> {
           onPressed: () async {
             int receiptID =
                 await dbConnector.insertReceipt(receipt, dropdownValue);
+            if (apiCaller.cookie != null) {
+              await apiCaller.postReceipt(receipt);
+              await apiCaller.updateImage(receiptID, widget.image!);
+            }
             if (widget.existingTransaction != null) {
               if (widget.existingTransaction!.totalAmount != receipt.total) {
                 final snackBar = SnackBar(

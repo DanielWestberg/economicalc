@@ -7,6 +7,7 @@ import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/screens/results_screen.dart';
 import 'package:economicalc_client/screens/home_screen.dart';
+import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
@@ -38,6 +39,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   late List<TransactionCategory> categories;
   late Receipt receipt;
   late Future<Receipt>? receiptFutureBuilder;
+  final apiCaller = ApiCaller();
 
   @override
   void initState() {
@@ -73,13 +75,13 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   }
 
   showReceiptImage(context) async {
-    // If logged in, fetch image from backend
-    //
-    //
-
-    // else, fetch from local image path
     Receipt receipt =
         await dbConnector.getReceiptfromID(widget.transaction.receiptID!);
+    if (apiCaller.cookie != null) {
+      XFile image = await apiCaller.fetchImage(widget.transaction.receiptID!);
+      receipt.imagePath = image.path;
+      await dbConnector.updateReceipt(receipt);
+    }
     return showImageViewer(context, FileImage(File(receipt.imagePath!)));
   }
 
