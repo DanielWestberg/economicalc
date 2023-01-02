@@ -108,7 +108,7 @@ class SQFLite {
       ,cookie VARCHAR(128)
       );''');
 
-    await setCookie(null);
+    await _setCookie(null, db);
   }
 
   /*************************** TRANSACTIONS *******************************/
@@ -668,14 +668,21 @@ class SQFLite {
     return Cookie.fromSetCookieValue(result?[0]["cookie"]);
   }
 
-  Future<void> setCookie(Cookie? cookie) async {
-    final value = {'id': cookieId, 'cookie': cookie.toString()};
+  Future<void> _setCookie(Cookie? cookie, Database db) async {
+    final value = {
+      'id': cookieId,
+      'cookie': cookie.toString(),
+    };
 
-    final db = await database;
-    await db?.insert(
+    await db.insert(
       'cookies',
       value,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+
+  Future<void> setCookie(Cookie? cookie) async {
+    Database? db = await database;
+    _setCookie(cookie, db!);
   }
 }
