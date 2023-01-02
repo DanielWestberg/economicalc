@@ -25,9 +25,9 @@ class SQFLite {
   static Future<String> _defaultPath() async =>
       join(await getDatabasesPath(), _databaseName);
 
-  SQFLite({DatabaseFactory? dbFactory, Future<String> Function()? path}):
-      _dbFactory = dbFactory ?? databaseFactory,
-      _path = path ?? _defaultPath;
+  SQFLite({DatabaseFactory? dbFactory, Future<String> Function()? path})
+      : _dbFactory = dbFactory ?? databaseFactory,
+        _path = path ?? _defaultPath;
 
   static SQFLite? _instance;
   static SQFLite get instance {
@@ -47,13 +47,11 @@ class SQFLite {
   }
 
   initDatabase() async {
-    return await _dbFactory.openDatabase(
-        await _path(),
+    return await _dbFactory.openDatabase(await _path(),
         options: OpenDatabaseOptions(
-            version: _databaseVersion,
-            onCreate: _onCreate,
-        )
-    );
+          version: _databaseVersion,
+          onCreate: _onCreate,
+        ));
   }
 
   Future<void> wipeDB() async {
@@ -108,8 +106,7 @@ class SQFLite {
     await db.execute('''CREATE TABLE cookies(
       id INTEGER PRIMARY KEY CHECK (id = $cookieId)
       ,cookie VARCHAR(128)
-      );'''
-    );
+      );''');
 
     await setCookie(null);
   }
@@ -643,7 +640,8 @@ class SQFLite {
   Future<bool> doesCategoryAlreadyExist(String description) async {
     List<TransactionCategory> categoriesInDB = await getAllcategories();
     return categoriesInDB
-        .where((category) => category.description == description)
+        .where((category) =>
+            category.description.toLowerCase() == description.toLowerCase())
         .isNotEmpty;
   }
 
@@ -671,10 +669,7 @@ class SQFLite {
   }
 
   Future<void> setCookie(Cookie? cookie) async {
-    final value = {
-      'id': cookieId,
-      'cookie': cookie.toString()
-    };
+    final value = {'id': cookieId, 'cookie': cookie.toString()};
 
     final db = await database;
     await db?.insert(
