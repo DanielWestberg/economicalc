@@ -26,9 +26,17 @@ class UnifiedDb extends SQFLite {
   Future<int> insertReceipt(Receipt receipt, String categoryDesc) async {
     receipt.id = await super.insertReceipt(receipt, categoryDesc);
     if (_apiCaller.cookie != null) {
-      _apiCaller.postReceipt(receipt);
+      await _apiCaller.postReceipt(receipt);
     }
 
     return receipt.id!;
+  }
+
+  @override
+  Future<void> updateReceipt(Receipt receipt) async {
+    await super.updateReceipt(receipt);
+    if (_apiCaller.cookie != null) {
+      await _apiCaller.updateReceipt(receipt.id!, receipt);
+    }
   }
 }
