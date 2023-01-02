@@ -63,6 +63,8 @@ class ApiCaller {
     _dbConnector.setCookie(cookie);
   }
 
+  final List<Future<void> Function()> _loginCallbacks = [];
+
   static const String _tinkReportEndpoint =
       "https://link.tink.com/1.0/reports/create-report"
       "?client_id=1a539460199a4e8bb374893752db14e6"
@@ -100,6 +102,10 @@ class ApiCaller {
     }
 
     return Uri.https(apiServer, path);
+  }
+
+  void addLoginCallback(Future<void> Function() callback) {
+    _loginCallbacks.add(callback);
   }
 
   Future<List<Receipt>> fetchMockedTransactions() async {

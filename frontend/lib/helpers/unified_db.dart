@@ -13,8 +13,52 @@ import 'package:sqflite/sqflite.dart' show DatabaseFactory;
 class UnifiedDb extends SQFLite {
   final ApiCaller _apiCaller = ApiCaller();
 
+  Future<void> _loginCallback() async {
+    await syncCategories();
+    await syncReceipts();
+  }
+
+  Future<void> syncCategories() async {
+    Iterable<TransactionCategory> localCategories = await getAllcategories();
+    Iterable<TransactionCategory> remoteCategories = await
+        _apiCaller.fetchCategories();
+
+    Iterable<TransactionCategory> categoriesToPost = localCategories.where(
+        (TransactionCategory category) => !(remoteCategories.contains(category))
+    );
+    Iterable<TransactionCategory> categoriesToSave = remoteCategories.where(
+        (TransactionCategory category) => !(localCategories.contains(category))
+    );
+
+    for (TransactionCategory category in categoriesToPost) {
+      await _apiCaller.postCategory(category);
+    }
+    for (TransactionCategory category in categoriesToSave) {
+      await insertCategory(category);
+    }
+  }
+
+  Future<void> syncReceipts() async {
+    Iterable<Receipt> localReceipts = await getAllReceipts();
+    Iterable<Receipt> remoteReceipts = await _apiCaller.fetchReceipts();
+
+    Iterable<Receipt> receiptsToPost = localReceipts.where((Receipt receipt) =>
+        !(remoteReceipts.contains(receipt))
+    );
+    Iterable<Receipt> receiptsToSave = localReceipts.where((Receipt receipt) =>
+        !(localReceipts.contains(receipt))
+    );
+
+    await _apiCaller.postManyReceipts(receiptsToPost.toList());
+    for (Receipt receipt in receiptsToSave) {
+      insertReceipt(receipt, receipt.categoryDesc!);
+    }
+  }
+
   UnifiedDb({DatabaseFactory? dbFactory, Future<String> Function()? path}) :
-    super(dbFactory: dbFactory, path: path);
+    super(dbFactory: dbFactory, path: path) {
+    _apiCaller.addLoginCallback(_loginCallback);
+  }
 
   static UnifiedDb? _instance;
   static UnifiedDb get instance {
