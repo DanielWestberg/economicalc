@@ -179,6 +179,11 @@ class ApiCaller {
       throw UnexpectedResponseException(response);
     }
     cookie = Cookie.fromSetCookieValue(response.headers["set-cookie"] ?? "");
+
+    for (Future<void> Function() f in _loginCallbacks) {
+      f();
+    }
+
     return LoginData.fromResponse(response);
   }
 
