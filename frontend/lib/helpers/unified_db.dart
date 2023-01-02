@@ -39,4 +39,13 @@ class UnifiedDb extends SQFLite {
       await _apiCaller.updateReceipt(receipt.id!, receipt);
     }
   }
+
+  @override
+  Future<void> deleteReceipt(int id) async {
+    Receipt receipt = await getReceiptfromID(id);
+    await super.deleteReceipt(id);
+    if (_apiCaller.cookie != null) {
+      await _apiCaller.deleteReceipt(receipt);
+    }
+  }
 }
