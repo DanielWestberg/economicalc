@@ -81,4 +81,12 @@ class UnifiedDb extends SQFLite {
       await _apiCaller.updateCategory(category);
     }
   }
+
+  @override
+  Future<void> deleteCategoryByID(int id) async {
+    await super.deleteCategoryByID(id);
+    if (_apiCaller.cookie != null) {
+      await _apiCaller.deleteCategory(id);
+    }
+  }
 }
