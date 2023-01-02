@@ -73,4 +73,12 @@ class UnifiedDb extends SQFLite {
       await _apiCaller.postCategory(category);
     }
   }
+
+  @override
+  Future<void> updateCategory(TransactionCategory category) async {
+    await super.updateCategory(category);
+    if (_apiCaller.cookie != null) {
+      await _apiCaller.updateCategory(category);
+    }
+  }
 }
