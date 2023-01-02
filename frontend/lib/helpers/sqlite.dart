@@ -86,6 +86,7 @@ class SQFLite {
         categoryDesc        TEXT,
         categoryID          INTEGER,
         ocrText             TEXT,
+        imagePath           TEXT,
         FOREIGN KEY (categoryID) REFERENCES category (id) )''',
     );
 
@@ -452,14 +453,16 @@ class SQFLite {
     // Convert the List<Map<String, dynamic> into a List<receipts>.
     return List.generate(maps!.length, (i) {
       return Receipt(
-          id: maps[i]['id'],
-          recipient: maps[i]['recipient'],
-          date: DateTime.parse(maps[i]['date']),
-          total: maps[i]['total'],
-          items: parseReceiptItems(maps[i]['items']),
-          categoryDesc: maps[i]['categoryDesc'],
-          categoryID: maps[i]['categoryID'],
-          ocrText: maps[i]['ocrText']);
+        id: maps[i]['id'],
+        recipient: maps[i]['recipient'],
+        date: DateTime.parse(maps[i]['date']),
+        total: maps[i]['total'],
+        items: parseReceiptItems(maps[i]['items']),
+        categoryDesc: maps[i]['categoryDesc'],
+        categoryID: maps[i]['categoryID'],
+        ocrText: maps[i]['ocrText'],
+        imagePath: maps[i]['imagePath'],
+      );
     });
   }
 
@@ -476,7 +479,8 @@ class SQFLite {
         items: parseReceiptItems(maps[0]['items']),
         categoryDesc: maps[0]['categoryDesc'],
         categoryID: maps[0]['categoryID'],
-        ocrText: maps[0]['ocrText']);
+        ocrText: maps[0]['ocrText'],
+        imagePath: maps[0]['imagePath']);
   }
 
   Future<void> updateReceipt(Receipt receipt) async {
