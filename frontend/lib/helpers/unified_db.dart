@@ -22,6 +22,8 @@ class UnifiedDb extends SQFLite {
     return _instance!;
   }
 
+  /********** RECEIPTS **********/
+
   @override
   Future<int> insertReceipt(Receipt receipt, String categoryDesc) async {
     receipt.id = await super.insertReceipt(receipt, categoryDesc);
@@ -59,6 +61,16 @@ class UnifiedDb extends SQFLite {
 
     for (Receipt receipt in receipts) {
       await _apiCaller.deleteReceipt(receipt);
+    }
+  }
+
+  /********** CATEGORIES **********/
+
+  @override
+  Future<void> insertCategory(TransactionCategory category) async {
+    await super.insertCategory(category);
+    if (_apiCaller.cookie != null) {
+      await _apiCaller.postCategory(category);
     }
   }
 }
