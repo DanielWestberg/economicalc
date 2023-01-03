@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:economicalc_client/helpers/sqlite.dart';
+import 'package:economicalc_client/helpers/unified_db.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
@@ -35,7 +35,7 @@ class HistoryListState extends State<HistoryList> {
   late List<Transaction> transactions_copy;
   bool initialized = false;
   bool isLoading = false;
-  final SQFLite dbConnector = SQFLite.instance;
+  final UnifiedDb dbConnector = UnifiedDb.instance;
 
   late List<TransactionCategory> categories = [];
 

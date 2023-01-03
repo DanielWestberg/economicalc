@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:economicalc_client/helpers/quota_exception.dart';
-import 'package:economicalc_client/helpers/sqlite.dart';
+import 'package:economicalc_client/helpers/unified_db.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:economicalc_client/models/category.dart';
@@ -36,7 +36,7 @@ class ResultsScreenState extends State<ResultsScreen> {
   late Receipt receipt;
   late Future<List<TransactionCategory>> categoriesFutureBuilder;
   late List<TransactionCategory> categories;
-  final dbConnector = SQFLite.instance;
+  final dbConnector = UnifiedDb.instance;
   final apiCaller = ApiCaller();
   int? categoryID;
   String dropdownValue =
@@ -490,7 +490,7 @@ class ResultsScreenState extends State<ResultsScreen> {
     }
   }
 
-  Future<List<TransactionCategory>> getCategories(SQFLite dbConnector) async {
+  Future<List<TransactionCategory>> getCategories(UnifiedDb dbConnector) async {
     return await dbConnector.getAllcategories();
   }
 }

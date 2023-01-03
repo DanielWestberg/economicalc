@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:core';
 
-import 'package:economicalc_client/helpers/sqlite.dart';
+import 'package:economicalc_client/helpers/unified_db.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/LoginData.dart';
 import 'package:economicalc_client/models/response.dart';
@@ -48,7 +48,7 @@ class OpenLinkState extends State<OpenLink> {
 
   late final Response response;
   late final List<BankTransaction> transactions;
-  final SQFLite dbConnector = SQFLite.instance;
+  final UnifiedDb dbConnector = UnifiedDb.instance;
   final apiCaller = ApiCaller();
 
   @override
