@@ -20,15 +20,15 @@ class UnifiedDb extends SQFLite {
       print("UnifiedDb: Syncing with backend...");
     }
 
-    await syncCategories();
-    await syncReceipts();
+    await _syncCategories();
+    await _syncReceipts();
 
     if (kDebugMode) {
       print("UnifiedDb: Sync finished");
     }
   }
 
-  Future<void> syncCategories() async {
+  Future<void> _syncCategories() async {
     Iterable<TransactionCategory> localCategories = await getAllcategories();
     Iterable<TransactionCategory> remoteCategories = await
         _apiCaller.fetchCategories();
@@ -59,7 +59,7 @@ class UnifiedDb extends SQFLite {
     }
   }
 
-  Future<void> syncReceipts() async {
+  Future<void> _syncReceipts() async {
     Iterable<Receipt> localReceipts = await getAllReceipts();
     Iterable<Receipt> remoteReceipts = await _apiCaller.fetchReceipts();
 
