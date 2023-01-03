@@ -15,7 +15,7 @@ import 'package:sqflite/sqflite.dart' show DatabaseFactory;
 class UnifiedDb extends SQFLite {
   final ApiCaller _apiCaller = ApiCaller();
 
-  Future<void> _loginCallback() async {
+  Future<void> syncWithBackend() async {
     if (kDebugMode) {
       print("UnifiedDb: Syncing with backend...");
     }
@@ -88,9 +88,7 @@ class UnifiedDb extends SQFLite {
   }
 
   UnifiedDb({DatabaseFactory? dbFactory, Future<String> Function()? path}) :
-    super(dbFactory: dbFactory, path: path) {
-    _apiCaller.addLoginCallback(_loginCallback);
-  }
+    super(dbFactory: dbFactory, path: path);
 
   static UnifiedDb? _instance;
   static UnifiedDb get instance {
