@@ -7,6 +7,8 @@ import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/models/bank_transaction.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
+
 import 'package:sqflite/sqflite.dart' show DatabaseFactory;
 
 // Acts as common interface for local db and backend db.
@@ -14,8 +16,16 @@ class UnifiedDb extends SQFLite {
   final ApiCaller _apiCaller = ApiCaller();
 
   Future<void> _loginCallback() async {
+    if (kDebugMode) {
+      print("UnifiedDb: Syncing with backend...");
+    }
+
     await syncCategories();
     await syncReceipts();
+
+    if (kDebugMode) {
+      print("UnifiedDb: Sync finished");
+    }
   }
 
   Future<void> syncCategories() async {
@@ -30,11 +40,22 @@ class UnifiedDb extends SQFLite {
         (TransactionCategory category) => !(localCategories.contains(category))
     );
 
+    // For logging purposes only
+    int postedCategories = 0;
+    int savedCategories = 0;
+
     for (TransactionCategory category in categoriesToPost) {
       await _apiCaller.postCategory(category);
+      postedCategories++;
     }
     for (TransactionCategory category in categoriesToSave) {
       await insertCategory(category);
+      savedCategories++;
+    }
+
+    if (kDebugMode) {
+      print("UnifiedDb: Posted $postedCategories categories");
+      print("UnifiedDb: Saved $savedCategories categories");
     }
   }
 
@@ -49,9 +70,20 @@ class UnifiedDb extends SQFLite {
         !(localReceipts.contains(receipt))
     );
 
-    await _apiCaller.postManyReceipts(receiptsToPost.toList());
+    List<Receipt> receiptsToPostList = receiptsToPost.toList();
+
+    // For logging purposes only
+    int savedReceipts = 0;
+
+    await _apiCaller.postManyReceipts(receiptsToPostList);
     for (Receipt receipt in receiptsToSave) {
       insertReceipt(receipt, receipt.categoryDesc!);
+      savedReceipts++;
+    }
+
+    if (kDebugMode) {
+      print("UnifiedDb: Posted ${receiptsToPostList.length} receipts");
+      print("UnifiedDb: Saved $savedReceipts receipts");
     }
   }
 
