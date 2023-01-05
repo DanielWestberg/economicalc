@@ -167,77 +167,12 @@ class HistoryListState extends State<HistoryList> {
                           child: ListView.builder(
                               itemCount: transactions.length,
                               itemBuilder: (BuildContext ctx, int index) {
-                                return Padding(
-                                    padding: EdgeInsets.only(top: 0.0),
-                                    child: ListTile(
-                                      style: ListTileStyle.list,
-                                      shape: Border(
-                                        left: BorderSide(
-                                            color:
-                                                TransactionCategory.getCategory(
-                                                        transactions[index]
-                                                            .categoryID!,
-                                                        categories)
-                                                    .color,
-                                            width: 20),
-                                        top: BorderSide(
-                                            color: Utils.mediumDarkColor,
-                                            width: 0.5),
-                                      ),
-                                      leading: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceEvenly,
-                                          children: [
-                                            Text(
-                                              DateFormat('yyyy-MM-dd').format(
-                                                  transactions[index].date),
-                                              style: TextStyle(
-                                                  color: Utils.textColor,
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 14),
-                                            ),
-                                            transactions[index].receiptID !=
-                                                    null
-                                                ? Icon(
-                                                    Icons.receipt_long_rounded,
-                                                    size: 15,
-                                                  )
-                                                : Text("")
-                                          ]),
-                                      title: Text(
-                                        transactions[index].store!,
-                                        style: TextStyle(
-                                            color: Utils.textColor,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 14),
-                                      ),
-                                      subtitle: Text(
-                                        NumberFormat.currency(
-                                          locale: 'sv_SE',
-                                        ).format(
-                                            transactions[index].totalAmount),
-                                        style: TextStyle(
-                                            color: Utils.textColor,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 12),
-                                      ),
-                                      trailing: Icon(
-                                        Icons.arrow_right_rounded,
-                                        size: 40,
-                                        color: Utils.textColor,
-                                      ),
-                                      onTap: () {
-                                        Navigator.of(context)
-                                            .push(MaterialPageRoute(
-                                                builder: (context) =>
-                                                    TransactionDetailsScreen(
-                                                        null,
-                                                        transactions[index])))
-                                            .then((value) {
-                                          updateData();
-                                        });
-                                      },
-                                    ));
+                                print(transactions[index].receiptID == null);
+                                if (transactions[index].receiptID == null) {
+                                  return buildListItem(context, index);
+                                } else {
+                                  return dissmiss(context, index);
+                                }
                               })));
                 } else {
                   return Center(
@@ -247,5 +182,102 @@ class HistoryListState extends State<HistoryList> {
                 }
               })
     ]);
+  }
+
+  Dismissible dissmiss(BuildContext context, int index) {
+    return Dismissible(
+        direction: DismissDirection.endToStart,
+        key: UniqueKey(),
+        onDismissed: ((direction) {
+          setState(() {
+            if (transactions[index].bankTransactionID == null) {
+              dbConnector.deleteTransaction(transactions[index].id!);
+              dbConnector.deleteReceipt(transactions[index].receiptID!);
+              transactions.removeAt(index);
+            } else {
+              int id = transactions[index].receiptID!;
+              transactions[index].receiptID = null;
+              dbConnector.updateTransaction(transactions[index]);
+              dbConnector.deleteReceipt(id);
+            }
+          });
+        }),
+        background: Container(
+          color: Colors.green,
+        ),
+        secondaryBackground: const ColoredBox(
+          color: Colors.red,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Icon(Icons.delete, color: Colors.white),
+            ),
+          ),
+        ),
+        child: buildListItem(context, index));
+  }
+
+  Widget buildListItem(BuildContext context, int index) {
+    return Padding(
+        padding: EdgeInsets.only(top: 0.0),
+        child: ListTile(
+          style: ListTileStyle.list,
+          shape: Border(
+            left: BorderSide(
+                color: TransactionCategory.getCategory(
+                        transactions[index].categoryID!, categories)
+                    .color,
+                width: 20),
+            top: BorderSide(color: Utils.mediumDarkColor, width: 0.5),
+          ),
+          leading: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Text(
+                  DateFormat('yyyy-MM-dd').format(transactions[index].date),
+                  style: TextStyle(
+                      color: Utils.textColor,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14),
+                ),
+                transactions[index].receiptID != null
+                    ? Icon(
+                        Icons.receipt_long_rounded,
+                        size: 15,
+                      )
+                    : Text("")
+              ]),
+          title: Text(
+            transactions[index].store!,
+            style: TextStyle(
+                color: Utils.textColor,
+                fontWeight: FontWeight.w500,
+                fontSize: 14),
+          ),
+          subtitle: Text(
+            NumberFormat.currency(
+              locale: 'sv_SE',
+            ).format(transactions[index].totalAmount),
+            style: TextStyle(
+                color: Utils.textColor,
+                fontWeight: FontWeight.w500,
+                fontSize: 12),
+          ),
+          trailing: Icon(
+            Icons.arrow_right_rounded,
+            size: 40,
+            color: Utils.textColor,
+          ),
+          onTap: () {
+            Navigator.of(context)
+                .push(MaterialPageRoute(
+                    builder: (context) =>
+                        TransactionDetailsScreen(null, transactions[index])))
+                .then((value) {
+              updateData();
+            });
+          },
+        ));
   }
 }
