@@ -112,7 +112,7 @@ class OpenLinkState extends State<OpenLink> {
               await dbConnector.postMissingBankTransactions(resTrans);
 
               List<int> addedUpdated = await dbConnector.updateTransactions();
-              dbConnector.syncWithBackend();
+              await dbConnector.syncWithBackend();
 
               final snackBar = SnackBar(
                 backgroundColor: Utils.mediumDarkColor,
