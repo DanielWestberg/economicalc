@@ -200,10 +200,22 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Widget popUpEditCategoryColor(context, index) {
     return AlertDialog(
       title: Text("Pick a color"),
-      content: ColorPicker(
+      content: Column(
+        children: [
+        ColorPicker(
           pickerColor: pickerColor,
           onColorChanged: ((pickerColor) =>
               setState(() => categories[index].color = pickerColor))),
+        
+        TextField(
+          decoration: InputDecoration(
+              border: InputBorder.none,
+              hintText: 'New category name'
+            ),
+          onChanged: (value) {
+            setState(() => categories[index].description = value);
+          },
+        )],),
       actions: [
         ElevatedButton(
           child: const Text('Save'),
