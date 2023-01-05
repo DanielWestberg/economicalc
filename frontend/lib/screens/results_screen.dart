@@ -8,6 +8,7 @@ import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
+import 'package:dart_numerics/dart_numerics.dart';
 
 import 'package:flutter/gestures.dart';
 
@@ -64,31 +65,41 @@ class ResultsScreenState extends State<ResultsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-        child: isLoading
-            ? Scaffold(
-                backgroundColor: Utils.mediumLightColor,
-                body: Center(
-                    child: LoadingAnimationWidget.threeArchedCircle(
-                        color: Colors.black, size: 40)))
-            : Scaffold(
-                appBar: AppBar(
-                  backgroundColor: Utils.mediumLightColor,
-                  foregroundColor: Utils.textColor,
-                  title: Text(
-                    'Scan result',
-                    style: GoogleFonts.roboto(),
-                  ),
-                  centerTitle: true,
-                  elevation: 10,
-                  actions: [confirmButton()],
-                ),
-                body: ListView(scrollDirection: Axis.vertical, children: [
-                  photoArea(),
-                  headerInfo(),
-                  buildDataTable(),
-                  addButton(),
-                ])));
+    return FutureBuilder(
+        future: Future.wait([categoriesFutureBuilder, dataFuture]),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            receipt = snapshot.data![1] as Receipt;
+            categories = snapshot.data![0] as List<TransactionCategory>;
+          } else {
+            return Text("${snapshot.error}");
+          }
+          return SafeArea(
+              child: isLoading
+                  ? Scaffold(
+                      backgroundColor: Utils.mediumLightColor,
+                      body: Center(
+                          child: LoadingAnimationWidget.threeArchedCircle(
+                              color: Colors.black, size: 40)))
+                  : Scaffold(
+                      appBar: AppBar(
+                        backgroundColor: Utils.mediumLightColor,
+                        foregroundColor: Utils.textColor,
+                        title: Text(
+                          'Scan result',
+                          style: GoogleFonts.roboto(),
+                        ),
+                        centerTitle: true,
+                        elevation: 10,
+                        actions: [confirmButton()],
+                      ),
+                      body: ListView(scrollDirection: Axis.vertical, children: [
+                        photoArea(),
+                        headerInfo(),
+                        buildDataTable(),
+                        addButton(),
+                      ])));
+        });
   }
 
   Widget photoArea() {
@@ -146,11 +157,14 @@ class ResultsScreenState extends State<ResultsScreen> {
               await apiCaller.updateImage(receiptID, widget.image!);
             }
             if (widget.existingTransaction != null) {
-              if (widget.existingTransaction!.totalAmount != receipt.total) {
+              if (almostEqualNumbersBetween(
+                  widget.existingTransaction!.totalAmount!,
+                  receipt.total!,
+                  1)) {
                 final snackBar = SnackBar(
                   backgroundColor: Utils.errorColor,
                   content: Text(
-                    "Total amount of scanned receipt and existing transaction don't match. Please scan the correct receipt or edit the results.",
+                    "Total amount of scanned receipt and existing transaction don't match. Please scan the correct receipt or edit the results. Amount on transaction: ${widget.existingTransaction?.totalAmount}",
                     style: GoogleFonts.roboto(),
                   ),
                 );
@@ -204,55 +218,41 @@ class ResultsScreenState extends State<ResultsScreen> {
   }
 
   Widget dropDown() {
-    return FutureBuilder(
-        future: categoriesFutureBuilder,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Text("${snapshot.error}");
-          } else if (snapshot.hasData) {
-            categories = snapshot.data!;
-
-            return SizedBox(
-                width: 300,
-                child: DropdownButton<String>(
-                    dropdownColor: Utils.lightColor,
-                    isDense: true,
-                    isExpanded: true,
-                    value: dropdownValue,
-                    onChanged: (
-                      String? value,
-                    ) async {
-                      int? categoryID = await dbConnector
-                          .getCategoryIDfromDescription(dropdownValue);
-                      setState(() {
-                        dropdownValue = value!;
-                        receipt.categoryDesc = dropdownValue;
-                        receipt.categoryID = categoryID;
-                      });
-                    },
-                    items: categories.map<DropdownMenuItem<String>>(
-                        (TransactionCategory category) {
-                      return DropdownMenuItem<String>(
-                        value: category.description,
-                        child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Container(
-                                  padding: EdgeInsets.only(right: 5),
-                                  child: Icon(Icons.label_rounded,
-                                      color: category.color)),
-                              Text(
-                                category.description,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.roboto(fontSize: fontSize),
-                              )
-                            ]),
-                      );
-                    }).toList()));
-          } else {
-            return Text("Unexpected error");
-          }
-        });
+    return SizedBox(
+        width: 300,
+        child: DropdownButton<String>(
+            dropdownColor: Utils.lightColor,
+            isDense: true,
+            isExpanded: true,
+            value: dropdownValue,
+            onChanged: (
+              String? value,
+            ) async {
+              int? categoryID =
+                  await dbConnector.getCategoryIDfromDescription(dropdownValue);
+              setState(() {
+                dropdownValue = value!;
+                receipt.categoryDesc = dropdownValue;
+                receipt.categoryID = categoryID;
+              });
+            },
+            items: categories
+                .map<DropdownMenuItem<String>>((TransactionCategory category) {
+              return DropdownMenuItem<String>(
+                value: category.description,
+                child:
+                    Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+                  Container(
+                      padding: EdgeInsets.only(right: 5),
+                      child: Icon(Icons.label_rounded, color: category.color)),
+                  Text(
+                    category.description,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.roboto(fontSize: fontSize),
+                  )
+                ]),
+              );
+            }).toList()));
   }
 
   showConfirmationButton(BuildContext context) {
@@ -385,110 +385,64 @@ class ResultsScreenState extends State<ResultsScreen> {
   }
 
   Widget headerInfo() {
-    return FutureBuilder(
-        future: dataFuture,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Text("${snapshot.error}");
-          } else if (snapshot.hasData) {
-            receipt = snapshot.data!;
-            return Container(
-                padding: EdgeInsets.only(top: 20, left: 20, bottom: 20),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+        padding: EdgeInsets.only(top: 20, left: 20, bottom: 20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                dropDown(),
+                Row(
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        dropDown(),
-                        Row(
-                          children: [
-                            Icon(Icons.store),
-                            Padding(
-                                padding: EdgeInsets.only(left: 5),
-                                child: SizedBox(
-                                  width: sizedBoxWidth,
-                                  height: sizedBoxHeight,
-                                  child: TextFormField(
-                                      initialValue: receipt.recipient,
-                                      autovalidateMode:
-                                          AutovalidateMode.onUserInteraction,
-                                      onFieldSubmitted: (value) {
-                                        setState(() {
-                                          receipt.recipient = value;
-                                        });
-                                      }),
-                                ))
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Icon(Icons.date_range),
-                            RichText(
-                                text: TextSpan(
-                                    style:
-                                        GoogleFonts.roboto(fontSize: fontSize),
-                                    children: <TextSpan>[
-                                  TextSpan(
-                                    style: TextStyle(color: Colors.black),
-                                    text: "${formatter.format(receipt.date)}",
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () => pickDate(),
-                                  )
-                                ])),
-                          ],
-                        )
-                      ],
-                    ),
+                    Icon(Icons.store),
                     Padding(
-                        padding: EdgeInsets.only(left: 10),
-                        child: Column(children: [
-                          Icon(Icons.payment),
-                          Text("${getTotal(receipt)} kr",
-                              style: TextStyle(
-                                  fontSize: fontSize,
-                                  fontWeight: FontWeight.w600))
-                        ])),
-/*
-                    Container(
-                        child: Text(
-                      receipt.recipient,
-                      style: GoogleFonts.roboto(fontSize: fontSize),
-                    )),
-                    Container(
-                        padding: EdgeInsets.only(top: 5),
-                        child: Text(
-                          DateFormat("yyyy-MM-dd")
-                              .format(receipt.date)
-                              .toString(),
-                          style: GoogleFonts.roboto(fontSize: fontSize),
-                        )),
-                    Container(
-                        padding: EdgeInsets.only(top: 5, bottom: 10),
-                        child: Text(
-                            NumberFormat.currency(locale: 'sv_SE')
-                                .format(receipt.total),
-                            style: GoogleFonts.roboto(fontSize: fontSize))),
-                    Container(
-                      padding: EdgeInsets.only(top: 15),
-                      child: Text(
-                        'Set category for transaction:',
-                        style: GoogleFonts.roboto(
-                            color: Utils.textColor, fontSize: fontSize),
-                      ),
-                    ),
-                    Container(
-                      padding: EdgeInsets.only(top: 5, right: 10),
-                      child: dropDown(),
-                    )
-*/
+                        padding: EdgeInsets.only(left: 5),
+                        child: SizedBox(
+                          width: sizedBoxWidth,
+                          height: sizedBoxHeight,
+                          child: TextFormField(
+                              initialValue: receipt.recipient,
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
+                              onFieldSubmitted: (value) {
+                                setState(() {
+                                  receipt.recipient = value;
+                                });
+                              }),
+                        ))
                   ],
-                ));
-          } else {
-            return Text("Unexpected error");
-          }
-        });
+                ),
+                Row(
+                  children: [
+                    Icon(Icons.date_range),
+                    RichText(
+                        text: TextSpan(
+                            style: GoogleFonts.roboto(fontSize: fontSize),
+                            children: <TextSpan>[
+                          TextSpan(
+                            style: TextStyle(color: Colors.black),
+                            text: "${formatter.format(receipt.date)}",
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () => pickDate(),
+                          )
+                        ])),
+                  ],
+                )
+              ],
+            ),
+            Padding(
+                padding: EdgeInsets.only(left: 10),
+                child: Column(children: [
+                  Icon(Icons.payment),
+                  Text("${(getTotal(receipt)! * -1).toStringAsFixed(2)} kr",
+                      style: TextStyle(
+                          fontSize: fontSize, fontWeight: FontWeight.w600))
+                ])),
+          ],
+        ));
   }
 
   pickDate() async {
@@ -506,87 +460,74 @@ class ResultsScreenState extends State<ResultsScreen> {
   }
 
   Widget buildDataTable() {
-    return FutureBuilder(
-        future: dataFuture,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Text("${snapshot.error}");
-          } else if (snapshot.hasData) {
-            receipt = snapshot.data!;
-            return ListView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: receipt.items.length,
-              itemBuilder: (BuildContext context, index) {
-                return Dismissible(
-                  direction: DismissDirection.endToStart,
-                  key: futurekey,
-                  onDismissed: ((direction) {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      itemCount: receipt.items.length,
+      itemBuilder: (BuildContext context, index) {
+        return Dismissible(
+          direction: DismissDirection.endToStart,
+          key: ValueKey(receipt.items[index].itemId),
+          onDismissed: ((direction) {
+            print(receipt.items.length);
+            print(index);
+            setState(() {
+              receipt.total = receipt.total! - receipt.items[index].amount;
+              receipt.items.removeAt(index);
+              receipt.total = double.parse((receipt.total)!.toStringAsFixed(2));
+            });
+          }),
+          background: Container(
+            color: Colors.green,
+          ),
+          secondaryBackground: const ColoredBox(
+            color: Colors.red,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Icon(Icons.delete, color: Colors.white),
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              Flexible(
+                flex: 6,
+                child: TextFormField(
+                  initialValue: receipt.items[index].itemName,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  onFieldSubmitted: (value) {
                     setState(() {
-                      receipt.total =
-                          receipt.total! - receipt.items[index].amount;
+                      receipt.items[index].itemName = value;
+                    });
+                  },
+                ),
+              ),
+              Flexible(
+                flex: 2,
+                child: TextFormField(
+                  initialValue: receipt.items[index].amount.toString(),
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  onFieldSubmitted: (value) {
+                    double oldAmount = receipt.items[index].amount;
+                    setState(() {
+                      double.tryParse(value) == null
+                          ? receipt.items[index].amount = 0
+                          : receipt.items[index].amount = double.parse(value);
+                      receipt.total = receipt.total! - oldAmount;
+                      receipt.total = receipt.total! + double.parse(value);
                       receipt.total =
                           double.parse((receipt.total)!.toStringAsFixed(2));
-                      receipt.items.removeAt(index);
                     });
-                  }),
-                  background: Container(
-                    color: Colors.green,
-                  ),
-                  secondaryBackground: const ColoredBox(
-                    color: Colors.red,
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Icon(Icons.delete, color: Colors.white),
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Flexible(
-                        flex: 6,
-                        child: TextFormField(
-                          initialValue: receipt.items[index].itemName,
-                          autovalidateMode: AutovalidateMode.onUserInteraction,
-                          onFieldSubmitted: (value) {
-                            setState(() {
-                              receipt.items[index].itemName = value;
-                            });
-                          },
-                        ),
-                      ),
-                      Flexible(
-                        flex: 2,
-                        child: TextFormField(
-                          initialValue: receipt.items[index].amount.toString(),
-                          autovalidateMode: AutovalidateMode.onUserInteraction,
-                          onFieldSubmitted: (value) {
-                            double oldAmount = receipt.items[index].amount;
-                            setState(() {
-                              double.tryParse(value) == null
-                                  ? receipt.items[index].amount = 0
-                                  : receipt.items[index].amount =
-                                      double.parse(value);
-                              receipt.total = receipt.total! - oldAmount;
-                              receipt.total =
-                                  receipt.total! + double.parse(value);
-                              receipt.total = double.parse(
-                                  (receipt.total)!.toStringAsFixed(2));
-                            });
-                          },
-                        ),
-                      )
-                    ],
-                  ),
-                );
-              },
-            );
-          } else {
-            return Text("Unexpected error");
-          }
-        });
+                  },
+                ),
+              )
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<Receipt> getTransactionFromImage(image) async {

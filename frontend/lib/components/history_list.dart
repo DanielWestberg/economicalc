@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:dart_numerics/dart_numerics.dart';
 import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
@@ -11,6 +12,7 @@ import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -169,9 +171,70 @@ class HistoryListState extends State<HistoryList> {
                               itemBuilder: (BuildContext ctx, int index) {
                                 print(transactions[index].receiptID == null);
                                 if (transactions[index].receiptID == null) {
-                                  return buildListItem(
-                                      context, transactions[index]);
+                                  print("INSIDE NYLL RECEIPT ID");
+                                  return DragTarget<int>(builder: (context,
+                                      List<int?> candidateData, rejectedData) {
+                                    return buildListItem(
+                                        context, transactions[index]);
+                                  }, onAccept: (data) {
+                                    updateTransaction(data, index, 1);
+                                  }, onWillAccept: (data) {
+                                    return true;
+                                    /*print("Accepted!!");
+                                      if (almostEqualNumbersBetween(
+                                              transactions[data!].totalAmount!,
+                                              transactions[index].totalAmount!,
+                                              1) ==
+                                          false) {
+                                        print("Firstcase");
+                                        final snackbar = SnackBar(
+                                          backgroundColor: Utils.errorColor,
+                                          content: Text(
+                                            "Total amount of scanned receipt and existing transaction don't match. Please scan the correct receipt or edit the results. Amount on transaction: ${transactions[index].totalAmount}",
+                                            style: GoogleFonts.roboto(),
+                                          ),
+                                        );
+                                        return false;
+                                      } else {
+                                        print("ELSE");
+                                        askMergeQuestions(data, index);
+
+                                        return true;
+                                      }
+                                    },*/
+                                  });
                                 } else {
+                                  if (transactions[index].bankTransactionID ==
+                                      null) {
+                                    print("Draggable");
+
+                                    return Draggable<int>(
+                                        data: index,
+                                        feedback: Material(
+                                          child: ConstrainedBox(
+                                              constraints: BoxConstraints(
+                                                  maxWidth:
+                                                      MediaQuery.of(context)
+                                                          .size
+                                                          .width),
+                                              child: Opacity(
+                                                  opacity: 0.4,
+                                                  child: buildListItem(context,
+                                                      transactions[index]))),
+                                        ),
+                                        childWhenDragging: Container(
+                                          foregroundDecoration:
+                                              const BoxDecoration(
+                                            color: Colors.grey,
+                                            backgroundBlendMode:
+                                                BlendMode.saturation,
+                                          ),
+                                          child: buildListItem(
+                                              context, transactions[index]),
+                                        ),
+                                        child: dissmiss(context, index));
+                                  }
+
                                   return dissmiss(context, index);
                                 }
                               })));
@@ -183,6 +246,55 @@ class HistoryListState extends State<HistoryList> {
                 }
               })
     ]);
+  }
+
+  AlertDialog askMergeQuestions(data, index) {
+    return AlertDialog(
+      title: const Text('Merge transactions?'),
+      content: Text(
+          "Do you want to merge ${transactions[data].store} with ${transactions[index].store}?"),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () {},
+          child: const Text("Cancel"),
+        ),
+        TextButton(
+            onPressed: () {
+              AlertDialog(
+                title: const Text("Keep category?"),
+                content: Text(
+                    "Do you want to keep category: ${transactions[data].categoryDesc} or use: ${transactions[index].categoryDesc}?"),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text("Keep"),
+                    onPressed: () {
+                      updateTransaction(data, index, 2);
+                    },
+                  ),
+                  TextButton(
+                      onPressed: () {
+                        updateTransaction(data, index, 1);
+                      },
+                      child: const Text("Switch"))
+                ],
+              );
+            },
+            child: const Text("OK"))
+      ],
+    );
+  }
+
+  updateTransaction(int data, int index, int catToBeUsed) {
+    Transaction receiptToMerge = transactions[data];
+    if (catToBeUsed == 1) {
+      transactions[index].categoryDesc = receiptToMerge.categoryDesc;
+      transactions[index].categoryID = receiptToMerge.categoryID;
+    }
+    transactions[index].receiptID = receiptToMerge.receiptID;
+    setState(() {
+      dbConnector.deleteTransaction(receiptToMerge.id!);
+      dbConnector.updateTransaction(transactions[index]);
+    });
   }
 
   Dismissible dissmiss(BuildContext context, int index) {
