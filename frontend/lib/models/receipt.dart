@@ -11,7 +11,6 @@ class Receipt {
   String? categoryDesc;
   List<ReceiptItem> items;
   int? categoryID;
-  String? backendId;
   String ocrText;
 
 
@@ -24,7 +23,6 @@ class Receipt {
     this.categoryDesc,
     this.categoryID,
 
-    this.backendId,
     required this.ocrText,
 
   });
@@ -38,7 +36,6 @@ class Receipt {
       categoryDesc == other.categoryDesc &&
       items.every((item) => other.items.contains(item)) &&
       categoryID == other.categoryID &&
-      backendId == other.backendId &&
       ocrText == other.ocrText
   );
 
