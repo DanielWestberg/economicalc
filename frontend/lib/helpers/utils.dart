@@ -5,10 +5,9 @@ import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'package:string_similarity/string_similarity.dart';
-
-import '../models/receipt.dart';
 
 class Utils {
   static int compareString(bool ascending, String value1, String value2) =>
@@ -22,7 +21,7 @@ class Utils {
 
   // COLORS
   static Color textColor = Colors.black87;
-  static Color lightColor = Color(0xffD4E6F3);
+  static Color lightColor = Color(0xffFFFAFA);
   static Color mediumLightColor = Color(0xFFB8D8D8);
   static Color mediumDarkColor = Color(0xff7a9e9f);
   static Color darkColor = Color.fromARGB(255, 68, 104, 107);

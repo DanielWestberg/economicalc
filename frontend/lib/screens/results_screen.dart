@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:economicalc_client/helpers/quota_exception.dart';
 import 'package:economicalc_client/helpers/sqlite.dart';
@@ -7,18 +8,25 @@ import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
+
 import 'package:flutter/gestures.dart';
+
+import 'package:economicalc_client/services/api_calls.dart';
+
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+
 import 'package:month_year_picker/month_year_picker.dart';
 import '../services/api_calls.dart';
 import 'package:flutter_date_pickers/flutter_date_pickers.dart';
 
 class ResultsScreen extends StatefulWidget {
   final XFile? image;
+  Transaction? existingTransaction;
 
-  const ResultsScreen({super.key, required this.image});
+  ResultsScreen({super.key, required this.image, this.existingTransaction});
 
   @override
   ResultsScreenState createState() => ResultsScreenState();
@@ -27,7 +35,7 @@ class ResultsScreen extends StatefulWidget {
 class ResultsScreenState extends State<ResultsScreen> {
   int? sortColumnIndex;
   bool isAscending = false;
-  double fontSize = 14;
+  double fontSize = 16;
   double sizedBoxWidth = 150;
   double sizedBoxHeight = 30;
   final columns = ["Items", "Total"];
@@ -37,6 +45,7 @@ class ResultsScreenState extends State<ResultsScreen> {
   late Future<List<TransactionCategory>> categoriesFutureBuilder;
   late List<TransactionCategory> categories;
   final dbConnector = SQFLite.instance;
+  final apiCaller = ApiCaller();
   int? categoryID;
   String dropdownValue =
       "Uncategorized"; // TODO: replace with suggested category
@@ -63,10 +72,13 @@ class ResultsScreenState extends State<ResultsScreen> {
             : Scaffold(
                 appBar: AppBar(
                   backgroundColor: Utils.mediumLightColor,
-                  foregroundColor: Colors.black,
-                  title: Text('Scan result'),
+                  foregroundColor: Utils.textColor,
+                  title: Text(
+                    'Scan result',
+                    style: GoogleFonts.roboto(),
+                  ),
                   centerTitle: true,
-                  elevation: 0,
+                  elevation: 10,
                   actions: [confirmButton()],
                 ),
                 body: ListView(scrollDirection: Axis.vertical, children: [
@@ -78,58 +90,116 @@ class ResultsScreenState extends State<ResultsScreen> {
   }
 
   Widget photoArea() {
-    return Container(
+    return SizedBox(
+        width: MediaQuery.of(context).size.width,
         height: 250,
-        width: 300,
-        padding: EdgeInsets.only(top: 10, bottom: 30),
-        child: GestureDetector(
-          onTap: () {
-            showImageViewer(context, FileImage(File(widget.image!.path)));
-          },
-          child: Image.file(File(widget.image!.path), fit: BoxFit.contain),
-        ));
+        child: Container(
+            child: Stack(fit: StackFit.expand, children: [
+          Image.file(File(widget.image!.path), fit: BoxFit.cover),
+          BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+              child: Container(
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.0)),
+              )),
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 130, vertical: 100),
+            child: TextButton(
+              style: ButtonStyle(
+                  shape: MaterialStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                    ),
+                  ),
+                  backgroundColor:
+                      MaterialStateProperty.all<Color>(Utils.mediumLightColor)),
+              onPressed: () {
+                showImageViewer(context, FileImage(File(widget.image!.path)));
+              },
+              child: Text(
+                "View receipt",
+                style: GoogleFonts.roboto(color: Utils.textColor),
+              ),
+            ),
+          )
+        ])));
   }
 
   Widget confirmButton() {
-    return IconButton(
-      onPressed: () async {
-        int receiptID = await dbConnector.insertReceipt(receipt, dropdownValue);
-        Transaction transaction = Transaction(
-          date: receipt.date,
-          totalAmount: -receipt.total!,
-          store: receipt.recipient,
-          receiptID: receiptID,
-          categoryID:
-              await dbConnector.getCategoryIDfromDescription(dropdownValue),
-          categoryDesc: dropdownValue,
-        );
-        Transaction? alreadyExists =
-            await dbConnector.checkForExistingTransaction(transaction);
-        if (alreadyExists != null) {
-          alreadyExists.receiptID = receiptID;
-          alreadyExists.date = transaction.date;
-          alreadyExists.categoryDesc = transaction.categoryDesc;
-          alreadyExists.categoryID = transaction.categoryID;
-          await dbConnector.updateTransaction(alreadyExists);
-          final snackBar = SnackBar(
-            backgroundColor: Utils.mediumDarkColor,
-            content: Text(
-              "Receipt was added to existing identical bank transaction",
-              style: TextStyle(color: Utils.lightColor),
-            ),
-          );
-          ScaffoldMessenger.of(context).showSnackBar(snackBar);
-        } else {
-          await dbConnector.insertTransaction(transaction);
-        }
-        int? n = await dbConnector.numOfCategoriesWithSameName(transaction);
-        if (n > 0) {
-          showAlertDialog(context, n, transaction);
-        } else {
-          showConfirmationButton(context);
-        }
-      },
-      icon: Icon(Icons.check),
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 40, horizontal: 100),
+      child: ElevatedButton(
+          style: ButtonStyle(
+              shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                ),
+              ),
+              backgroundColor:
+                  MaterialStateProperty.all<Color>(Utils.mediumLightColor),
+              foregroundColor:
+                  MaterialStateProperty.all<Color>(Utils.textColor)),
+          onPressed: () async {
+            int receiptID =
+                await dbConnector.insertReceipt(receipt, dropdownValue);
+            if (apiCaller.cookie != null) {
+              await apiCaller.postReceipt(receipt);
+              await apiCaller.updateImage(receiptID, widget.image!);
+            }
+            if (widget.existingTransaction != null) {
+              if (widget.existingTransaction!.totalAmount != receipt.total) {
+                final snackBar = SnackBar(
+                  backgroundColor: Utils.errorColor,
+                  content: Text(
+                    "Total amount of scanned receipt and existing transaction don't match. Please scan the correct receipt or edit the results.",
+                    style: GoogleFonts.roboto(),
+                  ),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(snackBar);
+              } else {
+                widget.existingTransaction!.receiptID = receiptID;
+                widget.existingTransaction!.categoryDesc = receipt.categoryDesc;
+                widget.existingTransaction!.categoryID = receipt.categoryID;
+                await dbConnector
+                    .updateTransaction(widget.existingTransaction!);
+                Navigator.pop(context);
+                final snackBar = SnackBar(
+                  backgroundColor: Utils.darkColor,
+                  content: Text(
+                    "Receipt was successfully attached to transaction.",
+                    style: GoogleFonts.roboto(color: Utils.lightColor),
+                  ),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(snackBar);
+              }
+            } else {
+              Transaction transaction = Transaction(
+                date: receipt.date,
+                totalAmount: -receipt.total!,
+                store: receipt.recipient,
+                receiptID: receiptID,
+                categoryID: await dbConnector
+                    .getCategoryIDfromDescription(dropdownValue),
+                categoryDesc: dropdownValue,
+              );
+              Transaction? alreadyExists =
+                  await dbConnector.checkForExistingTransaction(transaction);
+              if (alreadyExists != null) {
+                await showMergeTransactionDialog(
+                    context, alreadyExists, transaction);
+              } else {
+                await dbConnector.insertTransaction(transaction);
+              }
+              int? n =
+                  await dbConnector.numOfCategoriesWithSameName(transaction);
+              if (n > 0) {
+                await showAlertDialog(context, n, transaction);
+              }
+              showConfirmationButton(context);
+            }
+          },
+          child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [Text("Confirm "), Icon(Icons.check)])),
     );
   }
 
@@ -143,9 +213,9 @@ class ResultsScreenState extends State<ResultsScreen> {
             categories = snapshot.data!;
 
             return SizedBox(
-                width: sizedBoxWidth,
-                height: sizedBoxHeight,
+                width: 300,
                 child: DropdownButton<String>(
+                    dropdownColor: Utils.lightColor,
                     isDense: true,
                     isExpanded: true,
                     value: dropdownValue,
@@ -174,7 +244,7 @@ class ResultsScreenState extends State<ResultsScreen> {
                               Text(
                                 category.description,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: fontSize),
+                                style: GoogleFonts.roboto(fontSize: fontSize),
                               )
                             ]),
                       );
@@ -187,7 +257,10 @@ class ResultsScreenState extends State<ResultsScreen> {
 
   showConfirmationButton(BuildContext context) {
     Widget confirmationButton = TextButton(
-      child: Text("Ok"),
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
+      child: Center(child: Text("Ok")),
       onPressed: () {
         Navigator.of(context).popUntil((route) => route.isFirst);
       },
@@ -208,21 +281,25 @@ class ResultsScreenState extends State<ResultsScreen> {
     ).then((value) => Navigator.of(context).popUntil((route) => route.isFirst));
   }
 
-  showAlertDialog(BuildContext context, int n, transaction) {
+  showAlertDialog(BuildContext context, int n, transaction) async {
     // set up the buttons
     Widget cancelButton = TextButton(
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
       child: Text("No"),
       onPressed: () {
         Navigator.of(context, rootNavigator: true).pop('dialog');
-        showConfirmationButton(context);
       },
     );
     Widget continueButton = TextButton(
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
       child: Text("Yes"),
-      onPressed: () {
-        dbConnector.assignCategories(transaction);
+      onPressed: () async {
+        await dbConnector.assignCategories(transaction);
         Navigator.of(context, rootNavigator: true).pop('dialog');
-        showConfirmationButton(context);
       },
     );
 
@@ -243,7 +320,63 @@ class ResultsScreenState extends State<ResultsScreen> {
     );
 
     // show the dialog
-    showDialog(
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
+
+  showMergeTransactionDialog(BuildContext context, Transaction alreadyExists,
+      Transaction transaction) async {
+    // set up the buttons
+    Widget cancelButton = TextButton(
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
+      child: Text("No"),
+      onPressed: () async {
+        await dbConnector.insertTransaction(transaction);
+        Navigator.of(context, rootNavigator: true).pop('dialog');
+      },
+    );
+    Widget continueButton = TextButton(
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
+      child: Text("Yes"),
+      onPressed: () async {
+        alreadyExists.receiptID = transaction.receiptID;
+        alreadyExists.date = transaction.date;
+        alreadyExists.categoryDesc = transaction.categoryDesc;
+        alreadyExists.categoryID = transaction.categoryID;
+        await dbConnector.updateTransaction(alreadyExists);
+        final snackBar = SnackBar(
+          backgroundColor: Utils.mediumDarkColor,
+          content: Text(
+            "Receipt was added to existing identical bank transaction",
+            style: TextStyle(color: Utils.lightColor),
+          ),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        Navigator.of(context, rootNavigator: true).pop('dialog');
+        // showConfirmationButton(context);
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text("An existing bank transaction for this receipt was found."),
+      content: Text(
+          "Would you like to attach this receipt to that bank transaction?"),
+      actions: [
+        cancelButton,
+        continueButton,
+      ],
+    );
+
+    await showDialog(
       context: context,
       builder: (BuildContext context) {
         return alert;
@@ -260,10 +393,10 @@ class ResultsScreenState extends State<ResultsScreen> {
           } else if (snapshot.hasData) {
             receipt = snapshot.data!;
             return Container(
-                padding: EdgeInsets.only(top: 10, left: 50, bottom: 20),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                padding: EdgeInsets.only(top: 20, left: 20, bottom: 20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,9 +427,8 @@ class ResultsScreenState extends State<ResultsScreen> {
                             Icon(Icons.date_range),
                             RichText(
                                 text: TextSpan(
-                                    style: TextStyle(
-                                        fontSize: fontSize,
-                                        fontWeight: FontWeight.w600),
+                                    style:
+                                        GoogleFonts.roboto(fontSize: fontSize),
                                     children: <TextSpan>[
                                   TextSpan(
                                     text: "${receipt.date}",
@@ -317,6 +449,39 @@ class ResultsScreenState extends State<ResultsScreen> {
                                   fontSize: fontSize,
                                   fontWeight: FontWeight.w600))
                         ])),
+/*
+                    Container(
+                        child: Text(
+                      receipt.recipient,
+                      style: GoogleFonts.roboto(fontSize: fontSize),
+                    )),
+                    Container(
+                        padding: EdgeInsets.only(top: 5),
+                        child: Text(
+                          DateFormat("yyyy-MM-dd")
+                              .format(receipt.date)
+                              .toString(),
+                          style: GoogleFonts.roboto(fontSize: fontSize),
+                        )),
+                    Container(
+                        padding: EdgeInsets.only(top: 5, bottom: 10),
+                        child: Text(
+                            NumberFormat.currency(locale: 'sv_SE')
+                                .format(receipt.total),
+                            style: GoogleFonts.roboto(fontSize: fontSize))),
+                    Container(
+                      padding: EdgeInsets.only(top: 15),
+                      child: Text(
+                        'Set category for transaction:',
+                        style: GoogleFonts.roboto(
+                            color: Utils.textColor, fontSize: fontSize),
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.only(top: 5, right: 10),
+                      child: dropDown(),
+                    )
+*/
                   ],
                 ));
           } else {
@@ -423,72 +588,12 @@ class ResultsScreenState extends State<ResultsScreen> {
         });
   }
 
-  List<DataColumn> getColumns(List<String> columns) => columns
-      .map((String column) => DataColumn(
-          label: Text(column,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0)),
-          onSort: onSort))
-      .toList();
-
-  List<DataRow> getRows(List<ReceiptItem> items) =>
-      items.map((ReceiptItem item) {
-        final cells = [item.itemName, item.amount];
-        return DataRow(cells: getCells(cells));
-      }).toList();
-
-  List<DataCell> getCells(List<dynamic> cells) => cells
-      .map((data) => DataCell(
-            TextFormField(
-              initialValue: '$data',
-              onChanged: (value) {
-                print(receipt);
-                if (data == cells[0]) {
-                  int index = receipt.items
-                      .indexWhere((element) => element.itemName == data);
-                  setState(() {
-                    receipt.items[index].itemName = value;
-                  });
-                } else {
-                  int index = receipt.items.indexWhere((element) =>
-                      element.amount == data && element.itemName == cells[0]);
-                  double newValue = 0;
-                  double.tryParse(value) == null
-                      ? newValue = 0
-                      : newValue = double.parse(value);
-
-                  setState(() {
-                    receipt.items[index].amount = newValue;
-                    receipt.total = receipt.total! - data;
-                    receipt.total = receipt.total! + newValue;
-                    receipt.total =
-                        double.parse((receipt.total)!.toStringAsFixed(2));
-                  });
-                }
-              },
-            ),
-          ))
-      .toList();
-
-  void onSort(int columnIndex, bool ascending) {
-    if (columnIndex == 0) {
-      receipt.items.sort((row1, row2) =>
-          Utils.compareString(ascending, row1.itemName, row2.itemName));
-    } else if (columnIndex == 1) {
-      receipt.items.sort((row1, row2) =>
-          Utils.compareNumber(ascending, row1.amount, row2.amount));
-    }
-
-    setState(() {
-      sortColumnIndex = columnIndex;
-      isAscending = ascending;
-    });
-  }
-
   Future<Receipt> getTransactionFromImage(image) async {
     final imageFile = File(image.path);
     try {
-      var response = await processImageWithAsprise(imageFile);
+      var response = await apiCaller.processImageWithAsprise(imageFile);
       Receipt receipt = Receipt.fromJson(response);
+      receipt.imagePath = image.path;
       receipt = Utils.cleanReceipt(receipt);
 
       setState(() {
@@ -502,7 +607,7 @@ class ResultsScreenState extends State<ResultsScreen> {
         backgroundColor: Utils.errorColor,
         content: Text(
           'ERROR: Hourly quota exceeded. Try again in a few hours or use a VPN.',
-          style: TextStyle(color: Colors.white),
+          style: GoogleFonts.roboto(color: Colors.white),
         ),
       );
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
@@ -513,7 +618,7 @@ class ResultsScreenState extends State<ResultsScreen> {
         backgroundColor: Utils.errorColor,
         content: Text(
           'ERROR: Image could not be processed.',
-          style: TextStyle(color: Colors.white),
+          style: GoogleFonts.roboto(color: Colors.white),
         ),
       );
       ScaffoldMessenger.of(context).showSnackBar(snackBar);

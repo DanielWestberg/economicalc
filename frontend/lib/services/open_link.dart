@@ -12,6 +12,7 @@ import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import 'package:device_apps/device_apps.dart';
@@ -49,6 +50,7 @@ class OpenLinkState extends State<OpenLink> {
   late final Response response;
   late final List<BankTransaction> transactions;
   final SQFLite dbConnector = SQFLite.instance;
+  final apiCaller = ApiCaller();
 
   @override
   void initState() {
@@ -65,6 +67,7 @@ class OpenLinkState extends State<OpenLink> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
+          foregroundColor: Utils.textColor,
           backgroundColor: Utils.mediumLightColor,
           title: Text(title),
         ),
@@ -83,8 +86,9 @@ class OpenLinkState extends State<OpenLink> {
               code = code.split("=")[1];
               credential_id = credential_id.split("=")[1];
 
-              response = await CodeToAccessToken(code, widget.test);
-              transactions = await fetchTransactions(response.accessToken);
+              response = await apiCaller.CodeToAccessToken(code, widget.test);
+              transactions =
+                  await apiCaller.fetchTransactions(response.accessToken);
 
               await dbConnector.postMissingBankTransactions(transactions);
 
@@ -99,14 +103,27 @@ class OpenLinkState extends State<OpenLink> {
               String transaction_report_id = params["transaction_report_id"]!;
               String account_report_id = params[
                   "https://console.tink.com/callback?account_verification_report_id"]!;
-              LoginData data = await fetchLoginData(
-                  account_report_id, transaction_report_id, widget.test);
+              LoginData data;
+              try {
+                data = await apiCaller.fetchLoginData(
+                    account_report_id, transaction_report_id, widget.test);
+              } catch (e) {
+                Navigator.of(context).pop(false);
+                final snackBar = SnackBar(
+                  backgroundColor: Utils.errorColor,
+                  content: Text(
+                    e.toString(),
+                    style: GoogleFonts.roboto(color: Colors.white),
+                  ),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                rethrow;
+              }
 
               List<BankTransaction> resTrans = [];
               data.transactionReport["transactions"].forEach((transaction) {
                 resTrans.add(BankTransaction.fromJson(transaction));
               });
-              resTrans = resTrans.reversed.toList();
 
               await dbConnector.postMissingBankTransactions(resTrans);
 

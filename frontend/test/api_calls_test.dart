@@ -1,9 +1,11 @@
-import 'dart:io';
 import 'dart:ui';
 
 import 'package:collection/collection.dart';
 import 'package:cross_file/cross_file.dart';
+import 'package:sqflite_common/sqlite_api.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'package:economicalc_client/helpers/sqlite.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
@@ -22,8 +24,19 @@ class MissingParamException implements Exception {
   String toString() => "MissingParamException: $message";
 }
 
+Future<String> getInMemoryDatabasePath() async {
+  return inMemoryDatabasePath;
+}
+
 main() async {
-  print("Report IDs can be found here: $tinkReportEndpoint");
+  final apiCaller = ApiCaller.withDb(
+      SQFLite(
+          dbFactory: databaseFactoryFfi,
+          path: getInMemoryDatabasePath,
+      )
+  );
+
+  print("Report IDs can be found here: ${apiCaller.tinkReportEndpoint}");
   const accountReportId = String.fromEnvironment("accountReportId");
   const transactionReportId = String.fromEnvironment("transactionReportId");
 
@@ -35,22 +48,21 @@ main() async {
     throw const MissingParamException("transactionReportId");
   }
 
-  final loginData =
-      await fetchLoginData(accountReportId, transactionReportId, true);
-  final cookie = loginData.cookie;
   const int categoryId = 1234;
 
-  setUpAll(() {});
+  setUpAll(() async {
+    await apiCaller.fetchLoginData(accountReportId, transactionReportId, true);
+  });
 
   tearDownAll(() async {
-    await deleteCategory(cookie, categoryId);
+    await apiCaller.deleteCategory(categoryId);
 
-    List<Receipt> receipts = await fetchReceipts(cookie);
+    List<Receipt> receipts = await apiCaller.fetchReceipts();
     for (Receipt receipt in receipts) {
-      await deleteReceipt(cookie, receipt);
+      await apiCaller.deleteReceipt(receipt);
     }
 
-    receipts = await fetchReceipts(cookie);
+    receipts = await apiCaller.fetchReceipts();
     expect(receipts.length, 0);
   });
 
@@ -71,8 +83,8 @@ main() async {
       ocrText: "",
     );
 
-    final postedReceipt = await postReceipt(cookie, receipt);
-    List<Receipt> fetchedReceipts = await fetchReceipts(cookie);
+    final postedReceipt = await apiCaller.postReceipt(receipt);
+    List<Receipt> fetchedReceipts = await apiCaller.fetchReceipts();
 
     expect(fetchedReceipts, contains(postedReceipt));
   });
@@ -80,25 +92,25 @@ main() async {
   test("Update image", () async {
     final image = XFile("../backend/tests/res/tsu.jpg");
 
-    final receipts = await fetchReceipts(cookie);
+    final receipts = await apiCaller.fetchReceipts();
     final id = receipts[0].id!;
-    await updateImage(cookie, id, image);
+    await apiCaller.updateImage(id, image);
 
-    final responseImage = await fetchImage(cookie, id);
+    final responseImage = await apiCaller.fetchImage(id);
     final expectedBytes = await image.readAsBytes();
     final responseBytes = await responseImage.readAsBytes();
 
     final equals = const ListEquality().equals;
     expect(equals(expectedBytes, responseBytes), true);
 
-    deleteImage(cookie, id);
+    apiCaller.deleteImage(id);
   });
 
   test("Update receipt", () async {
-    final receipt = (await fetchReceipts(cookie))[0];
+    final receipt = (await apiCaller.fetchReceipts())[0];
     receipt.items[0].itemName = "Snus";
-    await updateReceipt(cookie, receipt.id, receipt);
-    final responseReceipts = await fetchReceipts(cookie);
+    await apiCaller.updateReceipt(receipt.id, receipt);
+    final responseReceipts = await apiCaller.fetchReceipts();
     expect(responseReceipts, contains(receipt));
   });
 
@@ -109,12 +121,12 @@ main() async {
       id: categoryId,
     );
 
-    await postCategory(cookie, category);
+    await apiCaller.postCategory(category);
 
-    List<TransactionCategory> fetchedCategories = await fetchCategories(cookie);
+    List<TransactionCategory> fetchedCategories = await apiCaller.fetchCategories();
     expect(fetchedCategories, contains(category));
 
-    await deleteCategory(cookie, categoryId);
+    await apiCaller.deleteCategory(categoryId);
   });
 
   test("Update category", () async {
@@ -126,24 +138,24 @@ main() async {
       id: categoryId,
     );
 
-    await updateCategory(cookie, category);
+    await apiCaller.updateCategory(category);
 
-    var fetchedCategories = await fetchCategories(cookie);
+    var fetchedCategories = await apiCaller.fetchCategories();
     expect(fetchedCategories, contains(category));
 
     category.description = "Nothing illegal";
-    await updateCategory(cookie, category);
+    await apiCaller.updateCategory(category);
 
-    fetchedCategories = await fetchCategories(cookie);
+    fetchedCategories = await apiCaller.fetchCategories();
     expect(fetchedCategories, contains(category));
 
     category.description = originalDescription;
     expect(fetchedCategories, isNot(contains(category)));
 
-    deleteCategory(cookie, category.id!);
+    apiCaller.deleteCategory(category.id!);
   });
 
-  test ("Can log in twice", () async {
+  test("Can log in twice", () async {
     Receipt receipt = Receipt(
       id: 6,
       recipient: "b",
@@ -156,14 +168,12 @@ main() async {
       ],
       total: 2,
       categoryID: 9,
+      ocrText: "",
     );
-    receipt = await postReceipt(cookie, receipt);
+    receipt = await apiCaller.postReceipt(receipt);
 
-    final otherLoginData = await fetchLoginData(
-      accountReportId, transactionReportId, true
-    );
-    final otherCookie = otherLoginData.cookie;
-    final responseReceipts = await fetchReceipts(otherCookie);
+    await apiCaller.fetchLoginData(accountReportId, transactionReportId, true);
+    final responseReceipts = await apiCaller.fetchReceipts();
     expect(responseReceipts, contains(receipt));
   });
 
@@ -185,7 +195,7 @@ main() async {
         ],
         total: 99.0,
         categoryID: 2,
-        ocrText: ""
+        ocrText: "",
       ),
       Receipt(
         id: 4,
@@ -203,12 +213,12 @@ main() async {
         ],
         total: 300.0,
         categoryID: 3,
-        ocrText: ""
+        ocrText: "",
       ),
     ];
 
-    final responseReceipts = await postManyReceipts(cookie, receipts);
-    final fetchedReceipts = await fetchReceipts(cookie);
+    final responseReceipts = await apiCaller.postManyReceipts(receipts);
+    final fetchedReceipts = await apiCaller.fetchReceipts();
     for (Receipt receipt in responseReceipts) {
       expect(fetchedReceipts, contains(receipt));
     }
