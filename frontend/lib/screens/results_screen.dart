@@ -33,6 +33,7 @@ class ResultsScreen extends StatefulWidget {
 }
 
 class ResultsScreenState extends State<ResultsScreen> {
+  static UniqueKey futurekey = UniqueKey();
   int? sortColumnIndex;
   bool isAscending = false;
   double fontSize = 16;
@@ -519,7 +520,7 @@ class ResultsScreenState extends State<ResultsScreen> {
               itemBuilder: (BuildContext context, index) {
                 return Dismissible(
                   direction: DismissDirection.endToStart,
-                  key: UniqueKey(),
+                  key: futurekey,
                   onDismissed: ((direction) {
                     setState(() {
                       receipt.total =
