@@ -15,6 +15,10 @@ import 'package:sqflite/sqflite.dart' show DatabaseFactory;
 class UnifiedDb extends SQFLite {
   final ApiCaller _apiCaller = ApiCaller();
 
+  // TODO: sync algorithm is very naive and does not account for the possibility
+  // of the frontend and backend having receipts with the same ID but different
+  // content. It also does not account for items being deleted in one database
+  // but not the other.
   Future<void> syncWithBackend() async {
     if (kDebugMode) {
       print("UnifiedDb: Syncing with backend...");
