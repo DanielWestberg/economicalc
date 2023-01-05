@@ -169,7 +169,8 @@ class HistoryListState extends State<HistoryList> {
                               itemBuilder: (BuildContext ctx, int index) {
                                 print(transactions[index].receiptID == null);
                                 if (transactions[index].receiptID == null) {
-                                  return buildListItem(context, index);
+                                  return buildListItem(
+                                      context, transactions[index]);
                                 } else {
                                   return dissmiss(context, index);
                                 }
@@ -205,20 +206,27 @@ class HistoryListState extends State<HistoryList> {
         background: Container(
           color: Colors.green,
         ),
-        secondaryBackground: const ColoredBox(
-          color: Colors.red,
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Icon(Icons.delete, color: Colors.white),
-            ),
-          ),
-        ),
-        child: buildListItem(context, index));
+        // ignore: unnecessary_null_comparison
+        secondaryBackground: transactions[index].bankTransactionID != null
+            ? buildListItem(context, transactions[index])
+            : redTrash(),
+        child: buildListItem(context, transactions[index]));
   }
 
-  Widget buildListItem(BuildContext context, int index) {
+  ColoredBox redTrash() {
+    return const ColoredBox(
+      color: Colors.red,
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Icon(Icons.delete, color: Colors.white),
+        ),
+      ),
+    );
+  }
+
+  Widget buildListItem(BuildContext context, Transaction transaction) {
     return Padding(
         padding: EdgeInsets.only(top: 0.0),
         child: ListTile(
@@ -226,7 +234,7 @@ class HistoryListState extends State<HistoryList> {
           shape: Border(
             left: BorderSide(
                 color: TransactionCategory.getCategory(
-                        transactions[index].categoryID!, categories)
+                        transaction.categoryID!, categories)
                     .color,
                 width: 20),
             top: BorderSide(color: Utils.mediumDarkColor, width: 0.5),
@@ -235,13 +243,13 @@ class HistoryListState extends State<HistoryList> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 Text(
-                  DateFormat('yyyy-MM-dd').format(transactions[index].date),
+                  DateFormat('yyyy-MM-dd').format(transaction.date),
                   style: TextStyle(
                       color: Utils.textColor,
                       fontWeight: FontWeight.w500,
                       fontSize: 14),
                 ),
-                transactions[index].receiptID != null
+                transaction.receiptID != null
                     ? Icon(
                         Icons.receipt_long_rounded,
                         size: 15,
@@ -249,7 +257,7 @@ class HistoryListState extends State<HistoryList> {
                     : Text("")
               ]),
           title: Text(
-            transactions[index].store!,
+            transaction.store!,
             style: TextStyle(
                 color: Utils.textColor,
                 fontWeight: FontWeight.w500,
@@ -258,7 +266,7 @@ class HistoryListState extends State<HistoryList> {
           subtitle: Text(
             NumberFormat.currency(
               locale: 'sv_SE',
-            ).format(transactions[index].totalAmount),
+            ).format(transaction.totalAmount),
             style: TextStyle(
                 color: Utils.textColor,
                 fontWeight: FontWeight.w500,
@@ -273,7 +281,7 @@ class HistoryListState extends State<HistoryList> {
             Navigator.of(context)
                 .push(MaterialPageRoute(
                     builder: (context) =>
-                        TransactionDetailsScreen(null, transactions[index])))
+                        TransactionDetailsScreen(null, transaction)))
                 .then((value) {
               updateData();
             });
