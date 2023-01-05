@@ -51,6 +51,7 @@ class ResultsScreenState extends State<ResultsScreen> {
       "Uncategorized"; // TODO: replace with suggested category
   int backupTotal = 0;
 
+  final DateFormat formatter = DateFormat('yyyy-MM-dd');
   @override
   void initState() {
     super.initState();
@@ -126,13 +127,11 @@ class ResultsScreenState extends State<ResultsScreen> {
 
   Widget confirmButton() {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 40, horizontal: 100),
+      padding: EdgeInsets.symmetric(vertical: 2, horizontal: 2),
       child: ElevatedButton(
           style: ButtonStyle(
               shape: MaterialStateProperty.all(
-                RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30.0),
-                ),
+                CircleBorder(),
               ),
               backgroundColor:
                   MaterialStateProperty.all<Color>(Utils.mediumLightColor),
@@ -199,7 +198,7 @@ class ResultsScreenState extends State<ResultsScreen> {
           },
           child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [Text("Confirm "), Icon(Icons.check)])),
+              children: [Icon(Icons.check)])),
     );
   }
 
@@ -431,7 +430,8 @@ class ResultsScreenState extends State<ResultsScreen> {
                                         GoogleFonts.roboto(fontSize: fontSize),
                                     children: <TextSpan>[
                                   TextSpan(
-                                    text: "${receipt.date}",
+                                    style: TextStyle(color: Colors.black),
+                                    text: "${formatter.format(receipt.date)}",
                                     recognizer: TapGestureRecognizer()
                                       ..onTap = () => pickDate(),
                                   )

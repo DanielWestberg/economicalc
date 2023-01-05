@@ -89,33 +89,50 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Future<List<dynamic>> list;
+    bool isReceipt = false;
+    if (receiptFutureBuilder != null) {
+      list = Future.wait([categoriesFutureBuilder, receiptFutureBuilder!]);
+      isReceipt = true;
+    } else {
+      list = Future.wait([categoriesFutureBuilder]);
+    }
     return FutureBuilder(
-        future: Future.wait([receiptFutureBuilder!, categoriesFutureBuilder]),
+        future: list,
         builder: (context, snapshot) {
-          if (snapshot.hasError) {
+          if (snapshot.hasData && isReceipt == false) {
+            categories = snapshot.data![0];
+            print("ERROR");
             return SafeArea(
                 child: Scaffold(
-              appBar: appbar(context),
+              appBar: appbar(context, isReceipt),
               body: Container(
                 child: Text("No receipt data for this transaction"),
               ),
             ));
           } else if (snapshot.hasData) {
-            receipt = snapshot.data![0] as Receipt;
-            categories = snapshot.data![1] as List<TransactionCategory>;
+            if (isReceipt) {
+              receipt = snapshot.data![1] as Receipt;
+            }
+
+            categories = snapshot.data![0] as List<TransactionCategory>;
+            print(categories);
 
             return SafeArea(
                 child: Scaffold(
-                    appBar: appbar(context),
-                    body: ListView(
-                        children: [buildDataTable(), deleteButton(context)])));
+                    appBar: appbar(context, isReceipt),
+                    body: ListView(children: [
+                      buildDataTable(),
+                      deleteButton(context),
+                      addButton()
+                    ])));
           } else {
             return Text("Unexpected error");
           }
         });
   }
 
-  AppBar appbar(BuildContext context) {
+  AppBar appbar(BuildContext context, bool isReceipt) {
     return AppBar(
       toolbarHeight: 230,
       backgroundColor: Utils.mediumLightColor,
@@ -154,9 +171,9 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
               }),
               child: Icon(Icons.receipt_long_rounded)),
         ),
-        confirmButton(),
+        if (isReceipt) confirmButton(),
       ],
-      flexibleSpace: headerInfo(),
+      flexibleSpace: headerInfo(isReceipt),
     );
   }
 
@@ -174,10 +191,12 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
           ),
           onPressed: () async {
             print(receipt);
-            await dbConnector.insertReceipt(receipt, receipt.categoryDesc!);
+            await dbConnector.updateReceipt(receipt);
+            await dbConnector.updateTransaction(widget.transaction);
             if (apiCaller.cookie != null) {
               await apiCaller.postReceipt(receipt);
             }
+            Navigator.of(context).popUntil((route) => route.isFirst);
           },
           child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -364,7 +383,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     );
   }
 
-  Widget headerInfo() {
+  Widget headerInfo(bool isReceipt) {
     return Container(
         padding: EdgeInsets.only(top: 10, left: 20, right: 20),
         child: Column(
@@ -382,21 +401,23 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
             ),
             Container(
               padding: const EdgeInsets.only(top: 0, bottom: 0),
-              child: TextFormField(
-                  decoration: const InputDecoration(
-                    isDense: true,
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-                  ),
-                  style: GoogleFonts.roboto(fontSize: fontSize),
-                  initialValue: widget.transaction.store,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                  onFieldSubmitted: (value) {
-                    setState(() {
-                      widget.transaction.store = value;
-                      receipt.recipient = value;
-                    });
-                  }),
+              child: isReceipt
+                  ? TextFormField(
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                      ),
+                      style: GoogleFonts.roboto(fontSize: fontSize),
+                      initialValue: widget.transaction.store,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      onFieldSubmitted: (value) {
+                        setState(() {
+                          widget.transaction.store = value;
+                          receipt.recipient = value;
+                        });
+                      })
+                  : Text(widget.transaction.store!),
             ),
             Container(
               padding: EdgeInsets.only(top: 5),
@@ -404,12 +425,18 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                   text: TextSpan(
                       style: GoogleFonts.roboto(fontSize: fontSize),
                       children: <TextSpan>[
-                    TextSpan(
-                      text: formatter.format(receipt.date),
-                      style: TextStyle(color: Colors.black),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () => pickDate(),
-                    )
+                    if (isReceipt)
+                      TextSpan(
+                        text: formatter.format(receipt.date),
+                        style: TextStyle(color: Colors.black),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () => pickDate(),
+                      )
+                    else
+                      TextSpan(
+                        text: formatter.format(widget.transaction.date),
+                        style: TextStyle(color: Colors.black),
+                      )
                   ])),
             ),
             Container(
@@ -417,7 +444,9 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                 child: Text(
                     NumberFormat.currency(
                       locale: 'sv_SE',
-                    ).format(getTotal(receipt)! * -1),
+                    ).format(isReceipt
+                        ? (getTotal(receipt)! * -1)
+                        : widget.transaction.totalAmount),
                     style: GoogleFonts.roboto(fontSize: fontSize))),
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Container(
@@ -441,6 +470,25 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
         ));
   }
 
+  Widget addButton() {
+    return Container(
+      padding: EdgeInsets.all(40),
+      child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Utils.mediumLightColor,
+            foregroundColor: Utils.textColor,
+          ),
+          onPressed: () async {
+            setState(() {
+              receipt.items.add(ReceiptItem(itemName: "", amount: 0));
+            });
+          },
+          child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [Text("Add item "), Icon(Icons.add)])),
+    );
+  }
+
   double? getTotal(Receipt receipt) {
     //if (receipt.total != null) return receipt.total;
     double? newTotal = 0;
@@ -450,6 +498,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       receipt.total = newTotal;
+      widget.transaction.totalAmount = newTotal;
     });
     return newTotal;
   }
