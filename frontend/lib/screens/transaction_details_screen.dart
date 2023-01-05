@@ -245,13 +245,15 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                 )
               ],
             ),
-            Padding(
-                padding: EdgeInsets.only(left: 10),
-                child: Column(children: [
-                  Icon(Icons.payment),
-                  Text("${widget.transaction.totalAmount} kr",
-                      style: TextStyle(fontSize: fontSize))
-                ])),
+            Expanded(
+              child: Padding(
+                  padding: EdgeInsets.only(left: 10),
+                  child: Column(children: [
+                    Icon(Icons.payment),
+                    Text("${widget.transaction.totalAmount} kr",
+                        style: TextStyle(fontSize: fontSize))
+                  ])),
+            )
           ],
         ));
   }
@@ -261,17 +263,81 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
         future: receiptFutureBuilder,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Text("${snapshot.error}");
+            return Text("No data to show: ${snapshot.error}");
           } else if (snapshot.hasData) {
             receipt = snapshot.data!;
-            return DataTable(
-                columnSpacing: 30,
-                sortAscending: isAscending,
-                sortColumnIndex: sortColumnIndex,
-                columns: getColumns(columns),
-                rows: getRows(receipt.items));
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: receipt.items.length,
+              itemBuilder: (BuildContext context, index) {
+                return Dismissible(
+                  direction: DismissDirection.endToStart,
+                  key: UniqueKey(),
+                  onDismissed: ((direction) {
+                    setState(() {
+                      receipt.total =
+                          receipt.total! - receipt.items[index].amount;
+                      receipt.total =
+                          double.parse((receipt.total)!.toStringAsFixed(2));
+                      receipt.items.removeAt(index);
+                    });
+                  }),
+                  background: Container(
+                    color: Colors.green,
+                  ),
+                  secondaryBackground: const ColoredBox(
+                    color: Colors.red,
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Icon(Icons.delete, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Flexible(
+                        flex: 6,
+                        child: TextFormField(
+                          initialValue: receipt.items[index].itemName,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          onFieldSubmitted: (value) {
+                            setState(() {
+                              receipt.items[index].itemName = value;
+                            });
+                          },
+                        ),
+                      ),
+                      Flexible(
+                        flex: 2,
+                        child: TextFormField(
+                          initialValue: receipt.items[index].amount.toString(),
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          onFieldSubmitted: (value) {
+                            double oldAmount = receipt.items[index].amount;
+                            setState(() {
+                              double.tryParse(value) == null
+                                  ? receipt.items[index].amount = 0
+                                  : receipt.items[index].amount =
+                                      double.parse(value);
+                              receipt.total = receipt.total! - oldAmount;
+                              receipt.total =
+                                  receipt.total! + double.parse(value);
+                              receipt.total = double.parse(
+                                  (receipt.total)!.toStringAsFixed(2));
+                            });
+                          },
+                        ),
+                      )
+                    ],
+                  ),
+                );
+              },
+            );
           } else {
-            return Center(heightFactor: 20, child: Text("No receipt data"));
+            return Text("Unexpected error");
           }
         });
   }
