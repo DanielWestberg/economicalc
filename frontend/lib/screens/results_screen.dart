@@ -174,29 +174,17 @@ class ResultsScreenState extends State<ResultsScreen> {
               Transaction? alreadyExists =
                   await dbConnector.checkForExistingTransaction(transaction);
               if (alreadyExists != null) {
-                alreadyExists.receiptID = receiptID;
-                alreadyExists.date = transaction.date;
-                alreadyExists.categoryDesc = transaction.categoryDesc;
-                alreadyExists.categoryID = transaction.categoryID;
-                await dbConnector.updateTransaction(alreadyExists);
-                final snackBar = SnackBar(
-                  backgroundColor: Utils.mediumDarkColor,
-                  content: Text(
-                    "Receipt was added to existing identical bank transaction",
-                    style: TextStyle(color: Utils.lightColor),
-                  ),
-                );
-                ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                await showMergeTransactionDialog(
+                    context, alreadyExists, transaction);
               } else {
                 await dbConnector.insertTransaction(transaction);
               }
               int? n =
                   await dbConnector.numOfCategoriesWithSameName(transaction);
               if (n > 0) {
-                showAlertDialog(context, n, transaction);
-              } else {
-                showConfirmationButton(context);
+                await showAlertDialog(context, n, transaction);
               }
+              showConfirmationButton(context);
             }
           },
           child: Row(
@@ -259,7 +247,10 @@ class ResultsScreenState extends State<ResultsScreen> {
 
   showConfirmationButton(BuildContext context) {
     Widget confirmationButton = TextButton(
-      child: Text("Ok"),
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
+      child: Center(child: Text("Ok")),
       onPressed: () {
         Navigator.of(context).popUntil((route) => route.isFirst);
       },
@@ -280,21 +271,25 @@ class ResultsScreenState extends State<ResultsScreen> {
     ).then((value) => Navigator.of(context).popUntil((route) => route.isFirst));
   }
 
-  showAlertDialog(BuildContext context, int n, transaction) {
+  showAlertDialog(BuildContext context, int n, transaction) async {
     // set up the buttons
     Widget cancelButton = TextButton(
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
       child: Text("No"),
       onPressed: () {
         Navigator.of(context, rootNavigator: true).pop('dialog');
-        showConfirmationButton(context);
       },
     );
     Widget continueButton = TextButton(
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
       child: Text("Yes"),
-      onPressed: () {
-        dbConnector.assignCategories(transaction);
+      onPressed: () async {
+        await dbConnector.assignCategories(transaction);
         Navigator.of(context, rootNavigator: true).pop('dialog');
-        showConfirmationButton(context);
       },
     );
 
@@ -315,7 +310,63 @@ class ResultsScreenState extends State<ResultsScreen> {
     );
 
     // show the dialog
-    showDialog(
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
+
+  showMergeTransactionDialog(BuildContext context, Transaction alreadyExists,
+      Transaction transaction) async {
+    // set up the buttons
+    Widget cancelButton = TextButton(
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
+      child: Text("No"),
+      onPressed: () async {
+        await dbConnector.insertTransaction(transaction);
+        Navigator.of(context, rootNavigator: true).pop('dialog');
+      },
+    );
+    Widget continueButton = TextButton(
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
+      child: Text("Yes"),
+      onPressed: () async {
+        alreadyExists.receiptID = transaction.receiptID;
+        alreadyExists.date = transaction.date;
+        alreadyExists.categoryDesc = transaction.categoryDesc;
+        alreadyExists.categoryID = transaction.categoryID;
+        await dbConnector.updateTransaction(alreadyExists);
+        final snackBar = SnackBar(
+          backgroundColor: Utils.mediumDarkColor,
+          content: Text(
+            "Receipt was added to existing identical bank transaction",
+            style: TextStyle(color: Utils.lightColor),
+          ),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        Navigator.of(context, rootNavigator: true).pop('dialog');
+        // showConfirmationButton(context);
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text("An existing bank transaction for this receipt was found."),
+      content: Text(
+          "Would you like to attach this receipt to that bank transaction?"),
+      actions: [
+        cancelButton,
+        continueButton,
+      ],
+    );
+
+    await showDialog(
       context: context,
       builder: (BuildContext context) {
         return alert;
