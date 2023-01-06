@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
@@ -5,6 +7,7 @@ import 'package:economicalc_client/helpers/unified_db.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/screens/results_screen.dart';
 import 'package:economicalc_client/screens/home_screen.dart';
+import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
@@ -36,6 +39,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   late List<TransactionCategory> categories;
   late Receipt receipt;
   late Future<Receipt>? receiptFutureBuilder;
+  final apiCaller = ApiCaller();
 
   @override
   void initState() {
@@ -68,6 +72,17 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                     TransactionDetailsScreen(null, widget.transaction)));
       }
     });
+  }
+
+  showReceiptImage(context) async {
+    Receipt receipt =
+        await dbConnector.getReceiptfromID(widget.transaction.receiptID!);
+    if (apiCaller.cookie != null) {
+      XFile image = await apiCaller.fetchImage(widget.transaction.receiptID!);
+      receipt.imagePath = image.path;
+      await dbConnector.updateReceipt(receipt);
+    }
+    return showImageViewer(context, FileImage(File(receipt.imagePath!)));
   }
 
   @override
@@ -107,9 +122,9 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                         backgroundColor: Utils.lightColor,
                         foregroundColor: Utils.mediumDarkColor,
                       ),
-                      onPressed: (() {
+                      onPressed: (() async {
                         widget.transaction.receiptID != null
-                            ? Text("TODO: Show image")
+                            ? await showReceiptImage(context)
                             : receiptBtnAlertDialog(context);
                       }),
                       child: Icon(Icons.receipt_long_rounded)),
@@ -462,12 +477,18 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   deleteAlertDialog(BuildContext context) {
     // set up the buttons
     Widget cancelButton = TextButton(
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
       child: Text("No"),
       onPressed: () {
         Navigator.of(context).pop();
       },
     );
     Widget continueButton = TextButton(
+      style: ButtonStyle(
+          foregroundColor:
+              MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
       child: Text("Yes"),
       onPressed: () async {
         await dbConnector.deleteReceipt(widget.transaction.receiptID!);
@@ -486,7 +507,8 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     AlertDialog alert = AlertDialog(
       title: Text("Delete receipt"),
       content: Text(
-          "Are you sure you want to delete this receipt? This action cannot be undone."),
+          """Are you sure you want to delete the receipt? This action cannot be undone.
+          \nCorresponding bank transaction will not be removed if it exists."""),
       actions: [
         cancelButton,
         continueButton,

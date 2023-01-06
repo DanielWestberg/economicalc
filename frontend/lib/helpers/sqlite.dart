@@ -25,9 +25,9 @@ class SQFLite {
   static Future<String> _defaultPath() async =>
       join(await getDatabasesPath(), _databaseName);
 
-  SQFLite({DatabaseFactory? dbFactory, Future<String> Function()? path}):
-      _dbFactory = dbFactory ?? databaseFactory,
-      _path = path ?? _defaultPath;
+  SQFLite({DatabaseFactory? dbFactory, Future<String> Function()? path})
+      : _dbFactory = dbFactory ?? databaseFactory,
+        _path = path ?? _defaultPath;
 
   static SQFLite? _instance;
   static SQFLite get instance {
@@ -47,13 +47,11 @@ class SQFLite {
   }
 
   initDatabase() async {
-    return await _dbFactory.openDatabase(
-        await _path(),
+    return await _dbFactory.openDatabase(await _path(),
         options: OpenDatabaseOptions(
-            version: _databaseVersion,
-            onCreate: _onCreate,
-        )
-    );
+          version: _databaseVersion,
+          onCreate: _onCreate,
+        ));
   }
 
   Future<void> wipeDB() async {
@@ -86,6 +84,7 @@ class SQFLite {
         categoryDesc        TEXT,
         categoryID          INTEGER,
         ocrText             TEXT,
+        imagePath           TEXT,
         FOREIGN KEY (categoryID) REFERENCES category (id) )''',
     );
 
@@ -108,8 +107,7 @@ class SQFLite {
     await db.execute('''CREATE TABLE cookies(
       id INTEGER PRIMARY KEY CHECK (id = $cookieId)
       ,cookie VARCHAR(128)
-      );'''
-    );
+      );''');
 
     await _setCookie(null, db);
   }
@@ -147,7 +145,7 @@ class SQFLite {
           transaction.store?.toLowerCase().trim()) {
         tran.categoryID = transaction.categoryID;
         tran.categoryDesc = transaction.categoryDesc;
-        updateTransaction(tran);
+        await updateTransaction(tran);
       }
     }
   }
@@ -452,14 +450,16 @@ class SQFLite {
     // Convert the List<Map<String, dynamic> into a List<receipts>.
     return List.generate(maps!.length, (i) {
       return Receipt(
-          id: maps[i]['id'],
-          recipient: maps[i]['recipient'],
-          date: DateTime.parse(maps[i]['date']),
-          total: maps[i]['total'],
-          items: parseReceiptItems(maps[i]['items']),
-          categoryDesc: maps[i]['categoryDesc'],
-          categoryID: maps[i]['categoryID'],
-          ocrText: maps[i]['ocrText']);
+        id: maps[i]['id'],
+        recipient: maps[i]['recipient'],
+        date: DateTime.parse(maps[i]['date']),
+        total: maps[i]['total'],
+        items: parseReceiptItems(maps[i]['items']),
+        categoryDesc: maps[i]['categoryDesc'],
+        categoryID: maps[i]['categoryID'],
+        ocrText: maps[i]['ocrText'],
+        imagePath: maps[i]['imagePath'],
+      );
     });
   }
 
@@ -476,7 +476,8 @@ class SQFLite {
         items: parseReceiptItems(maps[0]['items']),
         categoryDesc: maps[0]['categoryDesc'],
         categoryID: maps[0]['categoryID'],
-        ocrText: maps[0]['ocrText']);
+        ocrText: maps[0]['ocrText'],
+        imagePath: maps[0]['imagePath']);
   }
 
   Future<void> updateReceipt(Receipt receipt) async {
@@ -641,6 +642,14 @@ class SQFLite {
       // Pass the category's id as a whereArg to prevent SQL injection.
       whereArgs: [id],
     );
+  }
+
+  Future<bool> doesCategoryAlreadyExist(String description) async {
+    List<TransactionCategory> categoriesInDB = await getAllcategories();
+    return categoriesInDB
+        .where((category) =>
+            category.description.toLowerCase() == description.toLowerCase())
+        .isNotEmpty;
   }
 
   Future<List<TransactionCategory>> getAllcategories() async {

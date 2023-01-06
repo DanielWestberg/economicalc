@@ -12,7 +12,7 @@ class Receipt {
   List<ReceiptItem> items;
   int? categoryID;
   String ocrText;
-
+  String? imagePath;
 
   Receipt({
     this.id,
@@ -22,9 +22,8 @@ class Receipt {
     required this.items,
     this.categoryDesc,
     this.categoryID,
-
     required this.ocrText,
-
+    this.imagePath,
   });
 
   @override
@@ -36,9 +35,9 @@ class Receipt {
       categoryDesc == other.categoryDesc &&
       items.every((item) => other.items.contains(item)) &&
       categoryID == other.categoryID &&
-      ocrText == other.ocrText
+      ocrText == other.ocrText &&
+      imagePath == other.imagePath
   );
-
 
   @override
   get hashCode => (id.hashCode |
@@ -46,9 +45,9 @@ class Receipt {
       date.hashCode |
       total.hashCode |
       categoryDesc.hashCode |
-      items.fold(0, (previousValue, element) => previousValue | element.hashCode) |
-      categoryID.hashCode
-  );
+      items.fold(
+          0, (previousValue, element) => previousValue | element.hashCode) |
+      categoryID.hashCode);
 
   Map<String, dynamic> toMap() {
     List<Map<String, dynamic>> items = [];
@@ -63,7 +62,8 @@ class Receipt {
       'categoryDesc': categoryDesc,
       'items': items,
       'categoryID': categoryID,
-      'ocrText': ocrText
+      'ocrText': ocrText,
+      'imagePath': imagePath,
     };
 
     if (id != null) {
@@ -76,7 +76,7 @@ class Receipt {
   @override
   toString() {
     return "Receipt ${id ?? ""}: "
-    "{$recipient, $date, $total, $items, $categoryID}";
+        "{$recipient, $date, $total, $items, $categoryID}";
   }
 
   factory Receipt.fromBackendJson(Map<String, dynamic> json) {
@@ -96,9 +96,8 @@ class Receipt {
         ocrText: json["ocrText"]);
   }
 
-  static List<Receipt>
-  fromBackendJsonList(List<dynamic> jsonList) =>
-    jsonList.map((r) => Receipt.fromBackendJson(r)).toList();
+  static List<Receipt> fromBackendJsonList(List<dynamic> jsonList) =>
+      jsonList.map((r) => Receipt.fromBackendJson(r)).toList();
 
   factory Receipt.fromJson(Map<String, dynamic> json) {
     List<ReceiptItem> items = json['receipts'][0]["items"]
