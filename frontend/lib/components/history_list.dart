@@ -125,127 +125,131 @@ class HistoryListState extends State<HistoryList> {
   @override
   Widget build(BuildContext context) {
     initializeDateFormatting('sv_SE');
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Container(
-          color: Utils.lightColor,
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                "History",
-                style: TextStyle(color: Utils.textColor, fontSize: 32),
-              ),
-              Flexible(
-                  child: Text(
-                "${DateFormat.yMMMd('sv_SE').format(widget.startDate)} - ${DateFormat.yMMMd('sv_SE').format(widget.endDate)}",
-                style: TextStyle(color: Utils.textColor, fontSize: 18),
-              )),
-            ],
-          )),
-      isLoading
-          ? Center(
-              heightFactor: 10,
-              child: LoadingAnimationWidget.threeArchedCircle(
-                  color: Colors.black, size: 40))
-          : FutureBuilder(
-              future: dataFuture,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Text("${snapshot.error}");
-                } else if (snapshot.hasData) {
-                  transactions = snapshot.data!;
-                  if (!initialized) {
-                    transactions_copy = snapshot.data!;
-                  }
-                  initialized = true;
-                  sortByDate();
-                  return Expanded(
-                      child: RefreshIndicator(
-                          onRefresh: () async => updateData(),
-                          backgroundColor: Utils.mediumLightColor,
-                          color: Utils.textColor,
-                          child: ListView.builder(
-                              itemCount: transactions.length,
-                              itemBuilder: (BuildContext ctx, int index) {
-                                print(transactions[index].receiptID == null);
-                                if (transactions[index].receiptID == null) {
-                                  print("INSIDE NYLL RECEIPT ID");
-                                  return DragTarget<int>(builder: (context,
-                                      List<int?> candidateData, rejectedData) {
-                                    return buildListItem(
-                                        context, transactions[index]);
-                                  }, onAccept: (data) {
-                                    updateTransaction(data, index, 1);
-                                  }, onWillAccept: (data) {
-                                    return true;
-                                    /*print("Accepted!!");
+    return Scaffold(
+      body: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Container(
+            color: Utils.lightColor,
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  "History",
+                  style: TextStyle(color: Utils.textColor, fontSize: 32),
+                ),
+                Flexible(
+                    child: Text(
+                  "${DateFormat.yMMMd('sv_SE').format(widget.startDate)} - ${DateFormat.yMMMd('sv_SE').format(widget.endDate)}",
+                  style: TextStyle(color: Utils.textColor, fontSize: 18),
+                )),
+              ],
+            )),
+        isLoading
+            ? Center(
+                heightFactor: 10,
+                child: LoadingAnimationWidget.threeArchedCircle(
+                    color: Colors.black, size: 40))
+            : FutureBuilder(
+                future: dataFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Text("${snapshot.error}");
+                  } else if (snapshot.hasData) {
+                    transactions = snapshot.data!;
+                    if (!initialized) {
+                      transactions_copy = snapshot.data!;
+                    }
+                    initialized = true;
+                    sortByDate();
+                    return Expanded(
+                        child: RefreshIndicator(
+                            onRefresh: () async => updateData(),
+                            backgroundColor: Utils.mediumLightColor,
+                            color: Utils.textColor,
+                            child: ListView.builder(
+                                itemCount: transactions.length,
+                                itemBuilder: (BuildContext ctx, int index) {
+                                  print(transactions[index].receiptID == null);
+                                  if (transactions[index].receiptID == null) {
+                                    print("INSIDE NYLL RECEIPT ID");
+                                    return DragTarget<int>(builder: (context,
+                                        List<int?> candidateData,
+                                        rejectedData) {
+                                      return buildListItem(
+                                          context, transactions[index]);
+                                    }, onAccept: (data) {
+                                      print(transactions[data].totalAmount!);
+                                      print(transactions[index].totalAmount!);
                                       if (almostEqualNumbersBetween(
-                                              transactions[data!].totalAmount!,
-                                              transactions[index].totalAmount!,
-                                              1) ==
-                                          false) {
-                                        print("Firstcase");
-                                        final snackbar = SnackBar(
-                                          backgroundColor: Utils.errorColor,
-                                          content: Text(
-                                            "Total amount of scanned receipt and existing transaction don't match. Please scan the correct receipt or edit the results. Amount on transaction: ${transactions[index].totalAmount}",
-                                            style: GoogleFonts.roboto(),
-                                          ),
-                                        );
-                                        return false;
+                                          transactions[data!].totalAmount!,
+                                          transactions[index].totalAmount!,
+                                          1)) {
+                                        showSnackBar(context,
+                                            transactions[index].totalAmount!);
                                       } else {
-                                        print("ELSE");
-                                        askMergeQuestions(data, index);
-
-                                        return true;
+                                        updateTransaction(data, index, 2);
+                                        //askMergeQuestions(data, index);
                                       }
-                                    },*/
-                                  });
-                                } else {
-                                  if (transactions[index].bankTransactionID ==
-                                      null) {
-                                    print("Draggable");
 
-                                    return Draggable<int>(
-                                        data: index,
-                                        feedback: Material(
-                                          child: ConstrainedBox(
-                                              constraints: BoxConstraints(
-                                                  maxWidth:
-                                                      MediaQuery.of(context)
-                                                          .size
-                                                          .width),
-                                              child: Opacity(
-                                                  opacity: 0.4,
-                                                  child: buildListItem(context,
-                                                      transactions[index]))),
-                                        ),
-                                        childWhenDragging: Container(
-                                          foregroundDecoration:
-                                              const BoxDecoration(
-                                            color: Colors.grey,
-                                            backgroundBlendMode:
-                                                BlendMode.saturation,
+                                      //updateTransaction(data, index, 1);
+                                    }, onWillAccept: (data) {
+                                      return true;
+                                    });
+                                  } else {
+                                    if (transactions[index].bankTransactionID ==
+                                        null) {
+                                      return Draggable<int>(
+                                          data: index,
+                                          feedback: Material(
+                                            child: ConstrainedBox(
+                                                constraints: BoxConstraints(
+                                                    maxWidth:
+                                                        MediaQuery.of(context)
+                                                            .size
+                                                            .width),
+                                                child: Opacity(
+                                                    opacity: 0.4,
+                                                    child: buildListItem(
+                                                        context,
+                                                        transactions[index]))),
                                           ),
-                                          child: buildListItem(
-                                              context, transactions[index]),
-                                        ),
-                                        child: dissmiss(context, index));
-                                  }
+                                          childWhenDragging: Container(
+                                            foregroundDecoration:
+                                                const BoxDecoration(
+                                              color: Colors.grey,
+                                              backgroundBlendMode:
+                                                  BlendMode.saturation,
+                                            ),
+                                            child: buildListItem(
+                                                context, transactions[index]),
+                                          ),
+                                          child: dissmiss(context, index));
+                                    }
 
-                                  return dissmiss(context, index);
-                                }
-                              })));
-                } else {
-                  return Center(
-                      heightFactor: 10,
-                      child: LoadingAnimationWidget.threeArchedCircle(
-                          color: Colors.black, size: 40));
-                }
-              })
-    ]);
+                                    return dissmiss(context, index);
+                                  }
+                                })));
+                  } else {
+                    return Center(
+                        heightFactor: 10,
+                        child: LoadingAnimationWidget.threeArchedCircle(
+                            color: Colors.black, size: 40));
+                  }
+                })
+      ]),
+    );
+  }
+
+  static void showSnackBar(BuildContext context, double sum) {
+    final snackBar = SnackBar(
+      backgroundColor: Utils.errorColor,
+      content: Text(
+        "Total amount of scanned receipt and existing transaction don't match. Please scan the correct receipt or edit the results. Amount on transaction: $sum",
+        style: GoogleFonts.roboto(),
+      ),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   AlertDialog askMergeQuestions(data, index) {
@@ -340,7 +344,7 @@ class HistoryListState extends State<HistoryList> {
 
   Widget buildListItem(BuildContext context, Transaction transaction) {
     return Padding(
-        padding: EdgeInsets.only(top: 0.0),
+        padding: const EdgeInsets.only(top: 0.0),
         child: ListTile(
           style: ListTileStyle.list,
           shape: Border(
@@ -362,7 +366,7 @@ class HistoryListState extends State<HistoryList> {
                       fontSize: 14),
                 ),
                 transaction.receiptID != null
-                    ? Icon(
+                    ? const Icon(
                         Icons.receipt_long_rounded,
                         size: 15,
                       )

@@ -447,7 +447,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                     NumberFormat.currency(
                       locale: 'sv_SE',
                     ).format(isReceipt
-                        ? ((getTotal(receipt)! * -1).round())
+                        ? ((getTotal(receipt)!).round())
                         : widget.transaction.totalAmount!.round()),
                     style: GoogleFonts.roboto(fontSize: fontSize))),
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -499,8 +499,8 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     }
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      receipt.total = newTotal;
-      widget.transaction.totalAmount = newTotal;
+      receipt.total = newTotal! * -1;
+      widget.transaction.totalAmount = newTotal * -1;
     });
     return newTotal;
   }
