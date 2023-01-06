@@ -172,25 +172,19 @@ class SQFLite {
   }
 
   Future<List<Transaction>> getFilteredTransactions(
-      startDate, endDate, category, onlyReceipts) async {
-    final transactions = await getAllTransactions();
-    List<Transaction> filteredTransactions = [];
+      DateTime startDate,
+      DateTime endDate,
+      TransactionCategory category,
+      bool onlyReceipts,
+      ) async {
+    final TransactionFilter filter = TransactionFilter(
+      startDate: startDate,
+      endDate: endDate,
+      category: category,
+      onlyReceipts: onlyReceipts,
+    );
 
-    for (var transaction in transactions) {
-      bool dateCondition = transaction.date.compareTo(startDate) >= 0 &&
-          transaction.date.compareTo(endDate) <= 0;
-      bool onlyReceiptsCondition =
-          ((onlyReceipts == true) && (transaction.receiptID != null)) ||
-              (onlyReceipts == false);
-      bool isNone = category.description == 'None';
-
-      if (dateCondition &&
-          onlyReceiptsCondition &&
-          (isNone || !isNone && transaction.categoryID == category.id)) {
-        filteredTransactions.add(transaction);
-      }
-    }
-    return filteredTransactions;
+    return filter(await getAllTransactions()).toList();
   }
 
   Future<Transaction?> getTransactionByReceiptID(int receiptID) async {
@@ -395,7 +389,10 @@ class SQFLite {
     );
   }
 
-  Future<List<ReceiptItem>> getAllReceiptItems(startDate, endDate) async {
+  Future<List<ReceiptItem>> getAllReceiptItems(
+      DateTime startDate,
+      DateTime endDate,
+      ) async {
     final receipts = await getAllReceipts();
     List<ReceiptItem> items = [];
 
@@ -407,7 +404,10 @@ class SQFLite {
   }
 
   Future<List<Map<String, Object>>> getFilteredReceiptItems(
-      startDate, endDate, category) async {
+      DateTime startDate,
+      DateTime endDate,
+      TransactionCategory category,
+      ) async {
     final receipts = await getAllReceipts();
     List<Map<String, Object>> filteredItems = [];
 
@@ -558,7 +558,10 @@ class SQFLite {
   }
 
   Future<List<Map<String, Object>>> getFilteredCategoryTotals(
-      startDate, endDate, isExpenses) async {
+      DateTime startDate,
+      DateTime endDate,
+      bool isExpenses,
+      ) async {
     final categories = await getAllcategories();
 
     List<Map<String, Object>> categoryTotals = [];
@@ -669,7 +672,9 @@ class SQFLite {
       where: 'id = $cookieId',
     );
 
-    return Cookie.fromSetCookieValue(result?[0]["cookie"]);
+    String cookieString = result?[0]["cookie"];
+    return cookieString == "null" ? null :
+        Cookie.fromSetCookieValue(cookieString);
   }
 
   Future<void> _setCookie(Cookie? cookie, Database db) async {

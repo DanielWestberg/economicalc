@@ -173,6 +173,7 @@ class ApiCaller {
       throw UnexpectedResponseException(response);
     }
     cookie = Cookie.fromSetCookieValue(response.headers["set-cookie"] ?? "");
+
     return LoginData.fromResponse(response);
   }
 
@@ -258,6 +259,10 @@ class ApiCaller {
   }
 
   fetchReceipts() async {
+    if (kDebugMode) {
+      print("ApiCaller: fetching receipts");
+    }
+
     _assertCookieNotNull();
     const String path = "/receipts";
     final Map<String, String> headers = {
@@ -283,6 +288,10 @@ class ApiCaller {
   }
 
   postReceipt(Receipt receipt) async {
+    if (kDebugMode) {
+      print("ApiCaller: posting receipt with ID ${receipt.id}");
+    }
+
     _assertCookieNotNull();
     const String path = "/receipts";
     final Uri uri = getUri(path);
@@ -304,6 +313,10 @@ class ApiCaller {
   }
 
   postManyReceipts(List<Receipt> receipts) async {
+    if (kDebugMode) {
+      print("ApiCaller: posting ${receipts.length} receipts");
+    }
+
     _assertCookieNotNull();
     final uri = Uri.http(apiServer, "/receipts");
     final headers = {
@@ -324,6 +337,10 @@ class ApiCaller {
   }
 
   updateReceipt(int receiptId, Receipt receipt) async {
+    if (kDebugMode) {
+      print("ApiCaller: updating receipt with ID $receiptId");
+    }
+
     _assertCookieNotNull();
     final uri = getUri("/receipts/$receiptId");
     final headers = {
@@ -342,6 +359,10 @@ class ApiCaller {
   }
 
   deleteReceipt(Receipt receipt) async {
+    if (kDebugMode) {
+      print("ApiCaller: deleting receipt with ID ${receipt.id}");
+    }
+
     _assertCookieNotNull();
     final uri = getUri("/receipts/${receipt.id}");
     final Map<String, String> headers = {
@@ -358,6 +379,10 @@ class ApiCaller {
   }
 
   updateImage(int receiptId, XFile image) async {
+    if (kDebugMode) {
+      print("ApiCaller: updating image of receipt with ID $receiptId");
+    }
+
     _assertCookieNotNull();
     final uri = getUri("/receipts/$receiptId/image");
     final mimeType = image.mimeType ?? "application/octet-stream";
@@ -376,6 +401,10 @@ class ApiCaller {
   }
 
   fetchImage(int receiptId) async {
+    if (kDebugMode) {
+      print("ApiCaller: fetching image of receipt with ID $receiptId");
+    }
+
     _assertCookieNotNull();
     final uri = getUri("/receipts/$receiptId/image");
     final Map<String, String> headers = {
@@ -393,6 +422,10 @@ class ApiCaller {
   }
 
   deleteImage(int receiptId) async {
+    if (kDebugMode) {
+      print("ApiCaller: deleting image of receipt with ID $receiptId");
+    }
+
     _assertCookieNotNull();
     final uri = getUri("/receipts/$receiptId/image");
     final Map<String, String> headers = {
@@ -409,6 +442,10 @@ class ApiCaller {
   }
 
   fetchCategories() async {
+    if (kDebugMode) {
+      print("ApiCaller: fetching categories");
+    }
+
     _assertCookieNotNull();
     final uri = getUri("/categories");
     final Map<String, String> headers = {
@@ -428,6 +465,10 @@ class ApiCaller {
   }
 
   postCategory(TransactionCategory category) async {
+    if (kDebugMode) {
+      print("ApiCaller: posting category with ID ${category.id}");
+    }
+
     _assertCookieNotNull();
     final uri = getUri("/categories");
     final headers = {
@@ -446,6 +487,10 @@ class ApiCaller {
   }
 
   updateCategory(TransactionCategory category) async {
+    if (kDebugMode) {
+      print("ApiCaller: updating category with ID $category.id");
+    }
+
     _assertCookieNotNull();
     final uri = getUri("/categories/${category.id!}");
     final headers = {
@@ -460,6 +505,10 @@ class ApiCaller {
   }
 
   deleteCategory(int categoryId) async {
+    if (kDebugMode) {
+      print("ApiCaller: deleting category with ID $categoryId");
+    }
+
     _assertCookieNotNull();
     final uri = getUri("/categories/$categoryId");
     final Map<String, String> headers = {

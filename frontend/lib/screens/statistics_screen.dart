@@ -1,5 +1,5 @@
 import 'package:economicalc_client/components/drawer_menu.dart';
-import 'package:economicalc_client/helpers/sqlite.dart';
+import 'package:economicalc_client/helpers/unified_db.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
@@ -62,7 +62,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   String dropdownValue = dropdownList.first;
   String dropdownValueCategory = 'None';
 
-  final SQFLite dbConnector = SQFLite.instance;
+  final UnifiedDb dbConnector = UnifiedDb.instance;
   late List<TransactionCategory> categories;
   late Future<List<TransactionCategory>> categoriesFutureBuilder;
 

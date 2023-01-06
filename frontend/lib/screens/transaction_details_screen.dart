@@ -3,7 +3,7 @@ import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
-import 'package:economicalc_client/helpers/sqlite.dart';
+import 'package:economicalc_client/helpers/unified_db.dart';
 import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/screens/results_screen.dart';
 import 'package:economicalc_client/screens/home_screen.dart';
@@ -33,7 +33,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   double sizedBoxWidth = 240;
   double sizedBoxHeight = 30;
   final columns = ["Items", "Sum"];
-  final dbConnector = SQFLite.instance;
+  final dbConnector = UnifiedDb.instance;
   late String? dropdownValue;
   late Future<List<TransactionCategory>> categoriesFutureBuilder;
   late List<TransactionCategory> categories;
@@ -438,11 +438,11 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     });
   }
 
-  Future<List<TransactionCategory>> getCategories(SQFLite dbConnector) async {
+  Future<List<TransactionCategory>> getCategories(UnifiedDb dbConnector) async {
     return await dbConnector.getAllcategories();
   }
 
-  Future<Receipt> getReceipt(SQFLite dbConnector, int id) async {
+  Future<Receipt> getReceipt(UnifiedDb dbConnector, int id) async {
     return await dbConnector.getReceiptfromID(id);
   }
 
