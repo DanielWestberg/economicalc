@@ -57,49 +57,53 @@ class ResultsScreenState extends State<ResultsScreen> {
   @override
   void initState() {
     super.initState();
-    isLoading = true;
+
     dataFuture = getTransactionFromImage(widget.image);
     dbConnector.initDatabase();
     categoriesFutureBuilder = getCategories(dbConnector);
+    isLoading = true;
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: Future.wait([categoriesFutureBuilder, dataFuture]),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            receipt = snapshot.data![1] as Receipt;
-            categories = snapshot.data![0] as List<TransactionCategory>;
-          } else {
-            return Text("${snapshot.error}");
-          }
-          return SafeArea(
-              child: isLoading
-                  ? Scaffold(
+    if (isLoading) {
+      return SafeArea(
+          child: Scaffold(
+              backgroundColor: Utils.mediumLightColor,
+              body: Center(
+                  child: LoadingAnimationWidget.threeArchedCircle(
+                      color: Colors.black, size: 40))));
+    } else {
+      return FutureBuilder(
+          future: Future.wait([categoriesFutureBuilder, dataFuture]),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              receipt = snapshot.data![1] as Receipt;
+              categories = snapshot.data![0] as List<TransactionCategory>;
+            } else {
+              return Text("${snapshot.error}");
+            }
+            return SafeArea(
+                child: Scaffold(
+                    appBar: AppBar(
                       backgroundColor: Utils.mediumLightColor,
-                      body: Center(
-                          child: LoadingAnimationWidget.threeArchedCircle(
-                              color: Colors.black, size: 40)))
-                  : Scaffold(
-                      appBar: AppBar(
-                        backgroundColor: Utils.mediumLightColor,
-                        foregroundColor: Utils.textColor,
-                        title: Text(
-                          'Scan result',
-                          style: GoogleFonts.roboto(),
-                        ),
-                        centerTitle: true,
-                        elevation: 10,
-                        actions: [confirmButton()],
+                      foregroundColor: Utils.textColor,
+                      title: Text(
+                        'Scan result',
+                        style: GoogleFonts.roboto(),
                       ),
-                      body: ListView(scrollDirection: Axis.vertical, children: [
-                        photoArea(),
-                        headerInfo(),
-                        buildDataTable(),
-                        addButton(),
-                      ])));
-        });
+                      centerTitle: true,
+                      elevation: 10,
+                      actions: [confirmButton()],
+                    ),
+                    body: ListView(scrollDirection: Axis.vertical, children: [
+                      photoArea(),
+                      headerInfo(),
+                      buildDataTable(),
+                      addButton(),
+                    ])));
+          });
+    }
   }
 
   Widget photoArea() {
@@ -467,14 +471,13 @@ class ResultsScreenState extends State<ResultsScreen> {
       itemBuilder: (BuildContext context, index) {
         return Dismissible(
           direction: DismissDirection.endToStart,
-          key: ValueKey(receipt.items[index].itemId),
+          key: futurekey,
           onDismissed: ((direction) {
-            print(receipt.items.length);
-            print(index);
             setState(() {
               receipt.total = receipt.total! - receipt.items[index].amount;
               receipt.items.removeAt(index);
               receipt.total = double.parse((receipt.total)!.toStringAsFixed(2));
+              futurekey = UniqueKey();
             });
           }),
           background: Container(
