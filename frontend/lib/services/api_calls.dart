@@ -264,7 +264,6 @@ class ApiCaller {
         throw Exception(respJson['message']);
       }
     }
-    print(respJson);
     return respJson;
   }
 

@@ -73,11 +73,9 @@ class Utils {
 
     for (int i = 0; i < items.length; i++) {
       String desc = items[i].itemName;
-      //print(desc);
       if (desc.contains("C,kr/kg") || desc.contains("kr/kg")) {
         for (int j = 0; j < cleanedOcr.length; j++) {
           if (cleanedOcr[j].contains(items[i - 1].itemName)) {
-            print("Inside ${cleanedOcr[j]}");
             items[i].itemName = cleanedOcr[j + 1];
           }
         }
@@ -119,8 +117,6 @@ class Utils {
 
   static String removeStopWords(String word, List<String> stopwords) {
     for (String municipality in stopwords) {
-      //print(municipality.toLowerCase().trim().replaceAll(" ", ""));
-      //print(desc.toLowerCase().trim());
       word = word.toLowerCase().trim().replaceAll(
           municipality.toLowerCase().trim().replaceAll(" ", ""), "");
     }
