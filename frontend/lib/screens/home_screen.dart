@@ -51,12 +51,12 @@ class _HomeScreen extends State<HomeScreen> {
   };
 
   Map<String, dynamic> category = {
-    "selected": TransactionCategory.noneCategory,
-    "previous": TransactionCategory.noneCategory,
-    "dialog": TransactionCategory.noneCategory,
+    "selected": TransactionCategory.allCategory,
+    "previous": TransactionCategory.allCategory,
+    "dialog": TransactionCategory.allCategory,
   };
 
-  String dropdownValueCategory = 'None';
+  String dropdownValueCategory = 'All';
   late List<TransactionCategory> categories;
   late Future<List<TransactionCategory>> categoriesFutureBuilder;
 
@@ -325,8 +325,8 @@ class _HomeScreen extends State<HomeScreen> {
             return Text("${snapshot.error}");
           } else if (snapshot.hasData) {
             categories = snapshot.data!;
-            if (!categories.contains(TransactionCategory.noneCategory)) {
-              categories.insert(0, TransactionCategory.noneCategory);
+            if (!categories.contains(TransactionCategory.allCategory)) {
+              categories.insert(0, TransactionCategory.allCategory);
             }
             return SizedBox(
                 width: 130,

@@ -38,15 +38,15 @@ class StatisticsScreenState extends State<StatisticsScreen> {
 
   Map<String, dynamic> category = {
     "selected":
-        TransactionCategory(description: "None", color: Colors.black, id: 0),
+        TransactionCategory(description: "All", color: Colors.black, id: 0),
     "previous":
-        TransactionCategory(description: "None", color: Colors.black, id: 0),
+        TransactionCategory(description: "All", color: Colors.black, id: 0),
     "dialog":
-        TransactionCategory(description: "None", color: Colors.black, id: 0),
+        TransactionCategory(description: "All", color: Colors.black, id: 0),
   };
 
-  TransactionCategory noneCategory =
-      TransactionCategory(description: "None", color: Colors.black, id: 0);
+  TransactionCategory allCategory =
+      TransactionCategory(description: "All", color: Colors.black, id: 0);
   Map<String, dynamic> contentSelection = {
     "selected": [true, false],
     "previous": [true, false],
@@ -60,7 +60,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   };
 
   String dropdownValue = dropdownList.first;
-  String dropdownValueCategory = 'None';
+  String dropdownValueCategory = 'All';
 
   final SQFLite dbConnector = SQFLite.instance;
   late List<TransactionCategory> categories;
@@ -418,8 +418,8 @@ class StatisticsScreenState extends State<StatisticsScreen> {
             return Text("${snapshot.error}");
           } else if (snapshot.hasData) {
             categories = snapshot.data!;
-            if (!categories.contains(noneCategory)) {
-              categories.insert(0, noneCategory);
+            if (!categories.contains(allCategory)) {
+              categories.insert(0, allCategory);
             }
             return DropdownButton<String>(
                 isDense: true,

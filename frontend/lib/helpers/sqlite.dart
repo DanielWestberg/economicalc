@@ -184,11 +184,11 @@ class SQFLite {
       bool onlyReceiptsCondition =
           ((onlyReceipts == true) && (transaction.receiptID != null)) ||
               (onlyReceipts == false);
-      bool isNone = category.description == 'None';
+      bool isAll = category.description == 'All';
 
       if (dateCondition &&
           onlyReceiptsCondition &&
-          (isNone || !isNone && transaction.categoryID == category.id)) {
+          (isAll || !isAll && transaction.categoryID == category.id)) {
         filteredTransactions.add(transaction);
       }
     }
@@ -413,7 +413,7 @@ class SQFLite {
     final receipts = await getAllReceipts();
     List<Map<String, Object>> filteredItems = [];
 
-    if (category.description == 'None') {
+    if (category.description == 'All') {
       for (var receipt in receipts) {
         if (receipt.date.compareTo(startDate) >= 0 &&
             receipt.date.compareTo(endDate) <= 0) {
