@@ -161,14 +161,14 @@ class _HomeScreen extends State<HomeScreen> {
               color: Utils.textColor,
               iconSize: 30,
               icon: Icon(Icons.filter_alt_rounded),
-              onPressed: (() {
+              onPressed: (() async {
                 startDate['previous'] =
                     startDate['dialog'] = startDate['selected'];
                 endDate['previous'] = endDate['dialog'] = endDate['selected'];
                 category['previous'] =
                     category['dialog'] = category['selected'];
                 dropdownValueCategory = category['selected'].description;
-                showDialog(
+                await showDialog(
                     context: _context,
                     builder: (context) {
                       return StatefulBuilder(builder: (context, setState) {

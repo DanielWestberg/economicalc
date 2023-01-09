@@ -4,6 +4,7 @@ import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
+import 'package:economicalc_client/screens/home_screen.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -128,8 +129,10 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                               backgroundColor: Utils.lightColor,
                               foregroundColor: Utils.mediumDarkColor),
                           onPressed: (() {
-                            Navigator.of(context)
-                                .popUntil((route) => route.isFirst);
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => HomeScreen()));
                           }),
                           child: Icon(Icons.arrow_back))),
                   toolbarHeight: 100,

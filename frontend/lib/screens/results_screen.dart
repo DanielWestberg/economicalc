@@ -391,69 +391,111 @@ class ResultsScreenState extends State<ResultsScreen> {
   }
 
   Widget headerInfo() {
-    return Container(
-        padding: EdgeInsets.only(top: 20, left: 20, bottom: 20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                dropDown(),
-                Row(
+    return FutureBuilder(
+        future: dataFuture,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Text("${snapshot.error}");
+          } else if (snapshot.hasData) {
+            receipt = snapshot.data!;
+            return Container(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.store),
-                    Padding(
-                        padding: EdgeInsets.only(left: 5),
-                        child: SizedBox(
-                          width: sizedBoxWidth,
-                          height: sizedBoxHeight,
-                          child: TextFormField(
-                              initialValue: receipt.recipient,
-                              autovalidateMode:
-                                  AutovalidateMode.onUserInteraction,
-                              onFieldSubmitted: (value) {
-                                setState(() {
-                                  receipt.recipient = value;
-                                });
-                              }),
-                        ))
-                  ],
-                ),
-                Row(
-                  children: [
-                    Icon(Icons.date_range),
-                    RichText(
-                        text: TextSpan(
+                    Container(
+                        child: TextFormField(
+                            decoration: InputDecoration(isDense: true),
                             style: GoogleFonts.roboto(fontSize: fontSize),
-                            children: <TextSpan>[
-                          TextSpan(
-                            style: TextStyle(color: Colors.black),
-                            text: "${formatter.format(receipt.date)}",
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () => pickDate(),
-                          )
+                            initialValue: receipt.recipient,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
+                            onFieldSubmitted: (value) {
+                              setState(() {
+                                receipt.recipient = value;
+                              });
+                            })),
+                    Container(
+                        padding: EdgeInsets.only(top: 5),
+                        child: Row(children: [
+                          Container(
+                              padding: EdgeInsets.only(right: 5),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    minimumSize: Size(30, 30),
+                                    padding: EdgeInsets.zero,
+                                    backgroundColor: Utils.mediumLightColor,
+                                    foregroundColor: Utils.textColor,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap),
+                                child: Icon(Icons.date_range),
+                                onPressed: () {
+                                  pickDate();
+                                },
+                              )),
+                          Container(
+                              padding: EdgeInsets.only(left: 10),
+                              child: Text(
+                                formatter.format(receipt.date),
+                                style: GoogleFonts.roboto(fontSize: fontSize),
+                              ))
                         ])),
+                    Container(
+                      child: Row(children: [
+                        Container(
+                            alignment: Alignment.center,
+                            width: 30,
+                            height: 30,
+                            padding: EdgeInsets.all(2),
+                            child: Icon(Icons.payment_rounded)),
+                        Container(
+                            padding: EdgeInsets.only(left: 10),
+                            child: Text(
+                                NumberFormat.currency(
+                                        locale: 'sv_SE', decimalDigits: 2)
+                                    .format(getTotal(receipt)),
+                                style: GoogleFonts.roboto(fontSize: fontSize))),
+                      ]),
+                    ),
+                    Container(
+                      padding: EdgeInsets.only(top: 15),
+                      child: Text(
+                        'Set category for transaction:',
+                        style: GoogleFonts.roboto(
+                            color: Utils.textColor, fontSize: fontSize),
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.only(top: 5, right: 10),
+                      child: dropDown(),
+                    )
                   ],
-                )
-              ],
-            ),
-            Padding(
-                padding: EdgeInsets.only(left: 10),
-                child: Column(children: [
-                  Icon(Icons.payment),
-                  Text("${(getTotal(receipt)!).toStringAsFixed(2)} kr",
-                      style: TextStyle(
-                          fontSize: fontSize, fontWeight: FontWeight.w600))
-                ])),
-          ],
-        ));
+                ));
+          } else {
+            return Text("Unexpected error");
+          }
+        });
   }
 
   pickDate() async {
     DateTime startDate = receipt.date;
     DateTime? date = await showDatePicker(
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: Utils.mediumDarkColor, // header background color
+              ),
+              textButtonTheme: TextButtonThemeData(
+                style: TextButton.styleFrom(
+                  primary: Utils.mediumDarkColor, // button text color
+                ),
+              ),
+            ),
+            child: child!,
+          );
+        },
         context: context,
         initialDate: startDate,
         firstDate: DateTime(1900),
@@ -495,41 +537,44 @@ class ResultsScreenState extends State<ResultsScreen> {
               ),
             ),
           ),
-          child: Row(
-            children: [
-              Flexible(
-                flex: 6,
-                child: TextFormField(
-                  initialValue: receipt.items[index].itemName,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                  onFieldSubmitted: (value) {
-                    setState(() {
-                      receipt.items[index].itemName = value;
-                    });
-                  },
-                ),
-              ),
-              Flexible(
-                flex: 2,
-                child: TextFormField(
-                  initialValue: receipt.items[index].amount.toString(),
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                  onFieldSubmitted: (value) {
-                    double oldAmount = receipt.items[index].amount;
-                    setState(() {
-                      double.tryParse(value) == null
-                          ? receipt.items[index].amount = 0
-                          : receipt.items[index].amount = double.parse(value);
-                      receipt.total = receipt.total! - oldAmount;
-                      receipt.total = receipt.total! + double.parse(value);
-                      receipt.total = double.parse(
-                          (receipt.total! * -1).toStringAsFixed(2));
-                    });
-                  },
-                ),
-              )
-            ],
-          ),
+          child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10),
+              child: Row(
+                children: [
+                  Flexible(
+                    flex: 9,
+                    child: TextFormField(
+                      initialValue: receipt.items[index].itemName,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      onFieldSubmitted: (value) {
+                        setState(() {
+                          receipt.items[index].itemName = value;
+                        });
+                      },
+                    ),
+                  ),
+                  Flexible(
+                    flex: 2,
+                    child: TextFormField(
+                      initialValue: receipt.items[index].amount.toString(),
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      onFieldSubmitted: (value) {
+                        double oldAmount = receipt.items[index].amount;
+                        setState(() {
+                          double.tryParse(value) == null
+                              ? receipt.items[index].amount = 0
+                              : receipt.items[index].amount =
+                                  double.parse(value);
+                          receipt.total = receipt.total! - oldAmount;
+                          receipt.total = receipt.total! + double.parse(value);
+                          receipt.total = double.parse(
+                              (receipt.total! * -1).toStringAsFixed(2));
+                        });
+                      },
+                    ),
+                  )
+                ],
+              )),
         );
       },
     );

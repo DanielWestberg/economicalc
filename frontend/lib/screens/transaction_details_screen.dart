@@ -104,12 +104,12 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
         builder: (context, snapshot) {
           if (snapshot.hasData && isReceipt == false) {
             categories = snapshot.data![0];
-            print("ERROR");
             return SafeArea(
                 child: Scaffold(
               appBar: appbar(context, isReceipt),
               body: Container(
-                child: Text("No receipt data for this transaction"),
+                child:
+                    Center(child: Text("No receipt data for this transaction")),
               ),
             ));
           } else if (snapshot.hasData) {
@@ -118,15 +118,16 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
             }
 
             categories = snapshot.data![0] as List<TransactionCategory>;
-            print(categories);
 
             return SafeArea(
                 child: Scaffold(
                     appBar: appbar(context, isReceipt),
                     body: ListView(children: [
                       buildDataTable(),
+                      widget.transaction.bankTransactionID == null
+                          ? addButton()
+                          : Text(""),
                       deleteButton(context),
-                      addButton()
                     ])));
           } else {
             return Text("Unexpected error");
@@ -136,7 +137,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
 
   AppBar appbar(BuildContext context, bool isReceipt) {
     return AppBar(
-      toolbarHeight: 230,
+      toolbarHeight: widget.transaction.store!.length > 45 ? 265 : 245,
       backgroundColor: Utils.mediumLightColor,
       foregroundColor: Utils.lightColor,
       leading: Container(
@@ -191,7 +192,6 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
             foregroundColor: Utils.mediumDarkColor,
           ),
           onPressed: () async {
-            print(receipt);
             await dbConnector.updateReceipt(receipt);
             await dbConnector.updateTransaction(widget.transaction);
             if (apiCaller.cookie != null) {
@@ -396,7 +396,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Container(
-              padding: EdgeInsets.only(top: 20),
+              padding: EdgeInsets.only(top: 15, bottom: 5),
               alignment: Alignment.center,
               child: Text(
                   widget.transaction.receiptID != null
@@ -405,8 +405,8 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                   style: GoogleFonts.roboto(fontSize: fontSize * 1.6)),
             ),
             Container(
-              padding: const EdgeInsets.only(top: 5, bottom: 0),
-              child: isReceipt
+              padding: const EdgeInsets.only(top: 10, bottom: 0),
+              child: widget.transaction.bankTransactionID == null
                   ? TextFormField(
                       enabled: widget.transaction.bankTransactionID == null,
                       decoration: const InputDecoration(
@@ -423,36 +423,58 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                           receipt.recipient = value;
                         });
                       })
-                  : Text(widget.transaction.store!),
-            ),
-            Container(
-              padding: EdgeInsets.only(top: 5),
-              child: RichText(
-                  text: TextSpan(
+                  : Text(
+                      widget.transaction.store!,
                       style: GoogleFonts.roboto(fontSize: fontSize),
-                      children: <TextSpan>[
-                    if (isReceipt)
-                      TextSpan(
-                        text: formatter.format(receipt.date),
-                        style: TextStyle(color: Colors.black),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () => pickDate(),
-                      )
-                    else
-                      TextSpan(
-                        text: formatter.format(widget.transaction.date),
-                        style: TextStyle(color: Colors.black),
-                      )
-                  ])),
+                    ),
             ),
             Container(
-                padding: EdgeInsets.only(top: 5),
-                child: Text(
-                    NumberFormat.currency(locale: 'sv_SE', decimalDigits: 2)
-                        .format(isReceipt
-                            ? ((getTotal(receipt)!))
-                            : widget.transaction.totalAmount!),
-                    style: GoogleFonts.roboto(fontSize: fontSize))),
+                padding: EdgeInsets.only(top: 10),
+                child: Row(children: [
+                  isReceipt
+                      ? ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              minimumSize: Size(30, 30),
+                              padding: EdgeInsets.zero,
+                              backgroundColor: Utils.lightColor,
+                              foregroundColor: Utils.darkColor,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                          child: Icon(Icons.date_range_rounded),
+                          onPressed: () {
+                            pickDate();
+                          },
+                        )
+                      : Container(
+                          alignment: Alignment.center,
+                          width: 30,
+                          height: 30,
+                          padding: EdgeInsets.all(2),
+                          child: Icon(Icons.date_range_rounded)),
+                  Container(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Text(
+                        formatter.format(widget.transaction.date),
+                        style: GoogleFonts.roboto(fontSize: fontSize),
+                      ))
+                ])),
+            Container(
+              child: Row(children: [
+                Container(
+                    alignment: Alignment.center,
+                    width: 30,
+                    height: 30,
+                    padding: EdgeInsets.all(2),
+                    child: Icon(Icons.payment_rounded)),
+                Container(
+                    padding: EdgeInsets.only(left: 10),
+                    child: Text(
+                        NumberFormat.currency(locale: 'sv_SE', decimalDigits: 2)
+                            .format(isReceipt
+                                ? ((getTotal(receipt)))
+                                : widget.transaction.totalAmount),
+                        style: GoogleFonts.roboto(fontSize: fontSize))),
+              ]),
+            ),
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Container(
                 padding: EdgeInsets.only(top: 15, bottom: 5),
@@ -512,6 +534,21 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   pickDate() async {
     DateTime startDate = receipt.date;
     DateTime? date = await showDatePicker(
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: Utils.mediumDarkColor, // header background color
+              ),
+              textButtonTheme: TextButtonThemeData(
+                style: TextButton.styleFrom(
+                  primary: Utils.mediumDarkColor, // button text color
+                ),
+              ),
+            ),
+            child: child!,
+          );
+        },
         context: context,
         initialDate: startDate,
         firstDate: DateTime(1900),
@@ -561,9 +598,8 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
               child: Row(
                 children: [
                   Flexible(
-                    flex: 6,
+                    flex: 9,
                     child: TextFormField(
-                      enabled: widget.transaction.bankTransactionID == null,
                       initialValue: receipt.items[index].itemName,
                       autovalidateMode: AutovalidateMode.onUserInteraction,
                       onFieldSubmitted: (value) {
@@ -618,7 +654,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
           } else if (snapshot.hasData) {
             receipt = snapshot.data!;
             return Center(
-                heightFactor: 2,
+                heightFactor: 1.5,
                 child: IconButton(
                   icon: Icon(Icons.delete),
                   onPressed: () {
