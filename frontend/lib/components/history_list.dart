@@ -170,65 +170,7 @@ class HistoryListState extends State<HistoryList> {
                             child: ListView.builder(
                                 itemCount: transactions.length,
                                 itemBuilder: (BuildContext ctx, int index) {
-                                  print(transactions[index].receiptID == null);
-                                  if (transactions[index].receiptID == null) {
-                                    print("INSIDE NYLL RECEIPT ID");
-                                    return DragTarget<int>(builder: (context,
-                                        List<int?> candidateData,
-                                        rejectedData) {
-                                      return buildListItem(
-                                          context, transactions[index]);
-                                    }, onAccept: (data) {
-                                      print(transactions[data].totalAmount!);
-                                      print(transactions[index].totalAmount!);
-                                      if (almostEqualNumbersBetween(
-                                          transactions[data!].totalAmount!,
-                                          transactions[index].totalAmount!,
-                                          1)) {
-                                        showSnackBar(context,
-                                            transactions[index].totalAmount!);
-                                      } else {
-                                        updateTransaction(data, index, 2);
-                                        //askMergeQuestions(data, index);
-                                      }
-
-                                      //updateTransaction(data, index, 1);
-                                    }, onWillAccept: (data) {
-                                      return true;
-                                    });
-                                  } else {
-                                    if (transactions[index].bankTransactionID ==
-                                        null) {
-                                      return Draggable<int>(
-                                          data: index,
-                                          feedback: Material(
-                                            child: ConstrainedBox(
-                                                constraints: BoxConstraints(
-                                                    maxWidth:
-                                                        MediaQuery.of(context)
-                                                            .size
-                                                            .width),
-                                                child: Opacity(
-                                                    opacity: 0.4,
-                                                    child: buildListItem(
-                                                        context,
-                                                        transactions[index]))),
-                                          ),
-                                          childWhenDragging: Container(
-                                            foregroundDecoration:
-                                                const BoxDecoration(
-                                              color: Colors.grey,
-                                              backgroundBlendMode:
-                                                  BlendMode.saturation,
-                                            ),
-                                            child: buildListItem(
-                                                context, transactions[index]),
-                                          ),
-                                          child: dissmiss(context, index));
-                                    }
-
-                                    return dissmiss(context, index);
-                                  }
+                                  return dissmiss(context, index);
                                 })));
                   } else {
                     return Center(
@@ -294,8 +236,9 @@ class HistoryListState extends State<HistoryList> {
       transactions[index].categoryDesc = receiptToMerge.categoryDesc;
       transactions[index].categoryID = receiptToMerge.categoryID;
     }
-    transactions[index].receiptID = receiptToMerge.receiptID;
+
     setState(() {
+      transactions[index].receiptID = receiptToMerge.receiptID;
       dbConnector.deleteTransaction(receiptToMerge.id!);
       dbConnector.updateTransaction(transactions[index]);
     });
