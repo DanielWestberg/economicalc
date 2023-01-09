@@ -144,7 +144,7 @@ class ResultsScreenState extends State<ResultsScreen> {
   Widget confirmButton() {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 2, horizontal: 2),
-      child: ElevatedButton(
+      child: TextButton(
           style: ButtonStyle(
               shape: MaterialStateProperty.all(
                 CircleBorder(),
@@ -161,7 +161,7 @@ class ResultsScreenState extends State<ResultsScreen> {
               await apiCaller.updateImage(receiptID, widget.image!);
             }
             if (widget.existingTransaction != null) {
-              if (almostEqualNumbersBetween(
+              if (!almostEqualNumbersBetween(
                   widget.existingTransaction!.totalAmount!,
                   receipt.total!,
                   1)) {
@@ -192,7 +192,7 @@ class ResultsScreenState extends State<ResultsScreen> {
             } else {
               Transaction transaction = Transaction(
                 date: receipt.date,
-                totalAmount: -receipt.total!,
+                totalAmount: receipt.total!,
                 store: receipt.recipient,
                 receiptID: receiptID,
                 categoryID: await dbConnector
@@ -207,10 +207,10 @@ class ResultsScreenState extends State<ResultsScreen> {
               } else {
                 await dbConnector.insertTransaction(transaction);
               }
-              int? n =
+              List<Transaction> transToUpdate =
                   await dbConnector.numOfCategoriesWithSameName(transaction);
-              if (n > 0) {
-                await showAlertDialog(context, n, transaction);
+              if (transToUpdate.length > 1) {
+                await showAlertDialog(context, transToUpdate, transaction);
               }
               showConfirmationButton(context);
             }
@@ -285,8 +285,10 @@ class ResultsScreenState extends State<ResultsScreen> {
     ).then((value) => Navigator.of(context).popUntil((route) => route.isFirst));
   }
 
-  showAlertDialog(BuildContext context, int n, transaction) async {
+  showAlertDialog(BuildContext context, List<Transaction> transToUpdate,
+      transaction) async {
     // set up the buttons
+    int n = transToUpdate.length - 1;
     Widget cancelButton = TextButton(
       style: ButtonStyle(
           foregroundColor:
@@ -441,7 +443,7 @@ class ResultsScreenState extends State<ResultsScreen> {
                 padding: EdgeInsets.only(left: 10),
                 child: Column(children: [
                   Icon(Icons.payment),
-                  Text("${(getTotal(receipt)! * -1).toStringAsFixed(2)} kr",
+                  Text("${(getTotal(receipt)!).toStringAsFixed(2)} kr",
                       style: TextStyle(
                           fontSize: fontSize, fontWeight: FontWeight.w600))
                 ])),
@@ -520,8 +522,8 @@ class ResultsScreenState extends State<ResultsScreen> {
                           : receipt.items[index].amount = double.parse(value);
                       receipt.total = receipt.total! - oldAmount;
                       receipt.total = receipt.total! + double.parse(value);
-                      receipt.total =
-                          double.parse((receipt.total)!.toStringAsFixed(2));
+                      receipt.total = double.parse(
+                          (receipt.total! * -1).toStringAsFixed(2));
                     });
                   },
                 ),
@@ -600,6 +602,7 @@ class ResultsScreenState extends State<ResultsScreen> {
     for (var item in receipt.items) {
       newTotal = newTotal! + item.amount;
     }
+    newTotal = newTotal! * -1;
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       receipt.total = newTotal;

@@ -125,15 +125,18 @@ class SQFLite {
     );
   }
 
-  Future<int> numOfCategoriesWithSameName(Transaction transaction) async {
-    int n = 0;
+  Future<List<Transaction>> numOfCategoriesWithSameName(
+      Transaction transaction) async {
+    List<Transaction> transToUpdate = [];
     List<Transaction> transactionsInLocalDb = await getAllTransactions();
     for (Transaction tran in transactionsInLocalDb) {
       if (await Utils.categoricalSimilarity(tran, transaction)) {
-        n++;
+        tran.categoryID = transaction.categoryID;
+        tran.categoryDesc = transaction.categoryDesc;
+        transToUpdate.add(tran);
       }
     }
-    return (n - 1);
+    return transToUpdate;
   }
 
   //Maybe a more suitable name can be found?

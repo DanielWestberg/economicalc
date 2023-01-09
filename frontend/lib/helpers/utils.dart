@@ -89,6 +89,8 @@ class Utils {
         if (desc.toLowerCase().trim().contains(stopword.toLowerCase().trim())) {
           items[i - 1].itemName += " $desc";
           items[i - 1].amount += amount;
+          items[i - 1].amount =
+              double.parse(items[i - 1].amount.toStringAsFixed(2));
           items.removeAt(i);
           i--;
         }
@@ -111,7 +113,7 @@ class Utils {
   }
 
   static bool isSimilarDate(DateTime receiptDate, DateTime bankTransDate) {
-    return receiptDate.add(const Duration(days: 3)).compareTo(bankTransDate) >=
+    return receiptDate.add(const Duration(days: 5)).compareTo(bankTransDate) >=
         0;
   }
 
@@ -126,9 +128,6 @@ class Utils {
   }
 
   static bool isSimilarStoreName(String name1, String name2, double threshold) {
-    print(StringSimilarity.compareTwoStrings(
-        name1.toLowerCase(), name2.toLowerCase()));
-
     return StringSimilarity.compareTwoStrings(
             name1.toLowerCase().trim(), name2.toLowerCase().trim()) >
         threshold;
@@ -203,7 +202,9 @@ class Utils {
     String result = Utils.removeStopWords(desc, list);
     String result1 = Utils.removeStopWords(desc1, list);
 
-    if (Utils.isSimilarStoreName(result, result1, 0.2)) return true;
+    if (Utils.isSimilarStoreName(result, result1, 0.3)) {
+      return true;
+    }
     return false;
   }
 

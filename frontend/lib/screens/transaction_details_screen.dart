@@ -150,8 +150,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                   backgroundColor: Utils.lightColor,
                   foregroundColor: Utils.mediumDarkColor),
               onPressed: (() {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => HomeScreen()));
+                Navigator.of(context).popUntil((route) => route.isFirst);
               }),
               child: Icon(Icons.arrow_back))),
       actions: [
@@ -229,10 +228,10 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
           widget.transaction.categoryID =
               await dbConnector.getCategoryIDfromDescription(dropdownValue!);
           await dbConnector.updateTransaction(widget.transaction);
-          int? n =
+          List<Transaction> transToUpdate =
               await dbConnector.numOfCategoriesWithSameName(widget.transaction);
-          if (n > 0) {
-            showAlertDialog(context, n, dropdownValue!);
+          if (transToUpdate.length > 1) {
+            showAlertDialog(context, transToUpdate, dropdownValue!);
           } else {
             final snackBar = SnackBar(
               backgroundColor: Utils.darkColor,
@@ -264,7 +263,9 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
         }).toList());
   }
 
-  showAlertDialog(BuildContext context, int n, String dropdownValue) {
+  showAlertDialog(BuildContext context, List<Transaction> transToUpdate,
+      String dropdownValue) {
+    int n = transToUpdate.length - 1;
     // set up the buttons
     Widget cancelButton = TextButton(
       style: ButtonStyle(
@@ -289,7 +290,9 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
               MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
       child: Text("Yes"),
       onPressed: () {
-        dbConnector.assignCategories(widget.transaction);
+        for (Transaction tran in transToUpdate) {
+          dbConnector.updateTransaction(tran);
+        }
         Navigator.of(context).pop();
         final snackBar = SnackBar(
           backgroundColor: Utils.mediumDarkColor,
@@ -402,9 +405,10 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                   style: GoogleFonts.roboto(fontSize: fontSize * 1.6)),
             ),
             Container(
-              padding: const EdgeInsets.only(top: 0, bottom: 0),
+              padding: const EdgeInsets.only(top: 5, bottom: 0),
               child: isReceipt
                   ? TextFormField(
+                      enabled: widget.transaction.bankTransactionID == null,
                       decoration: const InputDecoration(
                         isDense: true,
                         contentPadding:
@@ -444,11 +448,10 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
             Container(
                 padding: EdgeInsets.only(top: 5),
                 child: Text(
-                    NumberFormat.currency(
-                      locale: 'sv_SE',
-                    ).format(isReceipt
-                        ? ((getTotal(receipt)!).round())
-                        : widget.transaction.totalAmount!.round()),
+                    NumberFormat.currency(locale: 'sv_SE', decimalDigits: 2)
+                        .format(isReceipt
+                            ? ((getTotal(receipt)!))
+                            : widget.transaction.totalAmount!),
                     style: GoogleFonts.roboto(fontSize: fontSize))),
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Container(
@@ -497,10 +500,11 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     for (var item in receipt.items) {
       newTotal = newTotal! + item.amount;
     }
+    newTotal = newTotal! * -1;
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      receipt.total = newTotal! * -1;
-      widget.transaction.totalAmount = newTotal * -1;
+      receipt.total = newTotal!;
+      widget.transaction.totalAmount = newTotal;
     });
     return newTotal;
   }
@@ -527,64 +531,72 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
       itemCount: receipt.items.length,
       itemBuilder: (BuildContext context, index) {
         return Dismissible(
-          direction: DismissDirection.endToStart,
-          key: UniqueKey(),
-          onDismissed: ((direction) {
-            setState(() {
-              receipt.total = receipt.total! - receipt.items[index].amount;
-              receipt.total = double.parse((receipt.total)!.toStringAsFixed(2));
-              receipt.items.removeAt(index);
-            });
-          }),
-          background: Container(
-            color: Colors.green,
-          ),
-          secondaryBackground: const ColoredBox(
-            color: Colors.red,
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Icon(Icons.delete, color: Colors.white),
+            direction: widget.transaction.bankTransactionID == null
+                ? DismissDirection.endToStart
+                : DismissDirection.none,
+            key: UniqueKey(),
+            onDismissed: ((direction) {
+              setState(() {
+                receipt.total = receipt.total! - receipt.items[index].amount;
+                receipt.total =
+                    double.parse((receipt.total)!.toStringAsFixed(2));
+                receipt.items.removeAt(index);
+              });
+            }),
+            background: Container(
+              color: Colors.green,
+            ),
+            secondaryBackground: const ColoredBox(
+              color: Colors.red,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Icon(Icons.delete, color: Colors.white),
+                ),
               ),
             ),
-          ),
-          child: Row(
-            children: [
-              Flexible(
-                flex: 6,
-                child: TextFormField(
-                  initialValue: receipt.items[index].itemName,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                  onFieldSubmitted: (value) {
-                    setState(() {
-                      receipt.items[index].itemName = value;
-                    });
-                  },
-                ),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10),
+              child: Row(
+                children: [
+                  Flexible(
+                    flex: 6,
+                    child: TextFormField(
+                      enabled: widget.transaction.bankTransactionID == null,
+                      initialValue: receipt.items[index].itemName,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      onFieldSubmitted: (value) {
+                        setState(() {
+                          receipt.items[index].itemName = value;
+                        });
+                      },
+                    ),
+                  ),
+                  Flexible(
+                    flex: 2,
+                    child: TextFormField(
+                      enabled: widget.transaction.bankTransactionID == null,
+                      initialValue: receipt.items[index].amount.toString(),
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      onFieldSubmitted: (value) {
+                        double oldAmount = receipt.items[index].amount;
+                        setState(() {
+                          double.tryParse(value) == null
+                              ? receipt.items[index].amount = 0
+                              : receipt.items[index].amount = double.parse(
+                                  double.parse(value).toStringAsFixed(2));
+                          receipt.total = receipt.total! - oldAmount;
+                          receipt.total = receipt.total! + double.parse(value);
+                          receipt.total =
+                              double.parse((receipt.total)!.toStringAsFixed(2));
+                        });
+                      },
+                    ),
+                  )
+                ],
               ),
-              Flexible(
-                flex: 2,
-                child: TextFormField(
-                  initialValue: receipt.items[index].amount.toString(),
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                  onFieldSubmitted: (value) {
-                    double oldAmount = receipt.items[index].amount;
-                    setState(() {
-                      double.tryParse(value) == null
-                          ? receipt.items[index].amount = 0
-                          : receipt.items[index].amount = double.parse(value);
-                      receipt.total = receipt.total! - oldAmount;
-                      receipt.total = receipt.total! + double.parse(value);
-                      receipt.total =
-                          double.parse((receipt.total)!.toStringAsFixed(2));
-                    });
-                  },
-                ),
-              )
-            ],
-          ),
-        );
+            ));
       },
     );
   }
@@ -649,8 +661,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
           widget.transaction.receiptID = null;
           await dbConnector.updateTransaction(widget.transaction);
         }
-        Navigator.of(context)
-            .push(MaterialPageRoute(builder: (context) => HomeScreen()));
+        Navigator.of(context).popUntil((route) => route.isFirst);
       },
     );
 

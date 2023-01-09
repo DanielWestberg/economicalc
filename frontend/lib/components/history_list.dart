@@ -236,11 +236,10 @@ class HistoryListState extends State<HistoryList> {
       transactions[index].categoryDesc = receiptToMerge.categoryDesc;
       transactions[index].categoryID = receiptToMerge.categoryID;
     }
-
-    setState(() {
-      transactions[index].receiptID = receiptToMerge.receiptID;
-      dbConnector.deleteTransaction(receiptToMerge.id!);
-      dbConnector.updateTransaction(transactions[index]);
+    transactions[index].receiptID = receiptToMerge.receiptID;
+    setState(() async {
+      await dbConnector.deleteTransaction(receiptToMerge.id!);
+      await dbConnector.updateTransaction(transactions[index]);
     });
   }
 
@@ -308,12 +307,23 @@ class HistoryListState extends State<HistoryList> {
                       fontWeight: FontWeight.w500,
                       fontSize: 14),
                 ),
-                transaction.receiptID != null
-                    ? const Icon(
-                        Icons.receipt_long_rounded,
-                        size: 15,
-                      )
-                    : Text("")
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    transaction.receiptID != null
+                        ? const Icon(
+                            Icons.receipt_long_rounded,
+                            size: 15,
+                          )
+                        : Text(""),
+                    transaction.bankTransactionID != null
+                        ? const Icon(
+                            Icons.account_balance_rounded,
+                            size: 15,
+                          )
+                        : Text("")
+                  ],
+                )
               ]),
           title: Text(
             transaction.store!,

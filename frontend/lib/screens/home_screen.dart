@@ -161,7 +161,7 @@ class _HomeScreen extends State<HomeScreen> {
               color: Utils.textColor,
               iconSize: 30,
               icon: Icon(Icons.filter_alt_rounded),
-              onPressed: (() async {
+              onPressed: (() {
                 startDate['previous'] =
                     startDate['dialog'] = startDate['selected'];
                 endDate['previous'] = endDate['dialog'] = endDate['selected'];
