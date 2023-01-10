@@ -57,8 +57,6 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     }
   }
 
-  //Något funkar inte här, när man kommer in i result
-  //screen härifrån så stängs tangentbordet hela tiden, från annat håll funkar det.
   void goToResults(XFile? image, BuildContext context) {
     Navigator.of(context)
         .push(MaterialPageRoute(
