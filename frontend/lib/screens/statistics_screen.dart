@@ -133,10 +133,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                               backgroundColor: Utils.lightColor,
                               foregroundColor: Utils.mediumDarkColor),
                           onPressed: (() {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => HomeScreen()));
+                            Navigator.pop(context);
                           }),
                           child: Icon(Icons.arrow_back))),
                   toolbarHeight: 100,

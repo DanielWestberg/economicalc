@@ -75,8 +75,12 @@ class _HomeScreen extends State<HomeScreen> {
             builder: (context) => ResultsScreen(image: image)))
         .then((value) {
       if (value != false) {
-        Navigator.push(
-            _context, MaterialPageRoute(builder: (context) => HomeScreen()));
+        Navigator.pushAndRemoveUntil(_context,
+            MaterialPageRoute(builder: (BuildContext context) {
+          return HomeScreen();
+        }), (r) {
+          return false;
+        });
       }
     });
   }

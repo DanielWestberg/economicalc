@@ -37,8 +37,12 @@ class DrawerMenu extends StatelessWidget {
             title:
                 Text('Home', style: TextStyle(fontSize: Utils.drawerFontsize)),
             onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => HomeScreen()));
+              Navigator.pushAndRemoveUntil(context,
+                  MaterialPageRoute(builder: (BuildContext context) {
+                return HomeScreen();
+              }), (r) {
+                return false;
+              });
             },
           ),
           ListTile(
@@ -60,8 +64,12 @@ class DrawerMenu extends StatelessWidget {
                   .push(MaterialPageRoute(
                       builder: (context) => StatisticsScreen()))
                   .then((value) {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => HomeScreen()));
+                Navigator.pushAndRemoveUntil(context,
+                    MaterialPageRoute(builder: (BuildContext context) {
+                  return HomeScreen();
+                }), (r) {
+                  return false;
+                });
               });
             },
           ),
@@ -176,8 +184,12 @@ class DrawerMenu extends StatelessWidget {
                   .push(
                       MaterialPageRoute(builder: (context) => OpenLink(false)))
                   .then((value) {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => HomeScreen()));
+                Navigator.pushAndRemoveUntil(context,
+                    MaterialPageRoute(builder: (BuildContext context) {
+                  return HomeScreen();
+                }), (r) {
+                  return false;
+                });
               });
             },
           ),
@@ -201,8 +213,12 @@ class DrawerMenu extends StatelessWidget {
                   .push(
                       MaterialPageRoute(builder: (context) => SettingsScreen()))
                   .then((value) {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => HomeScreen()));
+                Navigator.pushAndRemoveUntil(context,
+                    MaterialPageRoute(builder: (BuildContext context) {
+                  return HomeScreen();
+                }), (r) {
+                  return false;
+                });
               });
             },
           ),

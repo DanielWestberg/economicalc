@@ -177,6 +177,7 @@ class ResultsScreenState extends State<ResultsScreen> {
                 widget.existingTransaction!.receiptID = receiptID;
                 widget.existingTransaction!.categoryDesc = receipt.categoryDesc;
                 widget.existingTransaction!.categoryID = receipt.categoryID;
+                widget.existingTransaction!.date = receipt.date;
                 await dbConnector
                     .updateTransaction(widget.existingTransaction!);
                 Navigator.pop(context);
@@ -282,7 +283,7 @@ class ResultsScreenState extends State<ResultsScreen> {
       builder: (BuildContext context) {
         return alert;
       },
-    ).then((value) => Navigator.of(context).popUntil((route) => route.isFirst));
+    );
   }
 
   showAlertDialog(BuildContext context, List<Transaction> transToUpdate,
