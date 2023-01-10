@@ -301,34 +301,35 @@ class HistoryListState extends State<HistoryList> {
           leading: Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Text(
-                  DateFormat('yyyy-MM-dd').format(transaction.date),
-                  style: TextStyle(
-                      color: Utils.textColor,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14),
-                ),
+                SizedBox(
+                    width: 80,
+                    child: Text(
+                      DateFormat('yyyy-MM-dd').format(transaction.date),
+                      style: TextStyle(
+                          color: Utils.textColor,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14),
+                    )),
                 Row(
                   mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: transaction.receiptID != null
-                            ? const Icon(
-                                Icons.receipt_long_rounded,
-                                size: 15,
-                              )
-                            : Text("")),
-                    SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: transaction.bankTransactionID != null
-                            ? const Icon(
-                                Icons.account_balance_rounded,
-                                size: 15,
-                              )
-                            : Text(""))
+                    transaction.receiptID != null
+                        ? Container(
+                            padding: EdgeInsets.symmetric(horizontal: 5),
+                            child: Icon(
+                              Icons.receipt_long_rounded,
+                              size: 18,
+                            ))
+                        : Text(""),
+                    transaction.bankTransactionID != null
+                        ? Container(
+                            padding: EdgeInsets.symmetric(horizontal: 5),
+                            child: Icon(
+                              Icons.account_balance_rounded,
+                              size: 18,
+                            ))
+                        : Text("")
                   ],
                 )
               ]),
