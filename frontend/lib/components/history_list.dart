@@ -311,18 +311,24 @@ class HistoryListState extends State<HistoryList> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    transaction.receiptID != null
-                        ? const Icon(
-                            Icons.receipt_long_rounded,
-                            size: 15,
-                          )
-                        : Text(""),
-                    transaction.bankTransactionID != null
-                        ? const Icon(
-                            Icons.account_balance_rounded,
-                            size: 15,
-                          )
-                        : Text("")
+                    SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: transaction.receiptID != null
+                            ? const Icon(
+                                Icons.receipt_long_rounded,
+                                size: 15,
+                              )
+                            : Text("")),
+                    SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: transaction.bankTransactionID != null
+                            ? const Icon(
+                                Icons.account_balance_rounded,
+                                size: 15,
+                              )
+                            : Text(""))
                   ],
                 )
               ]),
