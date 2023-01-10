@@ -19,29 +19,6 @@ import 'dart:convert' as convert;
 
 import '../models/LoginData.dart';
 
-/*
- Change the last bool to false to switch to AWS server with HTTPS
- kDebugMode is present because it will always be true by default when
- compiling normally, but will be false when compiling into production. This
- is useful in case anyone forgets to set this to false before attempting to
- deploy.
- */
-const testMode = kDebugMode && false;
-
-const apiServer = testMode ? "192.168.0.165:5000" : "api.economicalc.online";
-const String tinkReportEndpoint =
-    "https://link.tink.com/1.0/reports/create-report"
-    "?client_id=1a539460199a4e8bb374893752db14e6"
-    "&redirect_uri=https://console.tink.com/callback&market=SE"
-    "&report_types=TRANSACTION_REPORT,ACCOUNT_VERIFICATION_REPORT"
-    "&refreshable_items="
-    "IDENTITY_DATA"
-    ",CHECKING_ACCOUNTS"
-    ",SAVING_ACCOUNTS"
-    ",CHECKING_TRANSACTIONS"
-    ",SAVING_TRANSACTIONS"
-    "&account_dialog_type=SINGLE";
-
 class UnauthorizedException implements Exception {
   final String message;
   const UnauthorizedException([this.message = "Login via bank required"]);
