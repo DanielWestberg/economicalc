@@ -174,11 +174,11 @@ class SQFLite {
   }
 
   Future<List<Transaction>> getFilteredTransactions(
-      DateTime startDate,
-      DateTime endDate,
-      TransactionCategory category,
-      bool onlyReceipts,
-      ) async {
+    DateTime startDate,
+    DateTime endDate,
+    TransactionCategory category,
+    bool onlyReceipts,
+  ) async {
     final TransactionFilter filter = TransactionFilter(
       startDate: startDate,
       endDate: endDate,
@@ -392,9 +392,9 @@ class SQFLite {
   }
 
   Future<List<ReceiptItem>> getAllReceiptItems(
-      DateTime startDate,
-      DateTime endDate,
-      ) async {
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
     final receipts = await getAllReceipts();
     List<ReceiptItem> items = [];
 
@@ -406,10 +406,10 @@ class SQFLite {
   }
 
   Future<List<Map<String, Object>>> getFilteredReceiptItems(
-      DateTime startDate,
-      DateTime endDate,
-      TransactionCategory category,
-      ) async {
+    DateTime startDate,
+    DateTime endDate,
+    TransactionCategory category,
+  ) async {
     final receipts = await getAllReceipts();
     List<Map<String, Object>> filteredItems = [];
 
@@ -560,10 +560,10 @@ class SQFLite {
   }
 
   Future<List<Map<String, Object>>> getFilteredCategoryTotals(
-      DateTime startDate,
-      DateTime endDate,
-      bool isExpenses,
-      ) async {
+    DateTime startDate,
+    DateTime endDate,
+    bool isExpenses,
+  ) async {
     final categories = await getAllcategories();
 
     List<Map<String, Object>> categoryTotals = [];
@@ -585,13 +585,15 @@ class SQFLite {
   Future<void> insertDefaultCategories(Database db) async {
     List<TransactionCategory> categories = [
       TransactionCategory(description: "Uncategorized", color: Colors.grey),
+      TransactionCategory(description: "Foodora", color: Colors.pink),
       TransactionCategory(description: "Groceries", color: Colors.blue),
-      TransactionCategory(description: "Hardware", color: Colors.black),
       TransactionCategory(description: "Transportation", color: Colors.purple),
-      TransactionCategory(description: "Stuff", color: Colors.green),
-      TransactionCategory(
-          description: "My proud collection of teddy bears",
-          color: Colors.brown),
+      TransactionCategory(description: "Sport", color: Colors.green),
+      TransactionCategory(description: "Electronics", color: Colors.black),
+      TransactionCategory(description: "Clothes", color: Colors.deepOrange),
+      TransactionCategory(description: "Furniture", color: Colors.brown),
+      TransactionCategory(description: "Rent", color: Colors.red),
+      TransactionCategory(description: "Other", color: Colors.brown),
     ];
     ;
     for (var category in categories) {
@@ -675,8 +677,9 @@ class SQFLite {
     );
 
     String cookieString = result?[0]["cookie"];
-    return cookieString == "null" ? null :
-        Cookie.fromSetCookieValue(cookieString);
+    return cookieString == "null"
+        ? null
+        : Cookie.fromSetCookieValue(cookieString);
   }
 
   Future<void> _setCookie(Cookie? cookie, Database db) async {
