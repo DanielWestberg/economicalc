@@ -68,8 +68,6 @@ class Transaction {
       date.compareTo(filter.startDate) >= 0 &&
       date.compareTo(filter.endDate) <= 0 &&
       (!filter.onlyReceipts || receiptID != null) &&
-      (
-          filter.category.description == 'None' ||
-              categoryID == filter.category.id
-      );
+      (filter.category.description.toLowerCase() == 'all' ||
+          categoryID == filter.category.id);
 }
