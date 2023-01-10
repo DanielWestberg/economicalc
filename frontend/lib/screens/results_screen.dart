@@ -8,11 +8,20 @@ import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
+import 'package:dart_numerics/dart_numerics.dart';
+
+import 'package:flutter/gestures.dart';
+
 import 'package:economicalc_client/services/api_calls.dart';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+
+import 'package:month_year_picker/month_year_picker.dart';
+import '../services/api_calls.dart';
+import 'package:flutter_date_pickers/flutter_date_pickers.dart';
 
 class ResultsScreen extends StatefulWidget {
   final XFile? image;
@@ -25,6 +34,7 @@ class ResultsScreen extends StatefulWidget {
 }
 
 class ResultsScreenState extends State<ResultsScreen> {
+  static UniqueKey futurekey = UniqueKey();
   int? sortColumnIndex;
   bool isAscending = false;
   double fontSize = 16;
@@ -41,42 +51,59 @@ class ResultsScreenState extends State<ResultsScreen> {
   int? categoryID;
   String dropdownValue =
       "Uncategorized"; // TODO: replace with suggested category
+  int backupTotal = 0;
 
+  final DateFormat formatter = DateFormat('yyyy-MM-dd');
   @override
   void initState() {
     super.initState();
-    isLoading = true;
+
     dataFuture = getTransactionFromImage(widget.image);
     dbConnector.initDatabase();
     categoriesFutureBuilder = getCategories(dbConnector);
+    isLoading = true;
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-        child: isLoading
-            ? Scaffold(
-                backgroundColor: Utils.mediumLightColor,
-                body: Center(
-                    child: LoadingAnimationWidget.threeArchedCircle(
-                        color: Colors.black, size: 40)))
-            : Scaffold(
-                appBar: AppBar(
-                  backgroundColor: Utils.mediumLightColor,
-                  foregroundColor: Utils.textColor,
-                  title: Text(
-                    'Scan result',
-                    style: GoogleFonts.roboto(),
-                  ),
-                  centerTitle: true,
-                  elevation: 10,
-                ),
-                body: ListView(children: [
-                  photoArea(),
-                  headerInfo(),
-                  buildDataTable(),
-                  confirmButton(),
-                ])));
+    if (isLoading) {
+      return SafeArea(
+          child: Scaffold(
+              backgroundColor: Utils.mediumLightColor,
+              body: Center(
+                  child: LoadingAnimationWidget.threeArchedCircle(
+                      color: Colors.black, size: 40))));
+    } else {
+      return FutureBuilder(
+          future: Future.wait([categoriesFutureBuilder, dataFuture]),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              receipt = snapshot.data![1] as Receipt;
+              categories = snapshot.data![0] as List<TransactionCategory>;
+            } else {
+              return Text("${snapshot.error}");
+            }
+            return SafeArea(
+                child: Scaffold(
+                    appBar: AppBar(
+                      backgroundColor: Utils.mediumLightColor,
+                      foregroundColor: Utils.textColor,
+                      title: Text(
+                        'Scan result',
+                        style: GoogleFonts.roboto(),
+                      ),
+                      centerTitle: true,
+                      elevation: 10,
+                      actions: [confirmButton()],
+                    ),
+                    body: ListView(scrollDirection: Axis.vertical, children: [
+                      photoArea(),
+                      headerInfo(),
+                      buildDataTable(),
+                      addButton(),
+                    ])));
+          });
+    }
   }
 
   Widget photoArea() {
@@ -116,13 +143,11 @@ class ResultsScreenState extends State<ResultsScreen> {
 
   Widget confirmButton() {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 40, horizontal: 100),
-      child: ElevatedButton(
+      padding: EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+      child: TextButton(
           style: ButtonStyle(
               shape: MaterialStateProperty.all(
-                RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30.0),
-                ),
+                CircleBorder(),
               ),
               backgroundColor:
                   MaterialStateProperty.all<Color>(Utils.mediumLightColor),
@@ -136,11 +161,14 @@ class ResultsScreenState extends State<ResultsScreen> {
               await apiCaller.updateImage(receiptID, widget.image!);
             }
             if (widget.existingTransaction != null) {
-              if (widget.existingTransaction!.totalAmount != receipt.total) {
+              if (!almostEqualNumbersBetween(
+                  widget.existingTransaction!.totalAmount!,
+                  receipt.total!,
+                  1)) {
                 final snackBar = SnackBar(
                   backgroundColor: Utils.errorColor,
                   content: Text(
-                    "Total amount of scanned receipt and existing transaction don't match. Please scan the correct receipt or edit the results.",
+                    "Total amount of scanned receipt and existing transaction don't match. Please scan the correct receipt or edit the results. Amount on transaction: ${widget.existingTransaction?.totalAmount}",
                     style: GoogleFonts.roboto(),
                   ),
                 );
@@ -164,7 +192,7 @@ class ResultsScreenState extends State<ResultsScreen> {
             } else {
               Transaction transaction = Transaction(
                 date: receipt.date,
-                totalAmount: -receipt.total!,
+                totalAmount: receipt.total!,
                 store: receipt.recipient,
                 receiptID: receiptID,
                 categoryID: await dbConnector
@@ -179,70 +207,56 @@ class ResultsScreenState extends State<ResultsScreen> {
               } else {
                 await dbConnector.insertTransaction(transaction);
               }
-              int? n =
+              List<Transaction> transToUpdate =
                   await dbConnector.numOfCategoriesWithSameName(transaction);
-              if (n > 0) {
-                await showAlertDialog(context, n, transaction);
+              if (transToUpdate.length > 1) {
+                await showAlertDialog(context, transToUpdate, transaction);
               }
               showConfirmationButton(context);
             }
           },
           child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [Text("Confirm "), Icon(Icons.check)])),
+              children: [Icon(Icons.check)])),
     );
   }
 
   Widget dropDown() {
-    return FutureBuilder(
-        future: categoriesFutureBuilder,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Text("${snapshot.error}");
-          } else if (snapshot.hasData) {
-            categories = snapshot.data!;
-
-            return SizedBox(
-                width: 300,
-                child: DropdownButton<String>(
-                    dropdownColor: Utils.lightColor,
-                    isDense: true,
-                    isExpanded: true,
-                    value: dropdownValue,
-                    onChanged: (
-                      String? value,
-                    ) async {
-                      int? categoryID = await dbConnector
-                          .getCategoryIDfromDescription(dropdownValue);
-                      setState(() {
-                        dropdownValue = value!;
-                        receipt.categoryDesc = dropdownValue;
-                        receipt.categoryID = categoryID;
-                      });
-                    },
-                    items: categories.map<DropdownMenuItem<String>>(
-                        (TransactionCategory category) {
-                      return DropdownMenuItem<String>(
-                        value: category.description,
-                        child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Container(
-                                  padding: EdgeInsets.only(right: 5),
-                                  child: Icon(Icons.label_rounded,
-                                      color: category.color)),
-                              Text(
-                                category.description,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.roboto(fontSize: fontSize),
-                              )
-                            ]),
-                      );
-                    }).toList()));
-          } else {
-            return Text("Unexpected error");
-          }
-        });
+    return SizedBox(
+        width: 300,
+        child: DropdownButton<String>(
+            dropdownColor: Utils.lightColor,
+            isDense: true,
+            isExpanded: true,
+            value: dropdownValue,
+            onChanged: (
+              String? value,
+            ) async {
+              int? categoryID =
+                  await dbConnector.getCategoryIDfromDescription(dropdownValue);
+              setState(() {
+                dropdownValue = value!;
+                receipt.categoryDesc = dropdownValue;
+                receipt.categoryID = categoryID;
+              });
+            },
+            items: categories
+                .map<DropdownMenuItem<String>>((TransactionCategory category) {
+              return DropdownMenuItem<String>(
+                value: category.description,
+                child:
+                    Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+                  Container(
+                      padding: EdgeInsets.only(right: 5),
+                      child: Icon(Icons.label_rounded, color: category.color)),
+                  Text(
+                    category.description,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.roboto(fontSize: fontSize),
+                  )
+                ]),
+              );
+            }).toList()));
   }
 
   showConfirmationButton(BuildContext context) {
@@ -271,8 +285,10 @@ class ResultsScreenState extends State<ResultsScreen> {
     ).then((value) => Navigator.of(context).popUntil((route) => route.isFirst));
   }
 
-  showAlertDialog(BuildContext context, int n, transaction) async {
+  showAlertDialog(BuildContext context, List<Transaction> transToUpdate,
+      transaction) async {
     // set up the buttons
+    int n = transToUpdate.length - 1;
     Widget cancelButton = TextButton(
       style: ButtonStyle(
           foregroundColor:
@@ -383,30 +399,65 @@ class ResultsScreenState extends State<ResultsScreen> {
           } else if (snapshot.hasData) {
             receipt = snapshot.data!;
             return Container(
-                padding: EdgeInsets.only(top: 20, left: 20, bottom: 20),
+                padding: EdgeInsets.all(20),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                        child: Text(
-                      receipt.recipient,
-                      style: GoogleFonts.roboto(fontSize: fontSize),
-                    )),
+                        child: TextFormField(
+                            decoration: InputDecoration(isDense: true),
+                            style: GoogleFonts.roboto(fontSize: fontSize),
+                            initialValue: receipt.recipient,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
+                            onFieldSubmitted: (value) {
+                              setState(() {
+                                receipt.recipient = value;
+                              });
+                            })),
                     Container(
                         padding: EdgeInsets.only(top: 5),
-                        child: Text(
-                          DateFormat("yyyy-MM-dd")
-                              .format(receipt.date)
-                              .toString(),
-                          style: GoogleFonts.roboto(fontSize: fontSize),
-                        )),
+                        child: Row(children: [
+                          Container(
+                              padding: EdgeInsets.only(right: 5),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    minimumSize: Size(30, 30),
+                                    padding: EdgeInsets.zero,
+                                    backgroundColor: Utils.mediumLightColor,
+                                    foregroundColor: Utils.textColor,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap),
+                                child: Icon(Icons.date_range),
+                                onPressed: () {
+                                  pickDate();
+                                },
+                              )),
+                          Container(
+                              padding: EdgeInsets.only(left: 10),
+                              child: Text(
+                                formatter.format(receipt.date),
+                                style: GoogleFonts.roboto(fontSize: fontSize),
+                              ))
+                        ])),
                     Container(
-                        padding: EdgeInsets.only(top: 5, bottom: 10),
-                        child: Text(
-                            NumberFormat.currency(locale: 'sv_SE')
-                                .format(receipt.total),
-                            style: GoogleFonts.roboto(fontSize: fontSize))),
+                      child: Row(children: [
+                        Container(
+                            alignment: Alignment.center,
+                            width: 30,
+                            height: 30,
+                            padding: EdgeInsets.all(2),
+                            child: Icon(Icons.payment_rounded)),
+                        Container(
+                            padding: EdgeInsets.only(left: 10),
+                            child: Text(
+                                NumberFormat.currency(
+                                        locale: 'sv_SE', decimalDigits: 2)
+                                    .format(getTotal(receipt)),
+                                style: GoogleFonts.roboto(fontSize: fontSize))),
+                      ]),
+                    ),
                     Container(
                       padding: EdgeInsets.only(top: 15),
                       child: Text(
@@ -427,85 +478,106 @@ class ResultsScreenState extends State<ResultsScreen> {
         });
   }
 
-  Widget buildDataTable() {
-    return FutureBuilder(
-        future: dataFuture,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Text("${snapshot.error}");
-          } else if (snapshot.hasData) {
-            receipt = snapshot.data!;
-            return DataTable(
-                columnSpacing: 30,
-                sortAscending: isAscending,
-                sortColumnIndex: sortColumnIndex,
-                columns: getColumns(columns),
-                rows: getRows(receipt.items as List<ReceiptItem>));
-          } else {
-            return Text("Unexpected error");
-          }
-        });
+  pickDate() async {
+    DateTime startDate = receipt.date;
+    DateTime? date = await showDatePicker(
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: Utils.mediumDarkColor, // header background color
+              ),
+              textButtonTheme: TextButtonThemeData(
+                style: TextButton.styleFrom(
+                  primary: Utils.mediumDarkColor, // button text color
+                ),
+              ),
+            ),
+            child: child!,
+          );
+        },
+        context: context,
+        initialDate: startDate,
+        firstDate: DateTime(1900),
+        lastDate: DateTime.now());
+    if (date != null) {
+      setState(() {
+        receipt.date = date;
+      });
+    }
   }
 
-  List<DataColumn> getColumns(List<String> columns) => columns
-      .map((String column) => DataColumn(
-          label: Text(column,
-              style: GoogleFonts.roboto(
-                  fontWeight: FontWeight.bold, fontSize: 16.0)),
-          onSort: onSort))
-      .toList();
-
-  List<DataRow> getRows(List<ReceiptItem> items) =>
-      items.map((ReceiptItem item) {
-        final cells = [item.itemName, item.amount];
-        return DataRow(cells: getCells(cells));
-      }).toList();
-
-  List<DataCell> getCells(List<dynamic> cells) => cells
-      .map((data) => DataCell(
-            TextFormField(
-              initialValue: '$data',
-              onChanged: (value) {
-                if (data == cells[0]) {
-                  int index = receipt.items
-                      .indexWhere((element) => element.itemName == data);
-                  setState(() {
-                    receipt.items[index].itemName = value;
-                  });
-                } else {
-                  int index = receipt.items.indexWhere((element) =>
-                      element.amount == data && element.itemName == cells[0]);
-                  double newValue = 0;
-                  double.tryParse(value) == null
-                      ? newValue = 0
-                      : newValue = double.parse(value);
-
-                  setState(() {
-                    receipt.items[index].amount = newValue;
-                    receipt.total = receipt.total! - data;
-                    receipt.total = receipt.total! + newValue;
-                    receipt.total =
-                        double.parse((receipt.total)!.toStringAsFixed(2));
-                  });
-                }
-              },
+  Widget buildDataTable() {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      itemCount: receipt.items.length,
+      itemBuilder: (BuildContext context, index) {
+        return Dismissible(
+          direction: DismissDirection.endToStart,
+          key: futurekey,
+          onDismissed: ((direction) {
+            setState(() {
+              receipt.total = receipt.total! - receipt.items[index].amount;
+              receipt.items.removeAt(index);
+              receipt.total = double.parse((receipt.total)!.toStringAsFixed(2));
+              futurekey = UniqueKey();
+            });
+          }),
+          background: Container(
+            color: Colors.green,
+          ),
+          secondaryBackground: const ColoredBox(
+            color: Colors.red,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Icon(Icons.delete, color: Colors.white),
+              ),
             ),
-          ))
-      .toList();
-
-  void onSort(int columnIndex, bool ascending) {
-    if (columnIndex == 0) {
-      receipt.items.sort((row1, row2) =>
-          Utils.compareString(ascending, row1.itemName, row2.itemName));
-    } else if (columnIndex == 1) {
-      receipt.items.sort((row1, row2) =>
-          Utils.compareNumber(ascending, row1.amount, row2.amount));
-    }
-
-    setState(() {
-      sortColumnIndex = columnIndex;
-      isAscending = ascending;
-    });
+          ),
+          child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10),
+              child: Row(
+                children: [
+                  Flexible(
+                    flex: 9,
+                    child: TextFormField(
+                      initialValue: receipt.items[index].itemName,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      onFieldSubmitted: (value) {
+                        setState(() {
+                          receipt.items[index].itemName = value;
+                        });
+                      },
+                    ),
+                  ),
+                  Flexible(
+                    flex: 2,
+                    child: TextFormField(
+                      initialValue: receipt.items[index].amount.toString(),
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      onFieldSubmitted: (value) {
+                        double oldAmount = receipt.items[index].amount;
+                        setState(() {
+                          double.tryParse(value) == null
+                              ? receipt.items[index].amount = 0
+                              : receipt.items[index].amount =
+                                  double.parse(value);
+                          receipt.total = receipt.total! - oldAmount;
+                          receipt.total = receipt.total! + double.parse(value);
+                          receipt.total = double.parse(
+                              (receipt.total! * -1).toStringAsFixed(2));
+                        });
+                      },
+                    ),
+                  )
+                ],
+              )),
+        );
+      },
+    );
   }
 
   Future<Receipt> getTransactionFromImage(image) async {
@@ -548,5 +620,38 @@ class ResultsScreenState extends State<ResultsScreen> {
 
   Future<List<TransactionCategory>> getCategories(UnifiedDb dbConnector) async {
     return await dbConnector.getAllcategories();
+  }
+
+  Widget addButton() {
+    return Container(
+      padding: EdgeInsets.all(40),
+      child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Utils.mediumLightColor,
+            foregroundColor: Utils.textColor,
+          ),
+          onPressed: () async {
+            setState(() {
+              receipt.items.add(ReceiptItem(itemName: "", amount: 0));
+            });
+          },
+          child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [Text("Add item "), Icon(Icons.add)])),
+    );
+  }
+
+  double? getTotal(Receipt receipt) {
+    //if (receipt.total != null) return receipt.total;
+    double? newTotal = 0;
+    for (var item in receipt.items) {
+      newTotal = newTotal! + item.amount;
+    }
+    newTotal = newTotal! * -1;
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      receipt.total = newTotal;
+    });
+    return newTotal;
   }
 }

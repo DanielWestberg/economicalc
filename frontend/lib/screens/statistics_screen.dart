@@ -4,6 +4,7 @@ import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:economicalc_client/models/receipt.dart';
 import 'package:economicalc_client/models/transaction.dart';
+import 'package:economicalc_client/screens/home_screen.dart';
 import 'package:economicalc_client/services/api_calls.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -24,29 +25,33 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   double fontSize = 14;
   double sizedBoxWidth = 140;
   double sizedBoxHeight = 30;
+
   Map<String, dynamic> startDate = {
-    "selected": DateTime(2022, 01, 01),
-    "previous": DateTime(2022, 01, 01),
-    "dialog": DateTime(2022, 01, 01),
+    "selected": DateTime(DateTime.now().year - 1, DateTime.now().month, 1),
+    "previous": DateTime(DateTime.now().year - 1, DateTime.now().month, 1),
+    "dialog": DateTime(DateTime.now().year - 1, DateTime.now().month, 1),
   };
 
   Map<String, dynamic> endDate = {
-    "selected": DateTime(2022, 12, 31),
-    "previous": DateTime(2022, 12, 31),
-    "dialog": DateTime(2022, 12, 31),
+    "selected":
+        DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
+    "previous":
+        DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
+    "dialog":
+        DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
   };
 
   Map<String, dynamic> category = {
     "selected":
-        TransactionCategory(description: "None", color: Colors.black, id: 0),
+        TransactionCategory(description: "All", color: Colors.black, id: 0),
     "previous":
-        TransactionCategory(description: "None", color: Colors.black, id: 0),
+        TransactionCategory(description: "All", color: Colors.black, id: 0),
     "dialog":
-        TransactionCategory(description: "None", color: Colors.black, id: 0),
+        TransactionCategory(description: "All", color: Colors.black, id: 0),
   };
 
-  TransactionCategory noneCategory =
-      TransactionCategory(description: "None", color: Colors.black, id: 0);
+  TransactionCategory allCategory =
+      TransactionCategory(description: "All", color: Colors.black, id: 0);
   Map<String, dynamic> contentSelection = {
     "selected": [true, false],
     "previous": [true, false],
@@ -60,7 +65,7 @@ class StatisticsScreenState extends State<StatisticsScreen> {
   };
 
   String dropdownValue = dropdownList.first;
-  String dropdownValueCategory = 'None';
+  String dropdownValueCategory = 'All';
 
   final UnifiedDb dbConnector = UnifiedDb.instance;
   late List<TransactionCategory> categories;
@@ -128,8 +133,10 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                               backgroundColor: Utils.lightColor,
                               foregroundColor: Utils.mediumDarkColor),
                           onPressed: (() {
-                            Navigator.of(context)
-                                .popUntil((route) => route.isFirst);
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => HomeScreen()));
                           }),
                           child: Icon(Icons.arrow_back))),
                   toolbarHeight: 100,
@@ -264,6 +271,24 @@ class StatisticsScreenState extends State<StatisticsScreen> {
               child: Text(DateFormat.yMMM().format(startDate['dialog'])),
               onPressed: () async {
                 DateTime? newStartDate = await showMonthYearPicker(
+                    builder: (context, child) {
+                      return Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: ColorScheme.light(
+                              primary: Utils
+                                  .mediumDarkColor, // header background color
+                              secondary: Utils.mediumDarkColor,
+                              onSecondary: Colors.white),
+                          textButtonTheme: TextButtonThemeData(
+                            style: TextButton.styleFrom(
+                              primary:
+                                  Utils.mediumDarkColor, // button text color
+                            ),
+                          ),
+                        ),
+                        child: child!,
+                      );
+                    },
                     context: context,
                     initialDate: startDate['dialog'],
                     firstDate: DateTime(1900),
@@ -288,6 +313,24 @@ class StatisticsScreenState extends State<StatisticsScreen> {
                 child: Text(DateFormat.yMMM().format(endDate['dialog'])),
                 onPressed: () async {
                   DateTime? newEndDate = await showMonthYearPicker(
+                      builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: ColorScheme.light(
+                                primary: Utils
+                                    .mediumDarkColor, // header background color
+                                secondary: Utils.mediumDarkColor,
+                                onSecondary: Colors.white),
+                            textButtonTheme: TextButtonThemeData(
+                              style: TextButton.styleFrom(
+                                primary:
+                                    Utils.mediumDarkColor, // button text color
+                              ),
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
                       context: context,
                       initialDate: endDate['dialog'],
                       firstDate: DateTime(1900),
@@ -418,8 +461,8 @@ class StatisticsScreenState extends State<StatisticsScreen> {
             return Text("${snapshot.error}");
           } else if (snapshot.hasData) {
             categories = snapshot.data!;
-            if (!categories.contains(noneCategory)) {
-              categories.insert(0, noneCategory);
+            if (!categories.contains(allCategory)) {
+              categories.insert(0, allCategory);
             }
             return DropdownButton<String>(
                 isDense: true,

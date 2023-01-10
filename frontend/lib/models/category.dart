@@ -50,6 +50,6 @@ class TransactionCategory {
     return categories.firstWhere((item) => item.description == categoryDesc);
   }
 
-  static TransactionCategory noneCategory =
-      TransactionCategory(description: "None", color: Colors.black);
+  static TransactionCategory allCategory =
+      TransactionCategory(description: "All", color: Colors.black);
 }

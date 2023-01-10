@@ -54,6 +54,9 @@ dependencies:
   android_intent: ^2.0.2
   string_similarity: ^2.0.0
   month_year_picker: ^0.2.0+2
+  flutter_date_picker: ^0.1.8
+  flutter_date_pickers: ^0.4.0
+  dart_numerics: ^0.0.6
 
 dev_dependencies:
   flutter_test:

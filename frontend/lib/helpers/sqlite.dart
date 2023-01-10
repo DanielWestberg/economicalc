@@ -125,16 +125,18 @@ class SQFLite {
     );
   }
 
-  Future<int> numOfCategoriesWithSameName(Transaction transaction) async {
-    int n = 0;
+  Future<List<Transaction>> numOfCategoriesWithSameName(
+      Transaction transaction) async {
+    List<Transaction> transToUpdate = [];
     List<Transaction> transactionsInLocalDb = await getAllTransactions();
     for (Transaction tran in transactionsInLocalDb) {
-      if (tran.store!.toLowerCase().trim() ==
-          transaction.store!.toLowerCase().trim()) {
-        n++;
+      if (await Utils.categoricalSimilarity(tran, transaction)) {
+        tran.categoryID = transaction.categoryID;
+        tran.categoryDesc = transaction.categoryDesc;
+        transToUpdate.add(tran);
       }
     }
-    return (n - 1);
+    return transToUpdate;
   }
 
   //Maybe a more suitable name can be found?
@@ -411,7 +413,7 @@ class SQFLite {
     final receipts = await getAllReceipts();
     List<Map<String, Object>> filteredItems = [];
 
-    if (category.description == 'None') {
+    if (category.description == 'All') {
       for (var receipt in receipts) {
         if (receipt.date.compareTo(startDate) >= 0 &&
             receipt.date.compareTo(endDate) <= 0) {

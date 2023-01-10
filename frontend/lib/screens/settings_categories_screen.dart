@@ -168,7 +168,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               ScaffoldMessenger.of(context).showSnackBar(snackBar);
             } else if (await dbConnector
                     .doesCategoryAlreadyExist(description) ||
-                description.toLowerCase() == 'none') {
+                description.toLowerCase() == 'all') {
               final snackBar = SnackBar(
                 backgroundColor: Utils.errorColor,
                 content: Text(
@@ -202,20 +202,19 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       title: Text("Pick a color"),
       content: Column(
         children: [
-        ColorPicker(
-          pickerColor: pickerColor,
-          onColorChanged: ((pickerColor) =>
-              setState(() => categories[index].color = pickerColor))),
-        
-        TextField(
-          decoration: InputDecoration(
-              border: InputBorder.none,
-              hintText: 'New category name'
-            ),
-          onChanged: (value) {
-            setState(() => categories[index].description = value);
-          },
-        )],),
+          ColorPicker(
+              pickerColor: pickerColor,
+              onColorChanged: ((pickerColor) =>
+                  setState(() => categories[index].color = pickerColor))),
+          TextField(
+            decoration: InputDecoration(
+                border: InputBorder.none, hintText: 'New category name'),
+            onChanged: (value) {
+              setState(() => categories[index].description = value);
+            },
+          )
+        ],
+      ),
       actions: [
         ElevatedButton(
           child: const Text('Save'),

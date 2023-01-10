@@ -15,12 +15,11 @@ void runTest(String sname1, String sname2, double amount1, double amount2,
       amount: -amount1, description: sname1, date: DateTime.parse(date2));
 
   Receipt receipt = Receipt(
-    recipient: sname2,
-    date: DateTime.parse(date1),
-    items: [],
-    total: amount2,
-    ocrText: "",
-  );
+      recipient: sname2,
+      date: DateTime.parse(date1),
+      items: [],
+      total: amount2,
+      ocrText: "");
 
   bool sameAmount = receipt.total == bankTransaction.amount!.abs();
 
@@ -43,7 +42,7 @@ void runTest(String sname1, String sname2, double amount1, double amount2,
   list.sort((a, b) => b.length.compareTo(a.length));
   String result = Utils.removeStopWords(desc, list);
   String result1 = Utils.removeStopWords(desc1, list);
-  bool similarName = Utils.isSimilarStoreName(result, result1);
+  bool similarName = Utils.isSimilarStoreName(result, result1, 0.2);
   print("Checking if $result== $result1...");
   expect(similarName, two);
   print("Checking if ${bankTransaction.date} == ${receipt.date}...");
@@ -80,5 +79,9 @@ void main() {
   test('String similarity 7', () {
     runTest("WILLYS VÄSBY CENTRUM, UPPLANDSVÄSBY", "WILLYS MÄRSTA, MÄRSTA", 100,
         100, "2022-12-13", "2022-12-13", true, false, true);
+  });
+  test('String similarity 7', () {
+    runTest("WILLYS VÄSBY CENTRUM, UPPLANDSVÄSBY", "WILLYS", 100, 100,
+        "2022-12-13", "2022-12-13", true, true, true);
   });
 }

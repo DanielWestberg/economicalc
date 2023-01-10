@@ -73,11 +73,9 @@ class Utils {
 
     for (int i = 0; i < items.length; i++) {
       String desc = items[i].itemName;
-      //print(desc);
       if (desc.contains("C,kr/kg") || desc.contains("kr/kg")) {
         for (int j = 0; j < cleanedOcr.length; j++) {
           if (cleanedOcr[j].contains(items[i - 1].itemName)) {
-            print("Inside ${cleanedOcr[j]}");
             items[i].itemName = cleanedOcr[j + 1];
           }
         }
@@ -89,6 +87,8 @@ class Utils {
         if (desc.toLowerCase().trim().contains(stopword.toLowerCase().trim())) {
           items[i - 1].itemName += " $desc";
           items[i - 1].amount += amount;
+          items[i - 1].amount =
+              double.parse(items[i - 1].amount.toStringAsFixed(2));
           items.removeAt(i);
           i--;
         }
@@ -111,27 +111,22 @@ class Utils {
   }
 
   static bool isSimilarDate(DateTime receiptDate, DateTime bankTransDate) {
-    return receiptDate.add(const Duration(days: 3)).compareTo(bankTransDate) >=
+    return receiptDate.add(const Duration(days: 5)).compareTo(bankTransDate) >=
         0;
   }
 
   static String removeStopWords(String word, List<String> stopwords) {
     for (String municipality in stopwords) {
-      //print(municipality.toLowerCase().trim().replaceAll(" ", ""));
-      //print(desc.toLowerCase().trim());
       word = word.toLowerCase().trim().replaceAll(
           municipality.toLowerCase().trim().replaceAll(" ", ""), "");
     }
     return word;
   }
 
-  static bool isSimilarStoreName(String name1, String name2) {
-    print(StringSimilarity.compareTwoStrings(
-        name1.toLowerCase(), name2.toLowerCase()));
-
+  static bool isSimilarStoreName(String name1, String name2, double threshold) {
     return StringSimilarity.compareTwoStrings(
             name1.toLowerCase().trim(), name2.toLowerCase().trim()) >
-        0.4;
+        threshold;
   }
 
   static Future<bool> isReceiptAndTransactionEqual(
@@ -155,7 +150,7 @@ class Utils {
       String result = Utils.removeStopWords(desc, list);
       String result1 = Utils.removeStopWords(desc1, list);
 
-      if (Utils.isSimilarStoreName(result, result1)) return true;
+      if (Utils.isSimilarStoreName(result, result1, 0.4)) return true;
     }
     return false;
   }
@@ -180,7 +175,31 @@ class Utils {
       String result = Utils.removeStopWords(desc, list);
       String result1 = Utils.removeStopWords(desc1, list);
 
-      if (Utils.isSimilarStoreName(result, result1)) return true;
+      if (Utils.isSimilarStoreName(result, result1, 0.4)) return true;
+    }
+    return false;
+  }
+
+  static Future<bool> categoricalSimilarity(
+      Transaction trans1, Transaction trans2) async {
+    String response =
+        await rootBundle.loadString('assets/swedish_municipalities.json');
+    List<dynamic> sweMuni = json.decode(response);
+
+    List<String> list = [];
+
+    sweMuni.forEach((element) {
+      list.add(element);
+    });
+
+    String desc = trans1.store!;
+    String desc1 = trans2.store!;
+    list.sort((a, b) => b.length.compareTo(a.length));
+    String result = Utils.removeStopWords(desc, list);
+    String result1 = Utils.removeStopWords(desc1, list);
+
+    if (Utils.isSimilarStoreName(result, result1, 0.3)) {
+      return true;
     }
     return false;
   }
@@ -205,7 +224,7 @@ class Utils {
       String result = Utils.removeStopWords(desc, list);
       String result1 = Utils.removeStopWords(desc1, list);
 
-      if (Utils.isSimilarStoreName(result, result1)) return true;
+      if (Utils.isSimilarStoreName(result, result1, 0.4)) return true;
     }
     return false;
   }

@@ -39,24 +39,27 @@ class _HomeScreen extends State<HomeScreen> {
   bool onlyReceipts = false;
 
   Map<String, dynamic> startDate = {
-    "selected": DateTime(2022, 01, 01),
-    "previous": DateTime(2022, 01, 01),
-    "dialog": DateTime(2022, 01, 01),
+    "selected": DateTime(DateTime.now().year - 1, DateTime.now().month, 1),
+    "previous": DateTime(DateTime.now().year - 1, DateTime.now().month, 1),
+    "dialog": DateTime(DateTime.now().year - 1, DateTime.now().month, 1),
   };
 
   Map<String, dynamic> endDate = {
-    "selected": DateTime(2022, 12, 31),
-    "previous": DateTime(2022, 12, 31),
-    "dialog": DateTime(2022, 12, 31),
+    "selected":
+        DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
+    "previous":
+        DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
+    "dialog":
+        DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
   };
 
   Map<String, dynamic> category = {
-    "selected": TransactionCategory.noneCategory,
-    "previous": TransactionCategory.noneCategory,
-    "dialog": TransactionCategory.noneCategory,
+    "selected": TransactionCategory.allCategory,
+    "previous": TransactionCategory.allCategory,
+    "dialog": TransactionCategory.allCategory,
   };
 
-  String dropdownValueCategory = 'None';
+  String dropdownValueCategory = 'All';
   late List<TransactionCategory> categories;
   late Future<List<TransactionCategory>> categoriesFutureBuilder;
 
@@ -161,14 +164,14 @@ class _HomeScreen extends State<HomeScreen> {
               color: Utils.textColor,
               iconSize: 30,
               icon: Icon(Icons.filter_alt_rounded),
-              onPressed: (() {
+              onPressed: (() async {
                 startDate['previous'] =
                     startDate['dialog'] = startDate['selected'];
                 endDate['previous'] = endDate['dialog'] = endDate['selected'];
                 category['previous'] =
                     category['dialog'] = category['selected'];
                 dropdownValueCategory = category['selected'].description;
-                showDialog(
+                await showDialog(
                     context: _context,
                     builder: (context) {
                       return StatefulBuilder(builder: (context, setState) {
@@ -207,6 +210,24 @@ class _HomeScreen extends State<HomeScreen> {
               child: Text(DateFormat.yMMM().format(startDate['dialog'])),
               onPressed: () async {
                 DateTime? newStartDate = await showMonthYearPicker(
+                    builder: (context, child) {
+                      return Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: ColorScheme.light(
+                              primary: Utils
+                                  .mediumDarkColor, // header background color
+                              secondary: Utils.mediumDarkColor,
+                              onSecondary: Colors.white),
+                          textButtonTheme: TextButtonThemeData(
+                            style: TextButton.styleFrom(
+                              primary:
+                                  Utils.mediumDarkColor, // button text color
+                            ),
+                          ),
+                        ),
+                        child: child!,
+                      );
+                    },
                     context: context,
                     initialDate: startDate['dialog'],
                     firstDate: DateTime(1900),
@@ -231,6 +252,24 @@ class _HomeScreen extends State<HomeScreen> {
                 child: Text(DateFormat.yMMM().format(endDate['dialog'])),
                 onPressed: () async {
                   DateTime? newEndDate = await showMonthYearPicker(
+                      builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: ColorScheme.light(
+                                primary: Utils
+                                    .mediumDarkColor, // header background color
+                                secondary: Utils.mediumDarkColor,
+                                onSecondary: Colors.white),
+                            textButtonTheme: TextButtonThemeData(
+                              style: TextButton.styleFrom(
+                                primary:
+                                    Utils.mediumDarkColor, // button text color
+                              ),
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
                       context: context,
                       initialDate: endDate['dialog'],
                       firstDate: DateTime(1900),
@@ -325,8 +364,8 @@ class _HomeScreen extends State<HomeScreen> {
             return Text("${snapshot.error}");
           } else if (snapshot.hasData) {
             categories = snapshot.data!;
-            if (!categories.contains(TransactionCategory.noneCategory)) {
-              categories.insert(0, TransactionCategory.noneCategory);
+            if (!categories.contains(TransactionCategory.allCategory)) {
+              categories.insert(0, TransactionCategory.allCategory);
             }
             return SizedBox(
                 width: 130,

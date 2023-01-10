@@ -8,6 +8,7 @@ import 'package:economicalc_client/models/transaction.dart';
 import 'package:economicalc_client/screens/results_screen.dart';
 import 'package:economicalc_client/screens/home_screen.dart';
 import 'package:economicalc_client/services/api_calls.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
@@ -40,6 +41,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   late Receipt receipt;
   late Future<Receipt>? receiptFutureBuilder;
   final apiCaller = ApiCaller();
+  final DateFormat formatter = DateFormat('yyyy-MM-dd');
 
   @override
   void initState() {
@@ -87,129 +89,181 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-        child: Scaffold(
-            appBar: AppBar(
-              toolbarHeight: 230,
-              backgroundColor: Utils.mediumLightColor,
-              foregroundColor: Utils.lightColor,
-              leading: Container(
-                  alignment: Alignment.topCenter,
-                  padding: EdgeInsets.only(top: 10, left: 10),
-                  child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          shape: CircleBorder(),
-                          padding: EdgeInsets.all(0),
-                          alignment: Alignment.center,
-                          backgroundColor: Utils.lightColor,
-                          foregroundColor: Utils.mediumDarkColor),
-                      onPressed: (() {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => HomeScreen()));
-                      }),
-                      child: Icon(Icons.arrow_back))),
-              actions: [
-                Container(
-                  alignment: Alignment.topCenter,
-                  padding: EdgeInsets.only(top: 10, right: 10),
-                  child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        shape: CircleBorder(),
-                        padding: EdgeInsets.all(0),
-                        alignment: Alignment.center,
-                        backgroundColor: Utils.lightColor,
-                        foregroundColor: Utils.mediumDarkColor,
-                      ),
-                      onPressed: (() async {
-                        widget.transaction.receiptID != null
-                            ? await showReceiptImage(context)
-                            : receiptBtnAlertDialog(context);
-                      }),
-                      child: Icon(Icons.receipt_long_rounded)),
-                )
-              ],
-              flexibleSpace: headerInfo(),
-            ),
-            body:
-                ListView(children: [buildDataTable(), deleteButton(context)])));
-  }
-
-  Widget dropDown() {
+    Future<List<dynamic>> list;
+    bool isReceipt = false;
+    if (receiptFutureBuilder != null) {
+      list = Future.wait([categoriesFutureBuilder, receiptFutureBuilder!]);
+      isReceipt = true;
+    } else {
+      list = Future.wait([categoriesFutureBuilder]);
+    }
     return FutureBuilder(
-        future: categoriesFutureBuilder,
+        future: list,
         builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Text("${snapshot.error}");
+          if (snapshot.hasData && isReceipt == false) {
+            categories = snapshot.data![0];
+            return SafeArea(
+                child: Scaffold(
+              appBar: appbar(context, isReceipt),
+              body: Container(
+                child:
+                    Center(child: Text("No receipt data for this transaction")),
+              ),
+            ));
           } else if (snapshot.hasData) {
-            categories = snapshot.data!;
+            if (isReceipt) {
+              receipt = snapshot.data![1] as Receipt;
+            }
 
-            return DropdownButton<String>(
-                dropdownColor: Utils.lightColor,
-                isDense: true,
-                itemHeight: null,
-                isExpanded: true,
-                elevation: 0,
-                underline: SizedBox(),
-                value: dropdownValue,
-                onChanged: (value) async {
-                  setState(() {
-                    dropdownValue = value;
-                  });
-                  if (widget.transaction.receiptID != null) {
-                    Receipt receipt = await dbConnector
-                        .getReceiptfromID(widget.transaction.receiptID!);
-                    receipt.categoryDesc = dropdownValue;
-                    await dbConnector.updateReceipt(receipt);
-                  }
-                  widget.transaction.categoryDesc = dropdownValue;
-                  widget.transaction.categoryID = await dbConnector
-                      .getCategoryIDfromDescription(dropdownValue!);
-                  await dbConnector.updateTransaction(widget.transaction);
-                  int? n = await dbConnector
-                      .numOfCategoriesWithSameName(widget.transaction);
-                  if (n > 0) {
-                    showAlertDialog(context, n, dropdownValue!);
-                  } else {
-                    final snackBar = SnackBar(
-                      backgroundColor: Utils.darkColor,
-                      content: Text(
-                        'Category was updated to $dropdownValue.',
-                        style: GoogleFonts.roboto(color: Utils.lightColor),
-                      ),
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                  }
-                },
-                items: categories.map<DropdownMenuItem<String>>(
-                    (TransactionCategory category) {
-                  return DropdownMenuItem<String>(
-                    value: category.description,
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Container(
-                              padding: EdgeInsets.only(right: 5),
-                              child: Icon(Icons.label_rounded,
-                                  color: category.color)),
-                          SizedBox(
-                              width: 250,
-                              child: Text(
-                                category.description,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.roboto(fontSize: fontSize),
-                              ))
-                        ]),
-                  );
-                }).toList());
+            categories = snapshot.data![0] as List<TransactionCategory>;
+
+            return SafeArea(
+                child: Scaffold(
+                    appBar: appbar(context, isReceipt),
+                    body: ListView(children: [
+                      buildDataTable(),
+                      widget.transaction.bankTransactionID == null
+                          ? addButton()
+                          : Text(""),
+                      deleteButton(context),
+                    ])));
           } else {
             return Text("Unexpected error");
           }
         });
   }
 
-  showAlertDialog(BuildContext context, int n, String dropdownValue) {
+  AppBar appbar(BuildContext context, bool isReceipt) {
+    return AppBar(
+      toolbarHeight: widget.transaction.store!.length > 45 ? 265 : 245,
+      backgroundColor: Utils.mediumLightColor,
+      foregroundColor: Utils.lightColor,
+      leading: Container(
+          alignment: Alignment.topCenter,
+          padding: EdgeInsets.only(top: 10, left: 10),
+          child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  shape: CircleBorder(),
+                  padding: EdgeInsets.all(0),
+                  alignment: Alignment.center,
+                  backgroundColor: Utils.lightColor,
+                  foregroundColor: Utils.mediumDarkColor),
+              onPressed: (() {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              }),
+              child: Icon(Icons.arrow_back))),
+      actions: [
+        Container(
+          alignment: Alignment.topCenter,
+          padding: EdgeInsets.only(top: 10, right: 0),
+          child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                shape: CircleBorder(),
+                padding: EdgeInsets.all(0),
+                alignment: Alignment.center,
+                backgroundColor: Utils.lightColor,
+                foregroundColor: Utils.mediumDarkColor,
+              ),
+              onPressed: (() async {
+                widget.transaction.receiptID != null
+                    ? await showReceiptImage(context)
+                    : receiptBtnAlertDialog(context);
+              }),
+              child: Icon(Icons.receipt_long_rounded)),
+        ),
+        if (isReceipt) confirmButton(),
+      ],
+      flexibleSpace: headerInfo(isReceipt),
+    );
+  }
+
+  Widget confirmButton() {
+    return Container(
+      alignment: Alignment.topCenter,
+      padding: EdgeInsets.only(top: 10, right: 5),
+      child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            shape: CircleBorder(),
+            padding: EdgeInsets.all(0),
+            alignment: Alignment.center,
+            backgroundColor: Utils.lightColor,
+            foregroundColor: Utils.mediumDarkColor,
+          ),
+          onPressed: () async {
+            await dbConnector.updateReceipt(receipt);
+            await dbConnector.updateTransaction(widget.transaction);
+            if (apiCaller.cookie != null) {
+              await apiCaller.postReceipt(receipt);
+            }
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          },
+          child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [Icon(Icons.check)])),
+    );
+  }
+
+  Widget dropDown() {
+    return DropdownButton<String>(
+        dropdownColor: Utils.lightColor,
+        isDense: true,
+        itemHeight: null,
+        isExpanded: true,
+        elevation: 0,
+        underline: SizedBox(),
+        value: dropdownValue,
+        onChanged: (value) async {
+          setState(() {
+            dropdownValue = value;
+          });
+          if (widget.transaction.receiptID != null) {
+            Receipt receipt = await dbConnector
+                .getReceiptfromID(widget.transaction.receiptID!);
+            receipt.categoryDesc = dropdownValue;
+            await dbConnector.updateReceipt(receipt);
+          }
+          widget.transaction.categoryDesc = dropdownValue;
+          widget.transaction.categoryID =
+              await dbConnector.getCategoryIDfromDescription(dropdownValue!);
+          await dbConnector.updateTransaction(widget.transaction);
+          List<Transaction> transToUpdate =
+              await dbConnector.numOfCategoriesWithSameName(widget.transaction);
+          if (transToUpdate.length > 1) {
+            showAlertDialog(context, transToUpdate, dropdownValue!);
+          } else {
+            final snackBar = SnackBar(
+              backgroundColor: Utils.darkColor,
+              content: Text(
+                'Category was updated to $dropdownValue.',
+                style: GoogleFonts.roboto(color: Utils.lightColor),
+              ),
+            );
+            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+          }
+        },
+        items: categories
+            .map<DropdownMenuItem<String>>((TransactionCategory category) {
+          return DropdownMenuItem<String>(
+            value: category.description,
+            child: Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+              Container(
+                  padding: EdgeInsets.only(right: 5),
+                  child: Icon(Icons.label_rounded, color: category.color)),
+              SizedBox(
+                  width: 250,
+                  child: Text(
+                    category.description,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.roboto(fontSize: fontSize),
+                  ))
+            ]),
+          );
+        }).toList());
+  }
+
+  showAlertDialog(BuildContext context, List<Transaction> transToUpdate,
+      String dropdownValue) {
+    int n = transToUpdate.length - 1;
     // set up the buttons
     Widget cancelButton = TextButton(
       style: ButtonStyle(
@@ -234,7 +288,9 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
               MaterialStateProperty.all<Color>(Utils.mediumDarkColor)),
       child: Text("Yes"),
       onPressed: () {
-        dbConnector.assignCategories(widget.transaction);
+        for (Transaction tran in transToUpdate) {
+          dbConnector.updateTransaction(tran);
+        }
         Navigator.of(context).pop();
         final snackBar = SnackBar(
           backgroundColor: Utils.mediumDarkColor,
@@ -330,7 +386,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     );
   }
 
-  Widget headerInfo() {
+  Widget headerInfo(bool isReceipt) {
     return Container(
         padding: EdgeInsets.only(top: 10, left: 20, right: 20),
         child: Column(
@@ -338,7 +394,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Container(
-              padding: EdgeInsets.only(top: 20),
+              padding: EdgeInsets.only(top: 15, bottom: 5),
               alignment: Alignment.center,
               child: Text(
                   widget.transaction.receiptID != null
@@ -347,24 +403,76 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                   style: GoogleFonts.roboto(fontSize: fontSize * 1.6)),
             ),
             Container(
-                padding: EdgeInsets.only(top: 15),
-                child: Text(
-                  widget.transaction.store!,
-                  style: GoogleFonts.roboto(fontSize: fontSize),
-                )),
+              padding: const EdgeInsets.only(top: 10, bottom: 0),
+              child: widget.transaction.bankTransactionID == null
+                  ? TextFormField(
+                      enabled: widget.transaction.bankTransactionID == null,
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                      ),
+                      style: GoogleFonts.roboto(fontSize: fontSize),
+                      initialValue: widget.transaction.store,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      onFieldSubmitted: (value) {
+                        setState(() {
+                          widget.transaction.store = value;
+                          receipt.recipient = value;
+                        });
+                      })
+                  : Text(
+                      widget.transaction.store!,
+                      style: GoogleFonts.roboto(fontSize: fontSize),
+                    ),
+            ),
             Container(
-                padding: EdgeInsets.only(top: 5),
-                child: Text(
-                  DateFormat("yyyy-MM-dd").format(widget.transaction.date),
-                  style: GoogleFonts.roboto(fontSize: fontSize),
-                )),
+                padding: EdgeInsets.only(top: 10),
+                child: Row(children: [
+                  isReceipt
+                      ? ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              minimumSize: Size(30, 30),
+                              padding: EdgeInsets.zero,
+                              backgroundColor: Utils.lightColor,
+                              foregroundColor: Utils.darkColor,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                          child: Icon(Icons.date_range_rounded),
+                          onPressed: () {
+                            pickDate();
+                          },
+                        )
+                      : Container(
+                          alignment: Alignment.center,
+                          width: 30,
+                          height: 30,
+                          padding: EdgeInsets.all(2),
+                          child: Icon(Icons.date_range_rounded)),
+                  Container(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Text(
+                        formatter.format(widget.transaction.date),
+                        style: GoogleFonts.roboto(fontSize: fontSize),
+                      ))
+                ])),
             Container(
-                padding: EdgeInsets.only(top: 5),
-                child: Text(
-                    NumberFormat.currency(
-                      locale: 'sv_SE',
-                    ).format(widget.transaction.totalAmount),
-                    style: GoogleFonts.roboto(fontSize: fontSize))),
+              child: Row(children: [
+                Container(
+                    alignment: Alignment.center,
+                    width: 30,
+                    height: 30,
+                    padding: EdgeInsets.all(2),
+                    child: Icon(Icons.payment_rounded)),
+                Container(
+                    padding: EdgeInsets.only(left: 10),
+                    child: Text(
+                        NumberFormat.currency(locale: 'sv_SE', decimalDigits: 2)
+                            .format(isReceipt
+                                ? ((getTotal(receipt)))
+                                : widget.transaction.totalAmount),
+                        style: GoogleFonts.roboto(fontSize: fontSize))),
+              ]),
+            ),
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Container(
                 padding: EdgeInsets.only(top: 15, bottom: 5),
@@ -380,62 +488,151 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                     borderRadius: BorderRadius.circular(30),
                     color: Utils.lightColor),
                 padding: EdgeInsets.only(left: 5, right: 10),
-                child: Expanded(child: dropDown()),
+                child: dropDown(),
               )
             ]),
           ],
         ));
   }
 
-  Widget buildDataTable() {
-    return FutureBuilder(
-        future: receiptFutureBuilder,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Text("${snapshot.error}");
-          } else if (snapshot.hasData) {
-            receipt = snapshot.data!;
-            return DataTable(
-                columnSpacing: 30,
-                sortAscending: isAscending,
-                sortColumnIndex: sortColumnIndex,
-                columns: getColumns(columns),
-                rows: getRows(receipt.items));
-          } else {
-            return Center(heightFactor: 20, child: Text("No receipt data"));
-          }
-        });
+  Widget addButton() {
+    return Container(
+      padding: EdgeInsets.all(40),
+      child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Utils.mediumLightColor,
+            foregroundColor: Utils.textColor,
+          ),
+          onPressed: () async {
+            setState(() {
+              receipt.items.add(ReceiptItem(itemName: "", amount: 0));
+            });
+          },
+          child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [Text("Add item "), Icon(Icons.add)])),
+    );
   }
 
-  List<DataColumn> getColumns(List<String> columns) => columns
-      .map((String column) => DataColumn(
-          label: Text(column,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0)),
-          onSort: onSort))
-      .toList();
-
-  List<DataRow> getRows(List<ReceiptItem> items) =>
-      items.map((ReceiptItem item) {
-        final cells = [item.itemName, item.amount];
-        return DataRow(cells: getCells(cells));
-      }).toList();
-
-  List<DataCell> getCells(List<dynamic> cells) =>
-      cells.map((data) => DataCell(Text('$data'))).toList();
-
-  void onSort(int columnIndex, bool ascending) {
-    if (columnIndex == 0) {
-      receipt.items.sort((row1, row2) =>
-          Utils.compareString(ascending, row1.itemName, row2.itemName));
-    } else if (columnIndex == 1) {
-      receipt.items.sort((row1, row2) =>
-          Utils.compareNumber(ascending, row1.amount, row2.amount));
+  double? getTotal(Receipt receipt) {
+    //if (receipt.total != null) return receipt.total;
+    double? newTotal = 0;
+    for (var item in receipt.items) {
+      newTotal = newTotal! + item.amount;
     }
+    newTotal = newTotal! * -1;
 
-    setState(() {
-      sortColumnIndex = columnIndex;
-      isAscending = ascending;
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      receipt.total = newTotal!;
+      widget.transaction.totalAmount = newTotal;
     });
+    return newTotal;
+  }
+
+  pickDate() async {
+    DateTime startDate = receipt.date;
+    DateTime? date = await showDatePicker(
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: Utils.mediumDarkColor, // header background color
+              ),
+              textButtonTheme: TextButtonThemeData(
+                style: TextButton.styleFrom(
+                  primary: Utils.mediumDarkColor, // button text color
+                ),
+              ),
+            ),
+            child: child!,
+          );
+        },
+        context: context,
+        initialDate: startDate,
+        firstDate: DateTime(1900),
+        lastDate: DateTime.now());
+    if (date != null) {
+      setState(() {
+        receipt.date = date;
+        widget.transaction.date = date;
+      });
+    }
+  }
+
+  Widget buildDataTable() {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      itemCount: receipt.items.length,
+      itemBuilder: (BuildContext context, index) {
+        return Dismissible(
+            direction: widget.transaction.bankTransactionID == null
+                ? DismissDirection.endToStart
+                : DismissDirection.none,
+            key: UniqueKey(),
+            onDismissed: ((direction) {
+              setState(() {
+                receipt.total = receipt.total! - receipt.items[index].amount;
+                receipt.total =
+                    double.parse((receipt.total)!.toStringAsFixed(2));
+                receipt.items.removeAt(index);
+              });
+            }),
+            background: Container(
+              color: Colors.green,
+            ),
+            secondaryBackground: const ColoredBox(
+              color: Colors.red,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Icon(Icons.delete, color: Colors.white),
+                ),
+              ),
+            ),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10),
+              child: Row(
+                children: [
+                  Flexible(
+                    flex: 9,
+                    child: TextFormField(
+                      initialValue: receipt.items[index].itemName,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      onFieldSubmitted: (value) {
+                        setState(() {
+                          receipt.items[index].itemName = value;
+                        });
+                      },
+                    ),
+                  ),
+                  Flexible(
+                    flex: 2,
+                    child: TextFormField(
+                      enabled: widget.transaction.bankTransactionID == null,
+                      initialValue: receipt.items[index].amount.toString(),
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      onFieldSubmitted: (value) {
+                        double oldAmount = receipt.items[index].amount;
+                        setState(() {
+                          double.tryParse(value) == null
+                              ? receipt.items[index].amount = 0
+                              : receipt.items[index].amount = double.parse(
+                                  double.parse(value).toStringAsFixed(2));
+                          receipt.total = receipt.total! - oldAmount;
+                          receipt.total = receipt.total! + double.parse(value);
+                          receipt.total =
+                              double.parse((receipt.total)!.toStringAsFixed(2));
+                        });
+                      },
+                    ),
+                  )
+                ],
+              ),
+            ));
+      },
+    );
   }
 
   Future<List<TransactionCategory>> getCategories(UnifiedDb dbConnector) async {
@@ -455,7 +652,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
           } else if (snapshot.hasData) {
             receipt = snapshot.data!;
             return Center(
-                heightFactor: 2,
+                heightFactor: 1.5,
                 child: IconButton(
                   icon: Icon(Icons.delete),
                   onPressed: () {
@@ -498,8 +695,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
           widget.transaction.receiptID = null;
           await dbConnector.updateTransaction(widget.transaction);
         }
-        Navigator.of(context)
-            .push(MaterialPageRoute(builder: (context) => HomeScreen()));
+        Navigator.of(context).popUntil((route) => route.isFirst);
       },
     );
 
