@@ -15,8 +15,6 @@ import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
-var dropDownItems = Utils.categories;
-
 class TransactionDetailsScreen extends StatefulWidget {
   final Transaction transaction;
 
@@ -656,7 +654,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                 child: IconButton(
                   icon: Icon(Icons.delete),
                   onPressed: () {
-                    deleteAlertDialog(context);
+                    deleteAlertDialog();
                   },
                 ));
           } else {
@@ -671,7 +669,7 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
         });
   }
 
-  deleteAlertDialog(BuildContext context) {
+  deleteAlertDialog() {
     // set up the buttons
     Widget cancelButton = TextButton(
       style: ButtonStyle(
@@ -691,11 +689,19 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
         await dbConnector.deleteReceipt(widget.transaction.receiptID!);
         if (widget.transaction.bankTransactionID == null) {
           await dbConnector.deleteTransaction(widget.transaction.id!);
+          Navigator.of(context).popUntil((route) => route.isFirst);
         } else {
-          widget.transaction.receiptID = null;
+          setState(() {
+            widget.transaction.receiptID = null;
+            receiptFutureBuilder = null;
+          });
           await dbConnector.updateTransaction(widget.transaction);
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      TransactionDetailsScreen(null, widget.transaction)));
         }
-        Navigator.of(context).popUntil((route) => route.isFirst);
       },
     );
 
