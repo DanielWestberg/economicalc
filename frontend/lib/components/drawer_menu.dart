@@ -132,30 +132,30 @@ class DrawerMenu extends StatelessWidget {
           //     print("Tests finished");
           //   },
           // ),
-          ListTile(
-            iconColor: Utils.mediumDarkColor,
-            textColor: Utils.mediumDarkColor,
-            selected: false,
-            selectedColor: Utils.darkColor,
-            selectedTileColor: Utils.mediumLightColor.withOpacity(0.7),
-            style: ListTileStyle.drawer,
-            minLeadingWidth: 10,
-            leading: Icon(Icons.science_rounded),
-            tileColor: Utils.lightColor.withOpacity(0.5),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(10)),
-            ),
-            title: Text('Login TEST',
-                style: TextStyle(fontSize: Utils.drawerFontsize)),
-            onTap: () {
-              Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (context) => OpenLink(true)))
-                  .then((value) {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => HomeScreen()));
-              });
-            },
-          ),
+          // ListTile(
+          //   iconColor: Utils.mediumDarkColor,
+          //   textColor: Utils.mediumDarkColor,
+          //   selected: false,
+          //   selectedColor: Utils.darkColor,
+          //   selectedTileColor: Utils.mediumLightColor.withOpacity(0.7),
+          //   style: ListTileStyle.drawer,
+          //   minLeadingWidth: 10,
+          //   leading: Icon(Icons.science_rounded),
+          //   tileColor: Utils.lightColor.withOpacity(0.5),
+          //   shape: RoundedRectangleBorder(
+          //     borderRadius: BorderRadius.all(Radius.circular(10)),
+          //   ),
+          //   title: Text('Login TEST',
+          //       style: TextStyle(fontSize: Utils.drawerFontsize)),
+          //   onTap: () {
+          //     Navigator.of(context)
+          //         .push(MaterialPageRoute(builder: (context) => OpenLink(true)))
+          //         .then((value) {
+          //       Navigator.push(context,
+          //           MaterialPageRoute(builder: (context) => HomeScreen()));
+          //     });
+          //   },
+          // ),
           ListTile(
             iconColor: Utils.mediumDarkColor,
             textColor: Utils.mediumDarkColor,
