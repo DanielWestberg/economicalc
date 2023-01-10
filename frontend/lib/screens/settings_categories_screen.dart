@@ -1,4 +1,4 @@
-import 'package:economicalc_client/helpers/sqlite.dart';
+import 'package:economicalc_client/helpers/unified_db.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/models/category.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +16,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   late List<TransactionCategory> categories;
   Color pickerColor = Utils.mediumLightColor;
   String description = "";
-  final SQFLite dbConnector = SQFLite.instance;
+  final UnifiedDb dbConnector = UnifiedDb.instance;
 
   @override
   void initState() {

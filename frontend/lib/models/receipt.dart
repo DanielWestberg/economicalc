@@ -11,7 +11,6 @@ class Receipt {
   String? categoryDesc;
   List<ReceiptItem> items;
   int? categoryID;
-  String? backendId;
   String ocrText;
   String? imagePath;
 
@@ -23,7 +22,6 @@ class Receipt {
     required this.items,
     this.categoryDesc,
     this.categoryID,
-    this.backendId,
     required this.ocrText,
     this.imagePath,
   });
@@ -37,9 +35,9 @@ class Receipt {
       categoryDesc == other.categoryDesc &&
       items.every((item) => other.items.contains(item)) &&
       categoryID == other.categoryID &&
-      backendId == other.backendId &&
       ocrText == other.ocrText &&
-      imagePath == other.imagePath);
+      imagePath == other.imagePath
+  );
 
   @override
   get hashCode => (id.hashCode |

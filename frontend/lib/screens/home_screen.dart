@@ -1,5 +1,5 @@
 import 'package:economicalc_client/components/drawer_menu.dart';
-import 'package:economicalc_client/helpers/sqlite.dart';
+import 'package:economicalc_client/helpers/unified_db.dart';
 import 'package:economicalc_client/helpers/utils.dart';
 import 'package:economicalc_client/screens/results_screen.dart';
 import 'package:economicalc_client/screens/settings_screen.dart';
@@ -33,7 +33,7 @@ class _HomeScreen extends State<HomeScreen> {
   GlobalKey<HistoryListState> historyListStateKey =
       GlobalKey<HistoryListState>();
   late String appName = "EconomiCalc";
-  final SQFLite dbConnector = SQFLite.instance;
+  final UnifiedDb dbConnector = UnifiedDb.instance;
   bool showSearchBar = false;
   TextEditingController editingController = TextEditingController();
   bool onlyReceipts = false;
