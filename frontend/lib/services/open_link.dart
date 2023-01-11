@@ -50,7 +50,7 @@ class OpenLinkState extends State<OpenLink> {
   late final Response response;
   late final List<BankTransaction> transactions;
   final UnifiedDb dbConnector = UnifiedDb.instance;
-  final apiCaller = ApiCaller();
+  final apiCaller = ApiCaller(false);
 
   @override
   void initState() {

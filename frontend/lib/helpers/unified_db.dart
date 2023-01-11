@@ -13,7 +13,7 @@ import 'package:sqflite/sqflite.dart' show DatabaseFactory;
 
 // Acts as common interface for local db and backend db.
 class UnifiedDb extends SQFLite {
-  final ApiCaller _apiCaller = ApiCaller();
+  final ApiCaller _apiCaller = ApiCaller(false);
 
   // TODO: sync algorithm is very naive and does not account for the possibility
   // of the frontend and backend having receipts with the same ID but different
@@ -34,15 +34,15 @@ class UnifiedDb extends SQFLite {
 
   Future<void> _syncCategories() async {
     Iterable<TransactionCategory> localCategories = await getAllcategories();
-    Iterable<TransactionCategory> remoteCategories = await
-        _apiCaller.fetchCategories();
+    Iterable<TransactionCategory> remoteCategories =
+        await _apiCaller.fetchCategories();
 
     Iterable<TransactionCategory> categoriesToPost = localCategories.where(
-        (TransactionCategory category) => !(remoteCategories.contains(category))
-    );
+        (TransactionCategory category) =>
+            !(remoteCategories.contains(category)));
     Iterable<TransactionCategory> categoriesToSave = remoteCategories.where(
-        (TransactionCategory category) => !(localCategories.contains(category))
-    );
+        (TransactionCategory category) =>
+            !(localCategories.contains(category)));
 
     // For logging purposes only
     int postedCategories = 0;
@@ -67,14 +67,18 @@ class UnifiedDb extends SQFLite {
     Iterable<Receipt> localReceipts = await getAllReceipts();
     Iterable<Receipt> remoteReceipts = await _apiCaller.fetchReceipts();
 
-    Iterable<Receipt> receiptsToPost = localReceipts.where((Receipt receipt) =>
-        !(remoteReceipts.contains(receipt))
-    );
-    Iterable<Receipt> receiptsToSave = localReceipts.where((Receipt receipt) =>
-        !(localReceipts.contains(receipt))
-    );
+    print("remot elen");
+    print(remoteReceipts.length);
+
+    Iterable<Receipt> receiptsToPost = localReceipts
+        .where((Receipt receipt) => !(remoteReceipts.contains(receipt)));
+    Iterable<Receipt> receiptsToSave = remoteReceipts
+        .where((Receipt receipt) => !(localReceipts.contains(receipt)));
 
     List<Receipt> receiptsToPostList = receiptsToPost.toList();
+
+    print("yohoo");
+    print(receiptsToPostList.length);
 
     // For logging purposes only
     int savedReceipts = 0;
@@ -91,8 +95,8 @@ class UnifiedDb extends SQFLite {
     }
   }
 
-  UnifiedDb({DatabaseFactory? dbFactory, Future<String> Function()? path}) :
-    super(dbFactory: dbFactory, path: path);
+  UnifiedDb({DatabaseFactory? dbFactory, Future<String> Function()? path})
+      : super(dbFactory: dbFactory, path: path);
 
   static UnifiedDb? _instance;
   static UnifiedDb get instance {

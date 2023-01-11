@@ -85,7 +85,7 @@ class ApiCaller {
       : nonTestInstance;
 
   // Preferred constructor
-  factory ApiCaller([bool testMode = true]) =>
+  factory ApiCaller([bool testMode = false]) =>
       testMode ? testInstance : nonTestInstance;
 
   // Primarily for testing
@@ -315,11 +315,14 @@ class ApiCaller {
     }
 
     _assertCookieNotNull();
-    final uri = Uri.http(apiServer, "/receipts");
+    const path = "/receipts";
+    final uri = getUri(path);
     final headers = {
       "Content-type": "application/json",
       "Cookie": cookie.toString(),
     };
+    print("postmanyheaders");
+    print(cookie);
     final receiptMaps = receipts.map((r) => r.toMap()).toList();
     final body = convert.jsonEncode(receiptMaps);
     final response = await http.post(uri, headers: headers, body: body);
@@ -449,6 +452,9 @@ class ApiCaller {
     final Map<String, String> headers = {
       "Cookie": cookie.toString(),
     };
+    print("jaosdjoisajdoisajd");
+    print(testMode);
+    print(headers);
     final response = await http.get(uri, headers: headers);
     if (response.statusCode == 401) {
       throw const UnauthorizedException();
