@@ -171,7 +171,12 @@ class HistoryListState extends State<HistoryList> {
                             child: ListView.builder(
                                 itemCount: transactions.length,
                                 itemBuilder: (BuildContext ctx, int index) {
-                                  return dissmiss(context, index);
+                                  if (transactions[index].receiptID != null) {
+                                    return dissmiss(context, index);
+                                  } else {
+                                    return buildListItem(
+                                        context, transactions[index]);
+                                  }
                                 })));
                   } else {
                     return Center(

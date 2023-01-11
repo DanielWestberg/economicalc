@@ -304,8 +304,8 @@ class TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     // set up the AlertDialog
     AlertDialog alert = AlertDialog(
       title: n == 1
-          ? Text("$n transaction with the same store name found")
-          : Text("$n transactions with the same store name found"),
+          ? Text("$n transaction with a similar store name found")
+          : Text("$n transactions with a similar store name found"),
       content: n == 1
           ? Text(
               "Would you like to update the category for that transaction as well?")
